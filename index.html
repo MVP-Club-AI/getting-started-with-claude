@@ -21,7 +21,7 @@
   .container {
     max-width: 560px;
     margin: 0 auto;
-    padding: 20px 16px;
+    padding: 20px 16px 120px;
     min-height: 100vh;
   }
 
@@ -39,17 +39,38 @@
   .step-content { margin-bottom: 32px; }
   .step-content > p { font-size: 17px; line-height: 1.8; color: #081f3f; margin-bottom: 20px; }
   .step { display: none; }
-  .step.active { display: block; }
+  .step.active { display: block; min-height: calc(100vh - 240px); }
+
+  /* Fixed navigation footer */
+  .nav-footer {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 560px;
+    background: #faf5f0;
+    padding: 0 16px 20px;
+    z-index: 10;
+  }
+  .nav-footer::before {
+    content: '';
+    display: block;
+    height: 32px;
+    margin: 0 -16px;
+    background: linear-gradient(to bottom, transparent, #faf5f0);
+    pointer-events: none;
+  }
 
   /* Navigation */
-  .nav { display: flex; gap: 12px; padding-top: 20px; border-top: 1px solid #e8e0d8; }
+  .nav { display: flex; gap: 12px; }
   .btn { padding: 14px 20px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; font-family: 'Inter', sans-serif; }
   .btn:hover { opacity: 0.9; }
   .btn-back { flex: 1; border: 1px solid #e8e0d8; background: white; color: #15465b; }
   .btn-next { flex: 2; background: #d97706; color: white; }
 
   /* Step dots */
-  .dots { display: flex; justify-content: center; gap: 6px; margin-top: 20px; }
+  .dots { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
   .dot { width: 8px; height: 8px; border-radius: 100px; border: none; cursor: pointer; padding: 0; transition: all 0.3s ease; background: #e8e0d8; }
   .dot.active { width: 24px; background: #d97706; }
   .dot.completed { background: #eba714; }
@@ -796,14 +817,16 @@
 
   </div>
 
-  <!-- Navigation -->
-  <div class="nav">
-    <button class="btn btn-back" id="btnBack" onclick="prevStep()" style="display:none">Back</button>
-    <button class="btn btn-next" id="btnNext" onclick="nextStep()">Let's go</button>
   </div>
 
-  <!-- Dots -->
-  <div class="dots" id="dots"></div>
+  <!-- Fixed navigation footer -->
+  <div class="nav-footer">
+    <div class="nav">
+      <button class="btn btn-back" id="btnBack" onclick="prevStep()" style="display:none">Back</button>
+      <button class="btn btn-next" id="btnNext" onclick="nextStep()">Let's go</button>
+    </div>
+    <div class="dots" id="dots"></div>
+  </div>
 </div>
 
 <script>
