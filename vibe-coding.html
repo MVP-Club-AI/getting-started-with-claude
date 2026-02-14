@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your First Vibe Code</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Zilla+Slab&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #faf5f0;
+    color: #081f3f;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    display: flex;
+    gap: 24px;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 20px 16px 20px 4px;
+    min-height: 100vh;
+  }
+
+  .main-col { flex: 1; min-width: 0; }
+
+  /* Section sequence rail */
+  .section-rail { width: 104px; flex-shrink: 0; padding-top: 8px; }
+  .section-rail-inner {
+    position: sticky;
+    top: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .rail-thumb {
+    width: 96px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    padding: 10px 8px 7px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-family: 'Inter', sans-serif;
+    background: #f0ebe4;
+    color: #b8a898;
+  }
+  .rail-thumb-visual { display: flex; align-items: center; justify-content: center; height: 44px; }
+  .rail-thumb-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1; text-align: center; }
+  .rail-thumb.upcoming { background: #f0ebe4; color: #b8a898; border-color: transparent; }
+  .rail-thumb.upcoming .rail-thumb-visual { opacity: 0.45; }
+  .rail-thumb.completed { background: #fef3e2; color: #b45309; border-color: #eba714; }
+  .rail-thumb.current {
+    background: #d97706; color: white;
+    border-color: #b45309;
+    box-shadow: 0 2px 10px rgba(217,119,6,0.4);
+    transform: scale(1.06);
+  }
+  .rail-connector { width: 2px; height: 6px; flex-shrink: 0; }
+  .rail-connector.completed { background: #eba714; }
+  .rail-connector.upcoming { background: #e8e0d8; }
+  .rail-thumb:hover::after {
+    content: attr(data-label);
+    position: absolute;
+    left: 102px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #081f3f;
+    color: #faf5f0;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 30;
+  }
+  .rail-thumb:hover::before {
+    content: '';
+    position: absolute;
+    left: 96px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: #081f3f;
+    pointer-events: none;
+    z-index: 30;
+  }
+
+  /* Vector icons (CSS mask) */
+  .icon { display:inline-block;width:1em;height:1em;background:currentColor;vertical-align:-0.125em;flex-shrink:0;-webkit-mask:no-repeat center/contain;mask:no-repeat center/contain; }
+  .i-folder{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M2 6a2 2 0 012-2h4l3 3h9a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M2 6a2 2 0 012-2h4l3 3h9a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2z'/%3E%3C/svg%3E");}
+  .i-file{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");}
+  .i-eye{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");}
+  .i-gear{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");}
+  .i-laptop{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='12' rx='2'/%3E%3Cpath d='M2 20h20'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='12' rx='2'/%3E%3Cpath d='M2 20h20'/%3E%3C/svg%3E");}
+  .i-cloud{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z'/%3E%3C/svg%3E");}
+  .i-globe{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M2 12h20'/%3E%3Cpath d='M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M2 12h20'/%3E%3Cpath d='M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z'/%3E%3C/svg%3E");}
+  .i-package{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L3 7v10l9 5 9-5V7z'/%3E%3Cpath d='M12 22V12M3 7l9 5 9-5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L3 7v10l9 5 9-5V7z'/%3E%3Cpath d='M12 22V12M3 7l9 5 9-5'/%3E%3C/svg%3E");}
+  .i-monitor{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='2' y='3' width='20' height='14' rx='2'/%3E%3Cpath d='M8 21h8M12 17v4'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='2' y='3' width='20' height='14' rx='2'/%3E%3Cpath d='M8 21h8M12 17v4'/%3E%3C/svg%3E");}
+  .i-edit{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E");}
+  .i-save{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z'/%3E%3Cpath d='M17 21v-8H7v8'/%3E%3Cpath d='M7 3v5h8'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z'/%3E%3Cpath d='M17 21v-8H7v8'/%3E%3Cpath d='M7 3v5h8'/%3E%3C/svg%3E");}
+  .i-check{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");}
+  .i-chat{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");}
+  .i-zap{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");}
+  .i-search{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");}
+  .i-refresh{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");}
+  .i-rocket{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L8 14h8z'/%3E%3Cpath d='M10 14l-2 8 4-3 4 3-2-8'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L8 14h8z'/%3E%3Cpath d='M10 14l-2 8 4-3 4 3-2-8'/%3E%3C/svg%3E");}
+  .i-star{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");}
+  .i-sparkle{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");}
+  .i-target{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");}
+  .i-wrench{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");}
+  .i-grid{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18M3 15h18M9 3v18M15 3v18'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18M3 15h18M9 3v18M15 3v18'/%3E%3C/svg%3E");}
+  .i-chart{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M18 20V10M12 20V4M6 20v-6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M18 20V10M12 20V4M6 20v-6'/%3E%3C/svg%3E");}
+  .i-briefcase{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='2' y='7' width='20' height='14' rx='2'/%3E%3Cpath d='M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='2' y='7' width='20' height='14' rx='2'/%3E%3Cpath d='M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2'/%3E%3C/svg%3E");}
+
+  /* Step header */
+  .step-header { margin-bottom: 24px; }
+  .step-header h1 { font-family: 'Zilla Slab', serif; font-size: 28px; font-weight: 400; color: #081f3f; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .step-header p { font-size: 16px; color: #15465b; }
+
+  /* Content area */
+  .step-content { margin-bottom: 32px; }
+  .step-content > p { font-size: 17px; line-height: 1.8; color: #081f3f; margin-bottom: 20px; }
+  .step { display: none; }
+  .step.active { display: block; min-height: calc(100vh - 240px); }
+
+  /* Fixed navigation header */
+  .nav-header {
+    position: sticky;
+    top: 0;
+    background: #faf5f0;
+    padding: 8px 0 12px;
+    z-index: 10;
+  }
+  .nav-header::after {
+    content: '';
+    display: block;
+    height: 20px;
+    margin: 0 -16px;
+    background: linear-gradient(to top, transparent, #faf5f0);
+    pointer-events: none;
+    position: absolute;
+    bottom: -20px;
+    left: 0;
+    right: 0;
+  }
+
+  /* Navigation */
+  .nav { display: flex; gap: 12px; }
+  .btn { padding: 14px 20px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; font-family: 'Inter', sans-serif; }
+  .btn:hover { opacity: 0.9; }
+  .btn-back { flex: 1; border: 1px solid #e8e0d8; background: white; color: #15465b; }
+  .btn-next { flex: 2; background: #d97706; color: white; }
+
+  /* Reusable blocks */
+  .callout { padding: 16px 20px; border-radius: 0 12px 12px 0; margin-bottom: 20px; }
+  .callout-purple { background: #fef9f0; border-left: 4px solid #081f3f; }
+  .callout-green { background: #f0fdf4; border-left: 4px solid #16a34a; }
+  .callout-blue { background: #f0f5f7; border-left: 4px solid #15465b; }
+  .callout-amber { background: #fef9f0; border-left: 4px solid #d97706; }
+  .callout-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .callout-text { font-size: 13px; color: #15465b; line-height: 1.7; }
+
+  .dark-card { background: #081f3f; border-radius: 16px; padding: 28px; margin-bottom: 24px; text-align: center; }
+  .dark-card h2 { font-family: 'Zilla Slab', serif; font-size: 22px; font-weight: 400; color: #faf5f0; margin-bottom: 8px; }
+  .dark-card p { font-size: 14px; color: #eba714; line-height: 1.7; }
+
+  .section-label {
+    font-size: 11px; font-weight: 600; color: #15465b;
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 12px; text-align: center;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* How-it-works diagram (unused but kept) */
+  .how-it-works { display: flex; gap: 12px; align-items: stretch; }
+  .how-card { flex: 1; border-radius: 12px; padding: 16px; text-align: center; }
+  .how-card-icon { font-size: 24px; margin-bottom: 6px; }
+  .how-card-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .how-card-desc { font-size: 11px; line-height: 1.5; }
+  .how-card-left { background: white; border: 1px solid #e8e0d8; }
+  .how-card-left .how-card-title { color: #081f3f; }
+  .how-card-left .how-card-desc { color: #15465b; }
+  .how-card-right { background: #fef9f0; border: 2px solid #d97706; }
+  .how-card-right .how-card-title { color: #081f3f; }
+  .how-card-right .how-card-desc { color: #d97706; }
+  .how-arrow { display: flex; align-items: center; font-size: 16px; color: #e8e0d8; }
+
+  /* Folder tree */
+  .folder-tree { background: white; border-radius: 16px; border: 1px solid #e8e0d8; padding: 16px 8px; margin-bottom: 20px; }
+  .tree-header { padding: 0 12px 10px; border-bottom: 1px solid #f0ebe4; margin-bottom: 8px; }
+  .tree-item { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: background 0.15s; }
+  .tree-item:hover { background: #fef9f0; }
+  .tree-item.folder { cursor: default; }
+  .tree-item.folder:hover { background: transparent; }
+  .tree-icon { font-size: 16px; }
+  .tree-name { font-family: monospace; font-size: 14px; color: #081f3f; }
+  .tree-name.folder-name { color: #081f3f; font-weight: 700; }
+  .tree-hint { font-size: 11px; font-weight: 600; margin-left: auto; opacity: 0.5; transition: opacity 0.15s; }
+  .tree-item:hover .tree-hint { opacity: 1; }
+  .tree-tooltip { padding: 8px 14px; border-radius: 0 8px 8px 0; font-size: 13px; color: #15465b; line-height: 1.5; margin-bottom: 4px; background: #faf5f0; display: none; }
+  .tree-tooltip.visible { display: block; }
+  .tree-footer { text-align: center; font-size: 12px; color: #15465b; margin-top: 10px; font-style: italic; }
+
+  /* Website anatomy tabs */
+  .anatomy-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .anatomy-tab { flex: 1; padding: 12px 8px; border-radius: 12px; border: 2px solid #e8e0d8; background: white; cursor: pointer; text-align: center; transition: all 0.2s; font-family: 'Inter', sans-serif; }
+  .anatomy-tab.active { border-color: var(--tab-color); background: var(--tab-bg); }
+  .anatomy-tab-label { font-size: 15px; font-weight: 600; }
+  .anatomy-tab-meta { font-size: 11px; color: #15465b; font-style: italic; }
+  .anatomy-content { display: none; margin-bottom: 24px; }
+  .anatomy-content.active { display: block; }
+  .anatomy-desc { font-size: 14px; color: #15465b; line-height: 1.7; padding: 0 4px; margin-top: 12px; }
+  .anatomy-hint { text-align: center; font-size: 13px; color: #15465b; padding: 12px; font-style: italic; }
+
+  /* HTML visual */
+  .visual-html { border: 2px dashed #e76f51; border-radius: 12px; padding: 16px; background: #fff5f3; }
+  .visual-html .bar { height: 14px; width: 60%; background: #e76f51; border-radius: 4px; margin-bottom: 8px; opacity: 0.7; }
+  .visual-html .line { height: 8px; background: #e76f51; border-radius: 4px; margin-bottom: 4px; opacity: 0.3; }
+  .visual-html .line1 { width: 90%; }
+  .visual-html .line2 { width: 75%; margin-bottom: 12px; }
+  .visual-html .boxes { display: flex; gap: 8px; }
+  .visual-html .box { height: 40px; flex: 1; border: 1px dashed #e76f51; border-radius: 6px; opacity: 0.5; }
+
+  /* CSS visual */
+  .visual-css { border-radius: 12px; padding: 16px; background: linear-gradient(135deg, #081f3f, #15465b); }
+  .visual-css .bar { height: 14px; width: 60%; background: linear-gradient(90deg, #2a9d8f, #6ee7b7); border-radius: 20px; margin-bottom: 8px; }
+  .visual-css .line { height: 8px; background: #3d6474; border-radius: 4px; margin-bottom: 4px; }
+  .visual-css .line1 { width: 90%; }
+  .visual-css .line2 { width: 75%; margin-bottom: 12px; }
+  .visual-css .boxes { display: flex; gap: 8px; }
+  .visual-css .box { height: 40px; flex: 1; background: linear-gradient(135deg, #15465b, #2a9d8f); border-radius: 10px; }
+
+  /* JS visual */
+  .visual-js { border-radius: 12px; padding: 16px; background: #fffbeb; border: 1px solid #fde68a; }
+  .visual-js .btns { display: flex; gap: 8px; margin-bottom: 8px; }
+  .visual-js .btn-a { padding: 8px 20px; background: #e9c46a; border-radius: 8px; font-size: 12px; font-weight: 700; color: #78350f; }
+  .visual-js .btn-b { padding: 8px 20px; background: #fde68a; border-radius: 8px; font-size: 12px; font-weight: 600; color: #92400e; }
+  .visual-js .note { font-size: 11px; color: #92400e; font-style: italic; }
+
+  /* Frontend/Backend split */
+  .fb-split { display: flex; gap: 0; margin-bottom: 20px; border-radius: 16px; overflow: hidden; border: 1px solid #e8e0d8; }
+  .fb-side { flex: 1; padding: 20px; text-align: center; }
+  .fb-front { background: linear-gradient(180deg, #fef3e2, #fef9f0); }
+  .fb-back { background: linear-gradient(180deg, #f0ebe4, #faf5f0); }
+  .fb-icon { font-size: 32px; margin-bottom: 8px; }
+  .fb-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .fb-sub { font-size: 12px; font-weight: 500; line-height: 1.5; }
+  .fb-detail { margin-top: 12px; padding: 8px 12px; background: white; border-radius: 8px; font-size: 11px; color: #15465b; line-height: 1.6; }
+  .fb-badge { margin-top: 8px; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block; }
+  .fb-badge-active { background: #d97706; color: white; }
+  .fb-badge-inactive { background: #e8e0d8; color: #15465b; }
+  .fb-divider { width: 2px; background: #e8e0d8; position: relative; display: flex; align-items: center; justify-content: center; }
+  .fb-divider-dot { position: absolute; background: white; border: 2px solid #e8e0d8; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+
+  /* Deploy diagram */
+  .deploy-diagram { background: #faf5f0; border-radius: 16px; padding: 24px; border: 1px solid #e8e0d8; margin-bottom: 20px; }
+  .deploy-flow { display: flex; align-items: center; justify-content: center; gap: 12px; }
+  .deploy-node { text-align: center; flex: 1; }
+  .deploy-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: 28px; color: #faf5f0; }
+  .deploy-label { font-size: 13px; font-weight: 700; color: #081f3f; }
+  .deploy-sublabel { font-size: 11px; color: #15465b; margin-top: 2px; }
+  .deploy-arrow { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .deploy-arrow-label { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+  .deploy-arrow-char { font-size: 20px; }
+  .deploy-footer { text-align: center; margin-top: 14px; font-size: 12px; color: #15465b; }
+
+  /* Localhost visual */
+  .localhost-split { display: flex; gap: 20px; align-items: stretch; }
+  .localhost-card { flex: 1; border-radius: 14px; padding: 20px; text-align: center; position: relative; }
+  .localhost-now { background: linear-gradient(135deg, #081f3f, #15465b); }
+  .localhost-later { background: white; border: 2px dashed #d4ccc4; opacity: 0.6; }
+  .localhost-badge { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; padding: 3px 12px; border-radius: 20px; }
+
+  /* Vibe loop */
+  .vibe-loop { background: linear-gradient(135deg, #081f3f, #15465b); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+  .vibe-loop-steps { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; }
+  .vibe-step { text-align: center; min-width: 72px; }
+  .vibe-step-icon { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-size: 22px; color: #faf5f0; }
+  .vibe-step-label { font-size: 12px; font-weight: 700; color: #faf5f0; margin-bottom: 2px; }
+  .vibe-step-desc { font-size: 10px; color: #eba714; line-height: 1.4; }
+  .vibe-arrow { display: flex; align-items: center; color: #d97706; font-size: 16px; padding-top: 8px; }
+  .vibe-footer { text-align: center; margin-top: 12px; font-size: 11px; color: #eba714; font-style: italic; }
+
+  /* Prompt framework */
+  .framework { background: white; border-radius: 16px; border: 1px solid #e8e0d8; padding: 20px 16px; margin-bottom: 20px; }
+  .framework-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .framework-row:last-of-type { margin-bottom: 0; }
+  .framework-badge { border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 600; min-width: 60px; text-align: center; color: white; flex-shrink: 0; font-family: 'Inter', sans-serif; }
+  .framework-q { font-size: 13px; color: #15465b; flex: 1; }
+  .framework-example { padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+  .framework-footer { margin-top: 16px; padding: 10px 14px; background: #faf5f0; border-radius: 10px; font-size: 12px; color: #15465b; text-align: center; line-height: 1.6; }
+
+  /* Input form */
+  .input-group { margin-bottom: 14px; }
+  .input-label { font-size: 13px; font-weight: 600; color: #15465b; display: block; margin-bottom: 6px; }
+  .input-field { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #d4ccc4; font-size: 15px; font-family: inherit; }
+  .input-field:focus { outline: none; border-color: #d97706; box-shadow: 0 0 0 3px rgba(217,119,6,0.1); }
+
+  /* Prompt block */
+  .prompt-block { background: #081f3f; color: #faf5f0; border-radius: 12px; padding: 20px; font-size: 14px; line-height: 1.7; font-family: monospace; white-space: pre-wrap; margin-bottom: 12px; }
+  .copy-btn { width: 100%; padding: 10px 20px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; background: #d97706; color: white; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Inter', sans-serif; }
+  .copy-btn.copied { background: #059669; }
+
+  /* Permission cards */
+  .perm-card { border: 1px solid #e8e0d8; border-radius: 12px; margin-bottom: 10px; overflow: hidden; transition: background 0.2s; }
+  .perm-card.open { background: #fef9f0; }
+  .perm-header { width: 100%; padding: 12px 16px; background: none; border: none; display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left; font-family: inherit; }
+  .perm-icon { font-size: 20px; }
+  .perm-label { font-family: monospace; font-size: 13px; color: #081f3f; font-weight: 600; background: #fef3e2; padding: 4px 10px; border-radius: 6px; flex: 1; }
+  .perm-arrow { font-size: 12px; color: #15465b; transition: transform 0.2s; flex-shrink: 0; }
+  .perm-card.open .perm-arrow { transform: rotate(180deg); }
+  .perm-body { padding: 0 16px 14px; display: none; }
+  .perm-card.open .perm-body { display: block; }
+  .perm-desc { font-size: 14px; color: #15465b; line-height: 1.7; margin-bottom: 12px; }
+  .perm-verdict { background: #ecfdf5; border-radius: 8px; padding: 10px 14px; font-size: 14px; color: #065f46; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+
+  /* Expandable cards */
+  .expand-card { border: 1px solid #e8e0d8; border-radius: 12px; margin-bottom: 12px; overflow: hidden; background: white; }
+  .expand-header { width: 100%; padding: 14px 18px; background: none; border: none; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 15px; font-weight: 600; color: #081f3f; text-align: left; font-family: inherit; }
+  .expand-arrow { font-size: 12px; color: #15465b; transition: transform 0.2s; }
+  .expand-card.open .expand-arrow { transform: rotate(180deg); }
+  .expand-body { padding: 0 18px 16px; color: #15465b; font-size: 14px; line-height: 1.7; display: none; }
+  .expand-card.open .expand-body { display: block; }
+
+  /* Iteration prompts */
+  .iter-card { background: #faf5f0; border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; border: 1px solid #e8e0d8; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .iter-text { font-size: 14px; color: #081f3f; line-height: 1.6; flex: 1; }
+  .iter-copy { background: #fef3e2; color: #b45309; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0; font-family: inherit; }
+
+  /* Success card */
+  .success-card { background: #f0fdf4; border-radius: 12px; padding: 20px; border: 1px solid #bbf7d0; text-align: center; margin-top: 16px; }
+  .success-icon { font-size: 28px; margin-bottom: 8px; }
+  .success-title { font-size: 16px; font-weight: 700; color: #15803d; margin-bottom: 8px; }
+  .success-text { font-size: 14px; color: #15465b; line-height: 1.7; }
+
+  /* Recap list */
+  .recap-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0ebe4; align-items: center; }
+  .recap-item:last-child { border-bottom: none; }
+  .recap-icon { font-size: 18px; flex-shrink: 0; }
+  .recap-text { font-size: 14px; color: #15465b; line-height: 1.6; }
+
+  /* Next grid */
+  .next-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .next-card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #e8e0d8; text-align: center; }
+  .next-card-icon { font-size: 24px; margin-bottom: 6px; }
+  .next-card-title { font-size: 14px; font-weight: 700; color: #081f3f; margin-bottom: 4px; }
+  .next-card-desc { font-size: 12px; color: #15465b; line-height: 1.4; }
+
+  /* Project summary */
+  .summary-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #e8e0d8; }
+  .summary-card p { font-size: 14px; color: #15465b; line-height: 2; }
+
+  .text-center { text-align: center; }
+  .text-muted { color: #15465b; }
+  .text-sm { font-size: 15px; line-height: 1.7; }
+  .mt-16 { margin-top: 16px; }
+  .mb-20 { margin-bottom: 20px; }
+  .mb-24 { margin-bottom: 24px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Section sequence rail -->
+  <div class="section-rail">
+    <div class="section-rail-inner" id="sectionRail"></div>
+  </div>
+
+  <div class="main-col">
+  <!-- Fixed navigation header -->
+  <div class="nav-header">
+    <div class="nav">
+      <button class="btn btn-back" id="btnBack" onclick="prevStep()" style="display:none">Back</button>
+      <button class="btn btn-next" id="btnNext" onclick="nextStep()">Let's go</button>
+    </div>
+  </div>
+
+  <!-- Step header -->
+  <div class="step-header">
+    <h1 id="stepTitle">Your First Vibe Code</h1>
+    <p id="stepSubtitle">You're about to build something real with AI.</p>
+  </div>
+
+  <!-- Step content -->
+  <div class="step-content">
+
+    <!-- STEP 0: Welcome -->
+    <div class="step active" id="step-0">
+      <p>In the next few minutes, you're going to build a personal website and put it on the internet. No prior coding experience needed.</p>
+      <p>You'll do it by having a conversation with Claude — describing what you want in plain English, and letting the AI write the code. This is called <strong>vibe coding</strong>.</p>
+
+      <div style="background:white;border-radius:16px;padding:20px;border:1px solid #e8e0d8;margin-bottom:24px">
+        <div class="section-label">Set up your screen like this</div>
+        <p style="text-align:center;font-size:13px;color:#15465b;margin-bottom:14px">Put these two windows side by side on your desktop — you'll work between them the whole time.</p>
+        <!-- Desktop mockup -->
+        <div style="background:#081f3f;border-radius:12px;padding:10px 10px 14px;position:relative">
+          <!-- Title bar dots -->
+          <div style="display:flex;gap:5px;margin-bottom:10px;padding-left:4px">
+            <div style="width:8px;height:8px;border-radius:50%;background:#ef4444"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#22c55e"></div>
+            <span style="font-size:10px;color:#5a7a8a;margin-left:auto;padding-right:4px">Your desktop</span>
+          </div>
+          <!-- Two windows side by side -->
+          <div style="display:flex;gap:8px">
+            <!-- Left window: Claude Code app -->
+            <div style="flex:1;background:#f7f3ee;border-radius:8px;padding:12px;border:2px solid #15465b">
+              <div style="font-size:10px;color:#5a7a8a;margin-bottom:8px">Claude Code — App</div>
+              <div style="font-size:11px;line-height:1.7">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+                  <div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#d97706,#eba714)"></div>
+                  <span style="font-weight:700;color:#081f3f;font-size:12px">Claude Code</span>
+                </div>
+                <div style="background:#ffffff;border-radius:6px;padding:8px;border:1px solid #e8e0d8">
+                  <div style="color:#5a7a8a;font-size:10px">Paste prompts here ▍</div>
+                </div>
+              </div>
+            </div>
+            <!-- Right window: This guide -->
+            <div style="flex:1;background:#ffffff;border-radius:8px;padding:12px;border:2px solid #d97706">
+              <div style="font-size:10px;color:#15465b;margin-bottom:8px">Browser — This Guide</div>
+              <div style="background:linear-gradient(90deg,#d97706,#eba714);height:4px;border-radius:4px;width:30%;margin-bottom:8px"></div>
+              <div style="font-size:11px;font-weight:700;color:#081f3f;margin-bottom:4px">Your First Vibe Code</div>
+              <div style="height:4px;background:#e8e0d8;border-radius:2px;width:80%;margin-bottom:3px"></div>
+              <div style="height:4px;background:#e8e0d8;border-radius:2px;width:60%;margin-bottom:6px"></div>
+              <div style="font-size:9px;color:#d97706;font-weight:600">Follow steps here →</div>
+            </div>
+          </div>
+          <!-- Arrow between them -->
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-20%);background:#d97706;color:white;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px">↔</div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:12px">
+          <div style="flex:1;text-align:center;font-size:12px;color:#081f3f"><strong style="color:#6ee7b7">Left:</strong> Claude Code — where you paste prompts and talk to Claude</div>
+          <div style="flex:1;text-align:center;font-size:12px;color:#081f3f"><strong style="color:#d97706">Right:</strong> This guide — follow along step by step</div>
+        </div>
+      </div>
+
+      <p class="text-sm text-muted">By the end, you'll have a live website with a link you can text to someone. And you'll understand what actually happened — no magic, no mystery.</p>
+    </div>
+
+    <!-- STEP 1: Demystify -->
+    <div class="step" id="step-1">
+      <div class="dark-card">
+        <h2>Code is just files and folders.</h2>
+        <p>Text files on your computer that act as instructions telling your computer what to do.</p>
+      </div>
+
+      <!-- Folder tree -->
+      <div class="folder-tree">
+        <div class="tree-header section-label" style="text-align:left;margin-bottom:0">Your project is just this:</div>
+        <div id="folderTree">
+          <div class="tree-item folder" style="padding-left:12px">
+            <span class="tree-icon"><span class="icon i-folder"></span></span>
+            <span class="tree-name folder-name">my-website</span>
+          </div>
+          <div class="tree-item" style="padding-left:32px" data-file="index.html" data-tooltip="The skeleton — tells the browser what content exists on the page" data-color="#e76f51">
+            <span class="tree-icon"><span class="icon i-file"></span></span>
+            <span class="tree-name">index.html</span>
+            <span class="tree-hint" style="color:#e76f51">hover me</span>
+          </div>
+          <div class="tree-tooltip" id="tip-index.html" style="margin-left:32px;border-left:3px solid #e76f51"></div>
+          <div class="tree-item" style="padding-left:32px" data-file="style.css" data-tooltip="The outfit — colors, fonts, spacing, layout. How things look." data-color="#2a9d8f">
+            <span class="tree-icon"><span class="icon i-file"></span></span>
+            <span class="tree-name">style.css</span>
+            <span class="tree-hint" style="color:#2a9d8f">hover me</span>
+          </div>
+          <div class="tree-tooltip" id="tip-style.css" style="margin-left:32px;border-left:3px solid #2a9d8f"></div>
+          <div class="tree-item folder" style="padding-left:32px">
+            <span class="tree-icon"><span class="icon i-folder"></span></span>
+            <span class="tree-name folder-name">src</span>
+          </div>
+          <div class="tree-item" style="padding-left:52px" data-file="App.jsx" data-tooltip="The brain — the logic and interactive behavior of your site" data-color="#e9c46a">
+            <span class="tree-icon"><span class="icon i-file"></span></span>
+            <span class="tree-name">App.jsx</span>
+            <span class="tree-hint" style="color:#e9c46a">hover me</span>
+          </div>
+          <div class="tree-tooltip" id="tip-App.jsx" style="margin-left:52px;border-left:3px solid #e9c46a"></div>
+          <div class="tree-item" style="padding-left:32px" data-file="package.json" data-tooltip="The shopping list — which pre-built tools your project uses" data-color="#264653">
+            <span class="tree-icon"><span class="icon i-file"></span></span>
+            <span class="tree-name">package.json</span>
+            <span class="tree-hint" style="color:#264653">hover me</span>
+          </div>
+          <div class="tree-tooltip" id="tip-package.json" style="margin-left:32px;border-left:3px solid #264653"></div>
+        </div>
+        <div class="tree-footer" id="treeFooter">Hover over a file to see what it does</div>
+      </div>
+
+      <!-- Website anatomy -->
+      <div class="mb-24">
+        <div class="section-label">The three layers of every website</div>
+        <div class="anatomy-tabs">
+          <button class="anatomy-tab" data-layer="html" style="--tab-color:#e76f51;--tab-bg:#fff5f3" onclick="toggleLayer('html')">
+            <div class="anatomy-tab-label" style="color:#e76f51">HTML</div>
+            <div class="anatomy-tab-meta">The skeleton</div>
+          </button>
+          <button class="anatomy-tab" data-layer="css" style="--tab-color:#2a9d8f;--tab-bg:#f0fdf9" onclick="toggleLayer('css')">
+            <div class="anatomy-tab-label" style="color:#2a9d8f">CSS</div>
+            <div class="anatomy-tab-meta">The outfit</div>
+          </button>
+          <button class="anatomy-tab" data-layer="js" style="--tab-color:#e9c46a;--tab-bg:#fffbeb" onclick="toggleLayer('js')">
+            <div class="anatomy-tab-label" style="color:#e9c46a">JavaScript</div>
+            <div class="anatomy-tab-meta">The brain</div>
+          </button>
+        </div>
+
+        <div class="anatomy-content" id="layer-html">
+          <div class="visual-html">
+            <div class="bar"></div>
+            <div class="line line1"></div>
+            <div class="line line2"></div>
+            <div class="boxes"><div class="box"></div><div class="box"></div></div>
+          </div>
+          <div class="anatomy-desc">Defines WHAT is on the page — headings, paragraphs, images, buttons. Like the frame of a house before walls and paint.</div>
+        </div>
+
+        <div class="anatomy-content" id="layer-css">
+          <div class="visual-css">
+            <div class="bar"></div>
+            <div class="line line1"></div>
+            <div class="line line2"></div>
+            <div class="boxes"><div class="box"></div><div class="box"></div></div>
+          </div>
+          <div class="anatomy-desc">Controls HOW things look — colors, fonts, spacing, layout. Same skeleton, totally different vibe depending on the CSS.</div>
+        </div>
+
+        <div class="anatomy-content" id="layer-js">
+          <div class="visual-js">
+            <div class="btns">
+              <div class="btn-a">Click me!</div>
+              <div class="btn-b">I respond!</div>
+            </div>
+            <div class="note">JS makes buttons do things, pages update, content change</div>
+          </div>
+          <div class="anatomy-desc">Defines WHAT HAPPENS — when you click a button, when data loads, when something animates. It makes the page interactive.</div>
+        </div>
+
+        <div class="anatomy-hint" id="layerHint">Tap a layer to see what it does</div>
+      </div>
+
+      <!-- Frontend vs Backend -->
+      <div class="fb-split">
+        <div class="fb-side fb-front">
+          <div class="fb-icon"><span class="icon i-eye"></span></div>
+          <div class="fb-title" style="color:#081f3f">Frontend</div>
+          <div class="fb-sub" style="color:#d97706">What people see</div>
+          <div class="fb-detail">Buttons, text, colors, layout, animations</div>
+          <div class="fb-badge fb-badge-active">Building this today</div>
+        </div>
+        <div class="fb-divider"><div class="fb-divider-dot">↔</div></div>
+        <div class="fb-side fb-back">
+          <div class="fb-icon"><span class="icon i-gear"></span></div>
+          <div class="fb-title" style="color:#15465b">Backend</div>
+          <div class="fb-sub" style="color:#5a7a8a">The logic behind it</div>
+          <div class="fb-detail">Logins, databases, saved data, API calls</div>
+          <div class="fb-badge fb-badge-inactive">Not needed yet</div>
+        </div>
+      </div>
+
+      <!-- Deploy diagram -->
+      <div class="deploy-diagram">
+        <div class="section-label">What "deploying" actually means</div>
+        <div class="deploy-flow">
+          <div class="deploy-node">
+            <div class="deploy-icon" style="background:linear-gradient(135deg,#081f3f,#15465b)"><span class="icon i-laptop"></span></div>
+            <div class="deploy-label">Your computer</div>
+            <div class="deploy-sublabel">Files live here now</div>
+          </div>
+          <div class="deploy-arrow">
+            <div class="deploy-arrow-label" style="color:#d97706;background:#fef3e2">copy</div>
+            <div class="deploy-arrow-char" style="color:#eba714">→</div>
+          </div>
+          <div class="deploy-node">
+            <div class="deploy-icon" style="background:linear-gradient(135deg,#15465b,#1d6a84)"><span class="icon i-cloud"></span></div>
+            <div class="deploy-label">A server</div>
+            <div class="deploy-sublabel">Always on, on the internet</div>
+          </div>
+          <div class="deploy-arrow">
+            <div class="deploy-arrow-label" style="color:#15465b;background:#e5edef">link</div>
+            <div class="deploy-arrow-char" style="color:#15465b">→</div>
+          </div>
+          <div class="deploy-node">
+            <div class="deploy-icon" style="background:linear-gradient(135deg,#d97706,#eba714)"><span class="icon i-globe"></span></div>
+            <div class="deploy-label">Anyone</div>
+            <div class="deploy-sublabel">Opens your URL</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-sm text-muted text-center" style="font-style:italic">That's it. No mystery. When Claude "writes code," it's creating text files in a folder. When you "deploy," you're copying those files to the internet.</p>
+    </div>
+
+    <!-- STEP 2: Plan -->
+    <div class="step" id="step-2">
+      <p>The biggest mistake people make with vibe coding is jumping straight to "build me a thing." The best results come from thinking like a product manager first.</p>
+
+      <div class="framework">
+        <div class="section-label">The prompt-building framework</div>
+        <div class="framework-row">
+          <div class="framework-badge" style="background:#081f3f">WHO</div>
+          <div class="framework-q">is this for?</div>
+          <div class="framework-example" style="background:#e8ecf0;color:#081f3f">Anyone I share the link with</div>
+        </div>
+        <div class="framework-row">
+          <div class="framework-badge" style="background:#15465b">WHY</div>
+          <div class="framework-q">does it need to exist?</div>
+          <div class="framework-example" style="background:#e5edef;color:#15465b">A professional intro to who I am</div>
+        </div>
+        <div class="framework-row">
+          <div class="framework-badge" style="background:#d97706">WHERE</div>
+          <div class="framework-q">will it live?</div>
+          <div class="framework-example" style="background:#fef3e2;color:#d97706">On the internet, with a real URL</div>
+        </div>
+        <div class="framework-row">
+          <div class="framework-badge" style="background:#b45309">HOW GOOD</div>
+          <div class="framework-q">does it need to be?</div>
+          <div class="framework-example" style="background:#fdecd3;color:#b45309">"Wait, you made that?" impressive</div>
+        </div>
+        <div class="framework-footer">Answer these before telling Claude <strong>WHAT</strong> to build.<br>Same thinking a good consultant does — you already know how.</div>
+      </div>
+
+      <div class="summary-card">
+        <div style="font-size:13px;font-weight:700;color:#081f3f;margin-bottom:12px">For today's project, we've already answered:</div>
+        <p>
+          <strong>What:</strong> A personal landing page / website<br>
+          <strong>Who:</strong> Anyone you share the link with<br>
+          <strong>Why:</strong> A shareable, professional intro to who you are<br>
+          <strong>Where:</strong> On the internet, with a real URL<br>
+          <strong>How good:</strong> Impressive enough that people say "wait, you made that?"
+        </p>
+      </div>
+    </div>
+
+    <!-- STEP 3: Prompt -->
+    <div class="step" id="step-3">
+      <p>First, personalize your page. Then copy the prompt below and paste it into your Claude Code chat.</p>
+
+      <div style="background:white;border-radius:12px;padding:20px;border:1px solid #e8e0d8;margin-bottom:20px">
+        <div class="input-group">
+          <label class="input-label">Your name</label>
+          <input class="input-field" type="text" id="userName" placeholder="e.g. Sarah Chen" oninput="updatePrompt()">
+        </div>
+        <div>
+          <label class="input-label">Your role / what you do</label>
+          <input class="input-field" type="text" id="userRole" placeholder="e.g. Marketing Director at Acme Corp" oninput="updatePrompt()">
+        </div>
+      </div>
+
+      <div style="margin-top:16px;margin-bottom:8px">
+        <div class="prompt-block" id="mainPrompt"></div>
+        <button class="copy-btn" onclick="copyPrompt()">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-amber mt-16">
+        <div class="callout-title" style="color:#b45309">What happens next</div>
+        <div class="callout-text">Claude will start creating files and may ask you a few questions about your preferences. It'll also ask for permission to do things — that's the next step in this guide.</div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Permissions -->
+    <div class="step" id="step-4">
+      <p>Claude will ask permission before doing certain things. This is a safety feature, not a warning sign.</p>
+      <p class="text-sm text-muted mb-20">Tap any to expand and see what it really means.</p>
+
+      <div id="permCards">
+        <div class="perm-card" onclick="togglePerm(this)">
+          <button class="perm-header"><span class="perm-icon"><span class="icon i-package"></span></span><span class="perm-label">"Install npm packages" or "Run npm install"</span><span class="perm-arrow">▼</span></button>
+          <div class="perm-body">
+            <div class="perm-desc">Claude wants to download pre-built tools that other developers made. Think of it like installing apps on your phone — these are common, trusted building blocks so Claude doesn't have to write everything from scratch.</div>
+            <div class="perm-verdict"><span class="icon i-check"></span> Say yes. This is normal for every project.</div>
+          </div>
+        </div>
+        <div class="perm-card" onclick="togglePerm(this)">
+          <button class="perm-header"><span class="perm-icon"><span class="icon i-folder"></span></span><span class="perm-label">"Create directory" or "Make folder"</span><span class="perm-arrow">▼</span></button>
+          <div class="perm-body">
+            <div class="perm-desc">Claude is organizing your project into folders, just like you'd make folders in Finder or File Explorer to keep things tidy.</div>
+            <div class="perm-verdict"><span class="icon i-check"></span> Say yes. It's just making folders on your computer.</div>
+          </div>
+        </div>
+        <div class="perm-card" onclick="togglePerm(this)">
+          <button class="perm-header"><span class="perm-icon"><span class="icon i-monitor"></span></span><span class="perm-label">"Start the dev server" or "Run npm run dev"</span><span class="perm-arrow">▼</span></button>
+          <div class="perm-body">
+            <div class="perm-desc">This turns your files into a live preview you can see in your browser. It's running on YOUR computer only — nobody else can see it yet.</div>
+            <div class="perm-verdict"><span class="icon i-check"></span> Say yes. This is how you preview your work.</div>
+          </div>
+        </div>
+        <div class="perm-card" onclick="togglePerm(this)">
+          <button class="perm-header"><span class="perm-icon"><span class="icon i-edit"></span></span><span class="perm-label">"Write to file" or "Create file"</span><span class="perm-arrow">▼</span></button>
+          <div class="perm-body">
+            <div class="perm-desc">Claude is creating or editing the actual files that make up your project. This is the core of what it does — writing the code files for you.</div>
+            <div class="perm-verdict"><span class="icon i-check"></span> Say yes. This is literally the point.</div>
+          </div>
+        </div>
+        <div class="perm-card" onclick="togglePerm(this)">
+          <button class="perm-header"><span class="perm-icon"><span class="icon i-save"></span></span><span class="perm-label">"Initialize git" or "git init"</span><span class="perm-arrow">▼</span></button>
+          <div class="perm-body">
+            <div class="perm-desc">Git is a save-point system for code. Think of it like "version history" in Google Docs. It lets you go back to earlier versions if needed.</div>
+            <div class="perm-verdict"><span class="icon i-check"></span> Say yes. It's a safety net, not a risk.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-blue mt-16">
+        <div class="callout-title" style="color:#15465b">Pro tip</div>
+        <div class="callout-text">If you see something not listed here and you're not sure, ask Claude: "Can you explain what this does in simple terms before I approve it?"</div>
+      </div>
+    </div>
+
+    <!-- STEP 5: Localhost -->
+    <div class="step" id="step-5">
+      <p>Once Claude finishes building, it'll start a "dev server" and give you a link. Here's what that means:</p>
+
+      <div class="deploy-diagram">
+        <div class="section-label">Where your site is right now</div>
+        <div class="localhost-split">
+          <div class="localhost-card localhost-now">
+            <div class="localhost-badge" style="background:#d97706;color:white">RIGHT NOW</div>
+            <div style="font-size:28px;margin-bottom:6px;margin-top:8px;color:#faf5f0"><span class="icon i-laptop"></span></div>
+            <div style="font-size:14px;font-weight:700;color:#faf5f0">localhost:5173</div>
+            <div style="font-size:11px;color:#eba714;margin-top:6px;line-height:1.5">Only YOU can see it<br>Running on your computer</div>
+          </div>
+          <div class="localhost-card localhost-later">
+            <div class="localhost-badge" style="background:#d4ccc4;color:#15465b">AFTER DEPLOY</div>
+            <div style="font-size:28px;margin-bottom:6px;margin-top:8px"><span class="icon i-globe"></span></div>
+            <div style="font-size:14px;font-weight:700;color:#15465b">yoursite.netlify.app</div>
+            <div style="font-size:11px;color:#5a7a8a;margin-top:6px;line-height:1.5">ANYONE with the link<br>Running on a server</div>
+          </div>
+        </div>
+        <div class="deploy-footer">Same files. Same site. Different location.</div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">What is a dev server?<span class="expand-arrow">▼</span></button>
+        <div class="expand-body">A tiny program that turns your code files into a working website and shows it in your browser. It also watches for changes — when Claude edits a file, the page updates automatically. This is only for development. When you deploy later, the real version won't need this.</div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">What does "port 5173" mean?<span class="expand-arrow">▼</span></button>
+        <div class="expand-body">Your computer has thousands of numbered "doors" (ports). The dev server picks one to use — usually 5173 for Vite projects. It's like an apartment number: the building is your computer, the port is which door to knock on.</div>
+      </div>
+
+      <div class="success-card">
+        <div class="success-icon"><span class="icon i-sparkle"></span></div>
+        <div class="success-title">Open that link in your browser.</div>
+        <div class="success-text">You should see your landing page. Take a second — you built that. With a conversation.</div>
+      </div>
+    </div>
+
+    <!-- STEP 6: Iterate -->
+    <div class="step" id="step-6">
+      <p>Now comes the best part. You can change anything by just asking.</p>
+
+      <div class="vibe-loop">
+        <div class="section-label" style="color:#eba714">The vibe coding loop</div>
+        <div class="vibe-loop-steps">
+          <div class="vibe-step">
+            <div class="vibe-step-icon"><span class="icon i-chat"></span></div>
+            <div class="vibe-step-label">Describe</div>
+            <div class="vibe-step-desc">Tell Claude what you want</div>
+          </div>
+          <div class="vibe-arrow">→</div>
+          <div class="vibe-step">
+            <div class="vibe-step-icon"><span class="icon i-zap"></span></div>
+            <div class="vibe-step-label">Generate</div>
+            <div class="vibe-step-desc">Claude writes the code</div>
+          </div>
+          <div class="vibe-arrow">→</div>
+          <div class="vibe-step">
+            <div class="vibe-step-icon"><span class="icon i-search"></span></div>
+            <div class="vibe-step-label">Review</div>
+            <div class="vibe-step-desc">See the result in your browser</div>
+          </div>
+          <div class="vibe-arrow">→</div>
+          <div class="vibe-step">
+            <div class="vibe-step-icon"><span class="icon i-refresh"></span></div>
+            <div class="vibe-step-label">Iterate</div>
+            <div class="vibe-step-desc">Ask for changes</div>
+          </div>
+        </div>
+        <div class="vibe-footer">↻ Repeat until it's exactly what you want</div>
+      </div>
+
+      <p class="text-sm text-muted mb-20">Try any of these — or make up your own. Just type it in the chat.</p>
+
+      <div class="iter-card">
+        <div class="iter-text">"Change the color scheme to dark mode with an accent color of electric blue."</div>
+        <button class="iter-copy" onclick="copyText('Change the color scheme to dark mode with an accent color of electric blue.')">Copy</button>
+      </div>
+      <div class="iter-card">
+        <div class="iter-text">"Add a smooth scroll animation when the page loads — I want each section to fade in as the user scrolls down."</div>
+        <button class="iter-copy" onclick="copyText('Add a smooth scroll animation when the page loads — I want each section to fade in as the user scrolls down.')">Copy</button>
+      </div>
+      <div class="iter-card">
+        <div class="iter-text">"Replace the placeholder text in the about section with this: [paste your own text]"</div>
+        <button class="iter-copy" onclick="copyText('Replace the placeholder text in the about section with this: ')">Copy</button>
+      </div>
+      <div class="iter-card">
+        <div class="iter-text">"Make it look more playful and less corporate. Rounder corners, a friendlier font, maybe a subtle pattern in the background."</div>
+        <button class="iter-copy" onclick="copyText('Make it look more playful and less corporate. Rounder corners, a friendlier font, maybe a subtle pattern in the background.')">Copy</button>
+      </div>
+    </div>
+
+    <!-- STEP 7: Deploy -->
+    <div class="step" id="step-7">
+      <p>Your site is running on your computer. Now let's put it on the internet.</p>
+
+      <div class="deploy-diagram">
+        <div class="section-label">What "deploying" actually means</div>
+        <div class="deploy-flow">
+          <div class="deploy-node">
+            <div class="deploy-icon" style="background:linear-gradient(135deg,#081f3f,#15465b)"><span class="icon i-laptop"></span></div>
+            <div class="deploy-label">Your computer</div>
+            <div class="deploy-sublabel">Files live here now</div>
+          </div>
+          <div class="deploy-arrow">
+            <div class="deploy-arrow-label" style="color:#d97706;background:#fef3e2">copy</div>
+            <div class="deploy-arrow-char" style="color:#eba714">→</div>
+          </div>
+          <div class="deploy-node">
+            <div class="deploy-icon" style="background:linear-gradient(135deg,#15465b,#1d6a84)"><span class="icon i-cloud"></span></div>
+            <div class="deploy-label">A server</div>
+            <div class="deploy-sublabel">Always on, on the internet</div>
+          </div>
+          <div class="deploy-arrow">
+            <div class="deploy-arrow-label" style="color:#15465b;background:#e5edef">link</div>
+            <div class="deploy-arrow-char" style="color:#15465b">→</div>
+          </div>
+          <div class="deploy-node">
+            <div class="deploy-icon" style="background:linear-gradient(135deg,#d97706,#eba714)"><span class="icon i-globe"></span></div>
+            <div class="deploy-label">Anyone</div>
+            <div class="deploy-sublabel">Opens your URL</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-sm text-muted">Ask Claude to deploy it for you:</p>
+
+      <div style="margin-top:16px;margin-bottom:8px">
+        <div class="prompt-block">I'm happy with how this looks. Can you help me deploy it so I can share the link? Use Netlify — set it up so I can deploy with a simple command. Walk me through any accounts I need to create.</div>
+        <button class="copy-btn" onclick="copyText(document.querySelector('#step-7 .prompt-block').textContent)">Copy this prompt</button>
+      </div>
+
+      <div class="expand-card mt-16" onclick="toggleExpand(this)">
+        <button class="expand-header">What Claude will do<span class="expand-arrow">▼</span></button>
+        <div class="expand-body">
+          <ol style="padding-left:20px;line-height:2">
+            <li>Build a production version of your site (optimized files)</li>
+            <li>Guide you through creating a free Netlify account if needed</li>
+            <li>Deploy your files to Netlify's servers</li>
+            <li>Give you a URL like <code>your-site-name.netlify.app</code></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="success-card">
+        <div class="success-icon"><span class="icon i-rocket"></span></div>
+        <div class="success-title" style="font-size:18px">Once it's deployed, copy that link.</div>
+        <div class="success-text">Text it to someone. "Hey, I made this." That's the moment.</div>
+      </div>
+    </div>
+
+    <!-- STEP 8: Done -->
+    <div class="step" id="step-8">
+      <div class="dark-card">
+        <div style="font-size:36px;margin-bottom:8px"><span class="icon i-sparkle"></span></div>
+        <h2 style="font-size:24px">You just built software.</h2>
+        <p>You described what you wanted. AI wrote the code. You iterated. You deployed. That's the whole process.</p>
+      </div>
+
+      <div style="font-size:16px;font-weight:600;color:#081f3f;margin-bottom:16px">What you actually learned:</div>
+      <div class="mb-20">
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-folder"></span></span><span class="recap-text">Code is files and folders — text files that are instructions for computers.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-globe"></span></span><span class="recap-text">A website is a collection of these files that a browser knows how to display.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-eye"></span></span><span class="recap-text">Frontend is what people see. Backend is the logic behind it.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-laptop"></span></span><span class="recap-text">Localhost = your computer. Deploying = putting files on the internet.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-package"></span></span><span class="recap-text">Packages are pre-built tools — like apps for your code project.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-refresh"></span></span><span class="recap-text">The vibe coding loop: describe → generate → review → iterate.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-target"></span></span><span class="recap-text">Good prompts start with WHO and WHY, not just WHAT.</span></div>
+      </div>
+
+      <div style="font-size:16px;font-weight:600;color:#081f3f;margin-bottom:12px">What to build next:</div>
+      <div class="next-grid">
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-wrench"></span></div>
+          <div class="next-card-title">A team tool</div>
+          <div class="next-card-desc">Solve a real workflow problem</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-grid"></span></div>
+          <div class="next-card-title">A calculator</div>
+          <div class="next-card-desc">Specific to your domain</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-chart"></span></div>
+          <div class="next-card-title">A dashboard</div>
+          <div class="next-card-desc">Visualize data that matters</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-briefcase"></span></div>
+          <div class="next-card-title">An internal app</div>
+          <div class="next-card-desc">Something your company needs</div>
+        </div>
+      </div>
+
+      <p class="text-sm text-muted text-center">The gap between "person with ideas" and "person who builds things" just got a lot smaller.</p>
+    </div>
+
+  </div>
+
+  </div><!-- /main-col -->
+</div>
+
+<script>
+const STEPS = [
+  { title: "Your First Vibe Code", subtitle: "You're about to build something real with AI." },
+  { title: "Code Is Just Files", subtitle: "The single mental model that changes everything." },
+  { title: "Think Before You Build", subtitle: "Great projects start with clear thinking, not code." },
+  { title: "Start Your Project", subtitle: "Paste this prompt and watch what happens." },
+  { title: "When Claude Asks Permission", subtitle: 'The "scary" moments explained.' },
+  { title: "See It Live", subtitle: "Your creation is running on your computer." },
+  { title: "Make It Yours", subtitle: "Your first iteration. This is where it gets fun." },
+  { title: "Share It With the World", subtitle: "Put it on the internet. Send the link." },
+  { title: "You Just Vibe Coded", subtitle: "What you learned, and where to go next." },
+];
+
+let currentStep = 0;
+
+// Thumbnail data for the section rail
+const RAIL_THUMBS = [
+  { label: "Start",
+    visual: '<div style="display:flex;gap:4px"><div style="width:26px;height:30px;border-radius:4px;border:2px solid currentColor;opacity:0.5"></div><div style="width:26px;height:30px;border-radius:4px;border:2px solid currentColor"></div></div>' },
+  { label: "Files",
+    visual: '<div style="width:52px;display:flex;flex-direction:column;gap:4px"><div style="height:4px;background:currentColor;border-radius:2px"></div><div style="height:4px;background:currentColor;border-radius:2px;width:72%;margin-left:10px;opacity:0.6"></div><div style="height:4px;background:currentColor;border-radius:2px;width:72%;margin-left:10px;opacity:0.6"></div><div style="height:4px;background:currentColor;border-radius:2px;width:50%;margin-left:20px;opacity:0.4"></div></div>' },
+  { label: "Plan",
+    visual: '<div style="width:52px;display:flex;flex-direction:column;gap:4px"><div style="display:flex;gap:6px;align-items:center"><div style="width:16px;height:8px;border-radius:2px;background:currentColor"></div><div style="flex:1;height:3px;background:currentColor;opacity:0.3;border-radius:2px"></div></div><div style="display:flex;gap:6px;align-items:center"><div style="width:16px;height:8px;border-radius:2px;background:currentColor;opacity:0.8"></div><div style="flex:1;height:3px;background:currentColor;opacity:0.3;border-radius:2px"></div></div><div style="display:flex;gap:6px;align-items:center"><div style="width:16px;height:8px;border-radius:2px;background:currentColor;opacity:0.6"></div><div style="flex:1;height:3px;background:currentColor;opacity:0.3;border-radius:2px"></div></div></div>' },
+  { label: "Prompt",
+    visual: '<div style="width:56px;height:32px;background:currentColor;opacity:0.15;border-radius:5px;position:relative;overflow:hidden"><div style="position:absolute;top:8px;left:8px;width:20px;height:4px;background:currentColor;opacity:1;border-radius:2px"></div><div style="position:absolute;top:18px;left:8px;width:32px;height:4px;background:currentColor;opacity:0.5;border-radius:2px"></div></div>' },
+  { label: "Allow",
+    visual: '<div style="position:relative;width:56px;height:36px"><div style="position:absolute;bottom:16px;left:6px;right:6px;height:16px;border:2px solid currentColor;border-radius:4px;opacity:0.25"></div><div style="position:absolute;bottom:8px;left:3px;right:3px;height:16px;border:2px solid currentColor;border-radius:4px;opacity:0.5"></div><div style="position:absolute;bottom:0;left:0;right:0;height:16px;border:2px solid currentColor;border-radius:4px"></div></div>' },
+  { label: "Live",
+    visual: '<div style="width:56px;height:32px;border:2px solid currentColor;border-radius:5px;overflow:hidden"><div style="height:10px;border-bottom:1.5px solid currentColor;display:flex;align-items:center;padding-left:4px;gap:3px"><div style="width:5px;height:5px;border-radius:50%;background:currentColor"></div><div style="width:5px;height:5px;border-radius:50%;background:currentColor;opacity:0.5"></div></div></div>' },
+  { label: "Tweak",
+    visual: '<div style="width:34px;height:34px;border:3px solid currentColor;border-radius:50%;border-top-color:transparent;position:relative"><div style="position:absolute;top:-3px;right:8px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid currentColor"></div></div>' },
+  { label: "Ship",
+    visual: '<div style="display:flex;align-items:center;gap:2px"><div style="width:14px;height:14px;border-radius:50%;background:currentColor"></div><div style="width:6px;height:3px;background:currentColor;opacity:0.4"></div><div style="width:14px;height:14px;border-radius:50%;background:currentColor;opacity:0.6"></div><div style="width:6px;height:3px;background:currentColor;opacity:0.4"></div><div style="width:14px;height:14px;border-radius:50%;background:currentColor;opacity:0.35"></div></div>' },
+  { label: "Done",
+    visual: '<div style="font-size:30px;line-height:1">&#9733;</div>' },
+];
+
+// Init section rail
+const railEl = document.getElementById("sectionRail");
+STEPS.forEach((step, i) => {
+  if (i > 0) {
+    const conn = document.createElement("div");
+    conn.className = "rail-connector upcoming";
+    conn.id = "rail-conn-" + i;
+    railEl.appendChild(conn);
+  }
+  const thumb = document.createElement("button");
+  thumb.className = "rail-thumb" + (i === 0 ? " current" : " upcoming");
+  thumb.id = "rail-thumb-" + i;
+  thumb.setAttribute("data-label", step.title);
+  thumb.innerHTML = '<div class="rail-thumb-visual">' + RAIL_THUMBS[i].visual + '</div><div class="rail-thumb-label">' + RAIL_THUMBS[i].label + '</div>';
+  thumb.onclick = () => goToStep(i);
+  railEl.appendChild(thumb);
+});
+
+// Init prompt
+updatePrompt();
+
+function goToStep(n) {
+  document.getElementById("step-" + currentStep).classList.remove("active");
+  currentStep = n;
+  document.getElementById("step-" + currentStep).classList.add("active");
+
+  // Update header
+  document.getElementById("stepTitle").textContent = STEPS[n].title;
+  document.getElementById("stepSubtitle").textContent = STEPS[n].subtitle;
+
+  // Update nav
+  document.getElementById("btnBack").style.display = n > 0 ? "" : "none";
+  const btnNext = document.getElementById("btnNext");
+  if (n >= STEPS.length - 1) {
+    btnNext.style.display = "none";
+  } else {
+    btnNext.style.display = "";
+    btnNext.textContent = n === 0 ? "Let's go" : "Next step";
+  }
+
+  // Update section rail
+  STEPS.forEach((_, i) => {
+    const thumb = document.getElementById("rail-thumb-" + i);
+    if (thumb) thumb.className = "rail-thumb " + (i < n ? "completed" : i === n ? "current" : "upcoming");
+    if (i > 0) {
+      const conn = document.getElementById("rail-conn-" + i);
+      if (conn) conn.className = "rail-connector " + (i <= n ? "completed" : "upcoming");
+    }
+  });
+
+  // Scroll to top
+  window.scrollTo(0, 0);
+}
+
+function nextStep() { if (currentStep < STEPS.length - 1) goToStep(currentStep + 1); }
+function prevStep() { if (currentStep > 0) goToStep(currentStep - 1); }
+
+// Folder tree hover
+document.querySelectorAll(".tree-item[data-file]").forEach(item => {
+  const file = item.getAttribute("data-file");
+  const tip = document.getElementById("tip-" + file);
+  const hint = item.querySelector(".tree-hint");
+
+  item.addEventListener("mouseenter", () => {
+    tip.textContent = item.getAttribute("data-tooltip");
+    tip.classList.add("visible");
+    hint.textContent = "";
+    document.getElementById("treeFooter").textContent = "";
+  });
+  item.addEventListener("mouseleave", () => {
+    tip.classList.remove("visible");
+    hint.textContent = "hover me";
+    document.getElementById("treeFooter").textContent = "Hover over a file to see what it does";
+  });
+});
+
+// Website anatomy tabs
+let activeLayer = null;
+function toggleLayer(id) {
+  const tabs = document.querySelectorAll(".anatomy-tab");
+  const contents = document.querySelectorAll(".anatomy-content");
+  const hint = document.getElementById("layerHint");
+
+  if (activeLayer === id) {
+    activeLayer = null;
+    tabs.forEach(t => t.classList.remove("active"));
+    contents.forEach(c => c.classList.remove("active"));
+    hint.style.display = "";
+  } else {
+    activeLayer = id;
+    tabs.forEach(t => t.classList.toggle("active", t.getAttribute("data-layer") === id));
+    contents.forEach(c => c.classList.toggle("active", c.id === "layer-" + id));
+    hint.style.display = "none";
+  }
+}
+
+// Permission cards
+function togglePerm(card) {
+  const wasOpen = card.classList.contains("open");
+  document.querySelectorAll(".perm-card").forEach(c => c.classList.remove("open"));
+  if (!wasOpen) card.classList.add("open");
+}
+
+// Expandable cards
+function toggleExpand(card) {
+  card.classList.toggle("open");
+}
+
+// Prompt builder
+function updatePrompt() {
+  const name = document.getElementById("userName")?.value || "[Your Name]";
+  const role = document.getElementById("userRole")?.value || "[Your Title / What You Do]";
+  const prompt = `I want to build a personal landing page — a single-page website that introduces me and what I do. Here's my info:
+
+Name: ${name}
+Role: ${role}
+
+I want it to feel modern, clean, and professional — something I'd be proud to share. Think a tasteful gradient background, clean typography, and maybe a subtle animation or two.
+
+Include:
+- A hero section with my name and title
+- A short "about me" section (use placeholder text I can edit later)
+- 3 cards for things I work on or care about (placeholder content is fine)
+- A footer with a way to contact me
+
+Use a modern tech stack — React with Vite is great. Keep it a single page. Make it look really good. I want to be able to show this to people and have them say "wait, you made that?"`;
+
+  const el = document.getElementById("mainPrompt");
+  if (el) el.textContent = prompt;
+}
+
+// Copy functions
+function copyPrompt() {
+  const text = document.getElementById("mainPrompt").textContent;
+  copyText(text, document.querySelector("#step-3 .copy-btn"));
+}
+
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    if (!btn) return;
+    btn.classList.add("copied");
+    btn.textContent = "Copied to clipboard!";
+    setTimeout(() => {
+      btn.classList.remove("copied");
+      btn.textContent = "Copy this prompt";
+    }, 2000);
+  });
+}
+
+// Override for iteration copy buttons
+document.querySelectorAll(".iter-copy").forEach(btn => {
+  btn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    const text = this.parentElement.querySelector(".iter-text").textContent.replace(/^"|"$/g, "");
+    navigator.clipboard.writeText(text).then(() => {
+      this.textContent = "Copied!";
+      setTimeout(() => { this.textContent = "Copy"; }, 1500);
+    });
+  });
+});
+
+// Keyboard nav
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") nextStep();
+  if (e.key === "ArrowLeft" || e.key === "ArrowUp") prevStep();
+});
+</script>
+</body>
+</html>
