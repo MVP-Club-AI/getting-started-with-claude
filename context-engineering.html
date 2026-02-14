@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Context Engineering — Prompt Along</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display&family=Zilla+Slab&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #faf5f0;
+    color: #081f3f;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    display: flex;
+    gap: 32px;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 20px 24px 20px 8px;
+    min-height: 100vh;
+  }
+
+  .main-col { flex: 1; min-width: 0; }
+
+  /* Target sidebar */
+  .target-sidebar { width: 500px; flex-shrink: 0; display: none; }
+  .target-sidebar.visible { display: block; }
+  .target-sidebar-inner {
+    position: sticky;
+    top: 16px;
+    background: white;
+    border-radius: 16px;
+    border: 2px solid #e8e0d8;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .target-label { font-size: 10px; font-weight: 700; color: #d97706; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; text-align: center; }
+  .target-note { font-size: 12px; color: #15465b; line-height: 1.6; margin-top: 12px; padding: 10px 12px; background: #fef9f0; border-radius: 8px; border-left: 3px solid #d97706; }
+  .target-sidebar-inner .goal-mockup { cursor: pointer; transition: box-shadow 0.2s; border-radius: 8px; }
+  .target-sidebar-inner .goal-mockup:hover { box-shadow: 0 0 0 3px rgba(217,119,6,0.3); }
+  .target-expand-hint { font-size: 10px; color: #a89880; text-align: center; margin-top: 6px; }
+
+  /* Target modal */
+  .target-modal-overlay { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; padding:32px; }
+  .target-modal-overlay.open { display:flex; }
+  .target-modal { background:white; border-radius:16px; padding:24px; max-width:540px; width:100%; max-height:90vh; overflow-y:auto; position:relative; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+  .target-modal-close { position:absolute; top:12px; right:12px; width:32px; height:32px; border:none; background:#f5f0eb; border-radius:50%; cursor:pointer; font-size:18px; color:#081f3f; display:flex; align-items:center; justify-content:center; transition:background 0.15s; }
+  .target-modal-close:hover { background:#e8e0d8; }
+  .target-modal-label { font-size:11px; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; text-align:center; }
+
+  /* Section sequence rail */
+  .section-rail { width: 88px; flex-shrink: 0; padding-top: 8px; }
+  .section-rail-inner {
+    position: sticky;
+    top: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .rail-thumb {
+    width: 80px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    padding: 8px 6px 6px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-family: 'Inter', sans-serif;
+    background: #f0ebe4;
+    color: #b8a898;
+  }
+  .rail-thumb-visual { display: flex; align-items: center; justify-content: center; height: 44px; }
+  .rail-thumb-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1; text-align: center; }
+  .rail-thumb.upcoming { background: #f0ebe4; color: #b8a898; border-color: transparent; }
+  .rail-thumb.upcoming .rail-thumb-visual { opacity: 0.45; }
+  .rail-thumb.completed { background: #fef3e2; color: #b45309; border-color: #eba714; }
+  .rail-thumb.current {
+    background: #d97706; color: white;
+    border-color: #b45309;
+    box-shadow: 0 2px 10px rgba(217,119,6,0.4);
+    transform: scale(1.06);
+  }
+  .rail-connector { width: 2px; height: 6px; flex-shrink: 0; }
+  .rail-connector.completed { background: #eba714; }
+  .rail-connector.upcoming { background: #e8e0d8; }
+  .rail-thumb:hover::after {
+    content: attr(data-label);
+    position: absolute;
+    left: 86px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #081f3f;
+    color: #faf5f0;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 30;
+  }
+  .rail-thumb:hover::before {
+    content: '';
+    position: absolute;
+    left: 80px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: #081f3f;
+    pointer-events: none;
+    z-index: 30;
+  }
+
+  /* Vector icons (CSS mask) */
+  .icon { display:inline-block;width:1em;height:1em;background:currentColor;vertical-align:-0.125em;flex-shrink:0;-webkit-mask:no-repeat center/contain;mask:no-repeat center/contain; }
+  .i-folder{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M2 6a2 2 0 012-2h4l3 3h9a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M2 6a2 2 0 012-2h4l3 3h9a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2z'/%3E%3C/svg%3E");}
+  .i-file{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");}
+  .i-eye{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");}
+  .i-gear{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");}
+  .i-laptop{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='12' rx='2'/%3E%3Cpath d='M2 20h20'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='12' rx='2'/%3E%3Cpath d='M2 20h20'/%3E%3C/svg%3E");}
+  .i-globe{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M2 12h20'/%3E%3Cpath d='M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M2 12h20'/%3E%3Cpath d='M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z'/%3E%3C/svg%3E");}
+  .i-package{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L3 7v10l9 5 9-5V7z'/%3E%3Cpath d='M12 22V12M3 7l9 5 9-5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L3 7v10l9 5 9-5V7z'/%3E%3Cpath d='M12 22V12M3 7l9 5 9-5'/%3E%3C/svg%3E");}
+  .i-edit{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E");}
+  .i-check{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");}
+  .i-chat{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");}
+  .i-zap{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");}
+  .i-search{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");}
+  .i-refresh{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");}
+  .i-rocket{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L8 14h8z'/%3E%3Cpath d='M10 14l-2 8 4-3 4 3-2-8'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L8 14h8z'/%3E%3Cpath d='M10 14l-2 8 4-3 4 3-2-8'/%3E%3C/svg%3E");}
+  .i-star{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");}
+  .i-sparkle{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");}
+  .i-target{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");}
+  .i-layers{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E");}
+  .i-brain{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 01-2 2h-4a2 2 0 01-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z'/%3E%3Cpath d='M9 21h6M10 17v4M14 17v4'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 01-2 2h-4a2 2 0 01-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z'/%3E%3Cpath d='M9 21h6M10 17v4M14 17v4'/%3E%3C/svg%3E");}
+  .i-sliders{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6'/%3E%3C/svg%3E");}
+  .i-book{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M4 19.5A2.5 2.5 0 016.5 17H20'/%3E%3Cpath d='M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M4 19.5A2.5 2.5 0 016.5 17H20'/%3E%3Cpath d='M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z'/%3E%3C/svg%3E");}
+  .i-map{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z'/%3E%3Cpath d='M8 2v16M16 6v16'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z'/%3E%3Cpath d='M8 2v16M16 6v16'/%3E%3C/svg%3E");}
+  .i-database{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cellipse cx='12' cy='5' rx='9' ry='3'/%3E%3Cpath d='M21 12c0 1.66-4 3-9 3s-9-1.34-9-3'/%3E%3Cpath d='M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cellipse cx='12' cy='5' rx='9' ry='3'/%3E%3Cpath d='M21 12c0 1.66-4 3-9 3s-9-1.34-9-3'/%3E%3Cpath d='M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5'/%3E%3C/svg%3E");}
+  .i-user{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E");}
+
+  /* Step header */
+  .step-header { margin-bottom: 32px; }
+  .step-header h1 { font-family: 'Zilla Slab', serif; font-size: 28px; font-weight: 400; color: #081f3f; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .step-header p { font-size: 16px; color: #15465b; }
+
+  /* Content area */
+  .step-content { margin-bottom: 32px; }
+  .step-content > p { font-size: 17px; line-height: 1.8; color: #081f3f; margin-bottom: 28px; }
+  .step { display: none; }
+  .step.active { display: block; min-height: calc(100vh - 240px); }
+  .step > p { font-size: 17px; line-height: 1.8; color: #081f3f; margin-bottom: 28px; }
+
+  /* Fixed navigation header */
+  .nav-header { position: sticky; top: 0; background: #faf5f0; padding: 8px 0 12px; z-index: 10; }
+  .nav-header::after { content:''; display:block; height:20px; margin:0 -16px; background:linear-gradient(to top,transparent,#faf5f0); pointer-events:none; position:absolute; bottom:-20px; left:0; right:0; }
+
+  /* Navigation */
+  .nav { display: flex; gap: 12px; }
+  .btn { padding: 14px 20px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; font-family: 'Inter', sans-serif; }
+  .btn:hover { opacity: 0.9; }
+  .btn-back { flex: 1; border: 1px solid #e8e0d8; background: white; color: #15465b; }
+  .btn-next { flex: 2; background: #d97706; color: white; }
+
+  /* Reusable blocks */
+  .callout { padding: 18px 22px; border-radius: 0 12px 12px 0; margin-bottom: 28px; }
+  .callout-purple { background: #fef9f0; border-left: 4px solid #081f3f; }
+  .callout-green { background: #f0fdf4; border-left: 4px solid #16a34a; }
+  .callout-blue { background: #f0f5f7; border-left: 4px solid #15465b; }
+  .callout-amber { background: #fef9f0; border-left: 4px solid #d97706; }
+  .callout-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .callout-text { font-size: 13px; color: #15465b; line-height: 1.7; }
+
+  .dark-card { background: #081f3f; border-radius: 16px; padding: 32px; margin-bottom: 32px; text-align: center; }
+  .dark-card h2 { font-family: 'Zilla Slab', serif; font-size: 22px; font-weight: 400; color: #faf5f0; margin-bottom: 8px; }
+  .dark-card p { font-size: 14px; color: #eba714; line-height: 1.7; }
+
+  .section-label { font-size:11px; font-weight:600; color:#15465b; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; text-align:center; font-family:'Inter',sans-serif; }
+
+  /* Expandable cards */
+  .expand-card { border: 1px solid #e8e0d8; border-radius: 12px; margin-bottom: 28px; overflow: hidden; background: white; }
+  .expand-header { width:100%; padding:14px 18px; background:none; border:none; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:15px; font-weight:600; color:#081f3f; text-align:left; font-family:inherit; }
+  .expand-arrow { font-size:12px; color:#15465b; transition:transform 0.2s; }
+  .expand-card.open .expand-arrow { transform:rotate(180deg); }
+  .expand-body { padding:0 18px 16px; color:#15465b; font-size:14px; line-height:1.7; display:none; }
+  .expand-card.open .expand-body { display:block; }
+
+  /* Prompt block */
+  .prompt-block { background:#081f3f; color:#faf5f0; border-radius:12px; padding:20px; font-size:14px; line-height:1.7; font-family:monospace; white-space:pre-wrap; margin-bottom:12px; }
+  .copy-btn { width:100%; padding:10px 20px; border-radius:8px; border:none; font-size:14px; font-weight:600; cursor:pointer; background:#d97706; color:white; transition:background 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Inter',sans-serif; }
+  .copy-btn.copied { background:#059669; }
+
+  /* Success card */
+  .success-card { background:#f0fdf4; border-radius:12px; padding:24px; border:1px solid #bbf7d0; text-align:center; margin-top:20px; margin-bottom:8px; }
+  .success-icon { font-size:28px; margin-bottom:8px; }
+  .success-title { font-size:16px; font-weight:700; color:#15803d; margin-bottom:8px; }
+  .success-text { font-size:14px; color:#15465b; line-height:1.7; }
+
+  /* Context meter */
+  .context-meter { background:white; border-radius:16px; border:1px solid #e8e0d8; padding:20px; margin-bottom:28px; }
+  .meter-bar-track { height:12px; background:#f0ebe4; border-radius:6px; overflow:hidden; margin-bottom:8px; }
+  .meter-bar-fill { height:100%; border-radius:6px; transition:width 0.6s ease, background 0.6s ease; }
+  .meter-labels { display:flex; justify-content:space-between; font-size:11px; font-weight:600; color:#b8a898; }
+  .meter-label-active { color:#d97706; }
+
+  /* Compare cards */
+  .compare-split { display:flex; gap:0; margin-bottom:28px; border-radius:16px; overflow:hidden; border:1px solid #e8e0d8; }
+  .compare-side { flex:1; padding:20px; }
+  .compare-naive { background:#f7f3ee; }
+  .compare-ctx { background:#fef9f0; }
+  .compare-badge { font-size:10px; font-weight:700; padding:4px 10px; border-radius:20px; display:inline-block; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px; }
+  .compare-divider { width:2px; background:#e8e0d8; position:relative; display:flex; align-items:center; justify-content:center; }
+  .compare-divider-dot { position:absolute; background:white; border:2px solid #e8e0d8; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:12px; }
+
+  /* Folder tree */
+  .folder-tree { background:white; border-radius:16px; border:1px solid #e8e0d8; padding:20px 12px; margin-bottom:32px; }
+  .tree-header { padding:0 12px 10px; border-bottom:1px solid #f0ebe4; margin-bottom:8px; }
+  .tree-item { display:flex; align-items:center; gap:8px; padding:6px 12px; border-radius:8px; cursor:pointer; transition:background 0.15s; }
+  .tree-item:hover { background:#fef9f0; }
+  .tree-item.folder { cursor:default; }
+  .tree-item.folder:hover { background:transparent; }
+  .tree-icon { font-size:16px; }
+  .tree-name { font-family:monospace; font-size:14px; color:#081f3f; }
+  .tree-name.folder-name { color:#081f3f; font-weight:700; }
+  .tree-hint { font-size:11px; font-weight:600; margin-left:auto; opacity:0.5; transition:opacity 0.15s; }
+  .tree-item:hover .tree-hint { opacity:1; }
+  .tree-tooltip { padding:8px 14px; border-radius:0 8px 8px 0; font-size:13px; color:#15465b; line-height:1.5; margin-bottom:4px; background:#faf5f0; display:none; }
+  .tree-tooltip.visible { display:block; }
+  .tree-footer { text-align:center; font-size:12px; color:#15465b; margin-top:10px; font-style:italic; }
+
+  /* Layer stack diagram */
+  .layer-stack { display:flex; flex-direction:column; gap:0; margin-bottom:32px; }
+  .layer-block { border-radius:0; padding:16px 20px; display:flex; align-items:center; gap:14px; cursor:pointer; transition:all 0.2s; border:1px solid transparent; }
+  .layer-block:first-child { border-radius:12px 12px 0 0; }
+  .layer-block:last-child { border-radius:0 0 12px 12px; }
+  .layer-block:hover { transform:translateX(4px); }
+  .layer-num { font-size:20px; font-weight:600; opacity:0.4; min-width:28px; }
+  .layer-info { flex:1; }
+  .layer-title { font-size:15px; font-weight:600; margin-bottom:2px; }
+  .layer-desc { font-size:12px; opacity:0.7; line-height:1.4; }
+  .layer-icon { font-size:20px; opacity:0.5; }
+
+  /* Flow diagram */
+  .flow-diagram { background:linear-gradient(135deg,#081f3f,#15465b); border-radius:16px; padding:28px; margin-bottom:32px; }
+  .flow-steps { display:flex; justify-content:center; gap:4px; flex-wrap:wrap; }
+  .flow-step { text-align:center; min-width:72px; }
+  .flow-step-icon { width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; margin:0 auto 6px; font-size:22px; color:#faf5f0; }
+  .flow-step-label { font-size:12px; font-weight:700; color:#faf5f0; margin-bottom:2px; }
+  .flow-step-desc { font-size:10px; color:#eba714; line-height:1.4; }
+  .flow-arrow { display:flex; align-items:center; color:#d97706; font-size:16px; padding-top:8px; }
+  .flow-footer { text-align:center; margin-top:12px; font-size:11px; color:#eba714; font-style:italic; }
+
+  /* Doc type cards */
+  .doc-card { background:white; border-radius:12px; padding:18px 20px; margin-bottom:14px; border:1px solid #e8e0d8; }
+  .doc-card-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .doc-card-badge { font-size:11px; font-weight:700; padding:3px 10px; border-radius:6px; }
+  .doc-card-title { font-size:15px; font-weight:600; color:#081f3f; }
+  .doc-card-desc { font-size:13px; color:#15465b; line-height:1.6; }
+  .doc-card-example { margin-top:10px; background:#081f3f; color:#8aa4b8; border-radius:8px; padding:12px 14px; font-family:monospace; font-size:12px; line-height:1.6; white-space:pre-wrap; }
+  .doc-card-example strong { color:#faf5f0; }
+
+  /* How to find file card */
+  .file-find { background:white; border-radius:16px; border:1px solid #e8e0d8; padding:24px; margin-bottom:32px; }
+  .file-find-row { display:flex; align-items:flex-start; gap:12px; padding:10px 0; border-bottom:1px solid #f0ebe4; }
+  .file-find-row:last-child { border-bottom:none; }
+  .file-find-os { font-size:12px; font-weight:700; color:#d97706; min-width:70px; padding-top:2px; }
+  .file-find-steps { font-size:13px; color:#15465b; line-height:1.6; }
+  .file-find-steps code { background:#f0ebe4; padding:2px 6px; border-radius:4px; font-size:12px; }
+
+  /* Action box */
+  .action-box { background:linear-gradient(135deg,#fef9f0,#fef3e2); border:2px solid #d97706; border-radius:16px; padding:24px; margin-bottom:32px; }
+  .action-box-label { font-size:11px; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .action-box-step { font-size:14px; color:#081f3f; line-height:1.8; }
+  .action-box-step ol { padding-left:20px; }
+  .action-box-step li { margin-bottom:6px; }
+
+  /* Iter cards */
+  .iter-card { background:#faf5f0; border-radius:12px; padding:16px 20px; margin-bottom:14px; border:1px solid #e8e0d8; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .iter-text { font-size:14px; color:#081f3f; line-height:1.6; flex:1; }
+  .iter-copy { background:#fef3e2; color:#b45309; border:none; border-radius:6px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; flex-shrink:0; font-family:inherit; }
+
+  /* Recap list */
+  .recap-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f0ebe4; align-items:center; }
+  .recap-item:last-child { border-bottom:none; }
+  .recap-icon { font-size:18px; flex-shrink:0; }
+  .recap-text { font-size:14px; color:#15465b; line-height:1.6; }
+
+  /* Next grid */
+  .next-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px; }
+  .next-card { background:white; border-radius:12px; padding:16px; border:1px solid #e8e0d8; text-align:center; }
+  .next-card-icon { font-size:24px; margin-bottom:6px; }
+  .next-card-title { font-size:14px; font-weight:700; color:#081f3f; margin-bottom:4px; }
+  .next-card-desc { font-size:12px; color:#15465b; line-height:1.4; }
+
+  .text-center { text-align:center; }
+  .text-muted { color:#15465b; }
+  .text-sm { font-size:15px; line-height:1.7; }
+  .mt-16 { margin-top:24px; }
+  .mb-20 { margin-bottom:28px; }
+  .mb-24 { margin-bottom:32px; }
+
+  /* Goal mockup */
+  .goal-frame { background:white; border-radius:16px; border:1px solid #e8e0d8; padding:20px; margin-bottom:32px; }
+  .goal-label { font-size:11px; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:1px; margin-bottom:14px; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .goal-mockup { border-radius:10px; overflow:hidden; border:1px solid #e8e0d8; font-family:'Inter',sans-serif; }
+
+  /* Hero — forest green, decorative circles, grain-feel */
+  .gm-hero { background:linear-gradient(135deg,#2d4a3e 0%,#3a6355 60%,#2d4a3e 100%); padding:22px 20px 28px; position:relative; overflow:hidden; }
+  .gm-hero::before { content:''; position:absolute; top:-25px; right:-25px; width:90px; height:90px; border:3px solid rgba(212,168,83,0.15); border-radius:50%; }
+  .gm-hero::after { content:''; position:absolute; bottom:15px; right:50px; width:35px; height:35px; border:2px solid rgba(212,168,83,0.1); border-radius:50%; }
+  .gm-hero-eyebrow { font-size:6px; text-transform:lowercase; letter-spacing:2.5px; color:#d4a853; margin-bottom:10px; position:relative; z-index:1; }
+  .gm-hero-tag { font-family:'Playfair Display',serif; font-size:22px; font-weight:400; color:#fdf6ec; line-height:1.1; margin-bottom:14px; position:relative; z-index:1; letter-spacing:-0.3px; }
+  .gm-hero-btn { display:inline-block; background:#c4704b; color:white; font-size:8px; font-weight:600; padding:6px 16px; border-radius:20px; position:relative; z-index:1; letter-spacing:0.3px; }
+
+  /* Steam animation — larger cup */
+  .gm-steam { position:absolute; bottom:12px; right:14px; width:32px; height:46px; z-index:1; }
+  .gm-cup { position:absolute; bottom:0; left:4px; width:24px; height:14px; background:rgba(253,246,236,0.1); border-radius:0 0 6px 6px; border:1.5px solid rgba(253,246,236,0.18); border-top:none; }
+  .gm-cup::after { content:''; position:absolute; right:-7px; top:2px; width:7px; height:8px; border:1.5px solid rgba(253,246,236,0.14); border-left:none; border-radius:0 4px 4px 0; }
+  .gm-steam-line { position:absolute; bottom:16px; width:2px; background:rgba(253,246,236,0.25); border-radius:2px; }
+  .gm-steam-line:nth-child(1) { left:7px; height:12px; animation:steam 2.5s ease-out infinite 0s; }
+  .gm-steam-line:nth-child(2) { left:14px; height:15px; animation:steam 2.8s ease-out infinite 0.6s; }
+  .gm-steam-line:nth-child(3) { left:21px; height:10px; animation:steam 2.3s ease-out infinite 1.2s; }
+  @keyframes steam { 0%{transform:translateY(0) scaleX(1);opacity:0} 10%{opacity:0.5} 50%{transform:translateY(-16px) scaleX(1.8) translateX(1px);opacity:0.15} 100%{transform:translateY(-26px) scaleX(2.5) translateX(-1px);opacity:0} }
+
+  /* Wave divider hero→board */
+  .gm-wave-hb { background:#2d4a3e; line-height:0; margin-top:-1px; }
+  .gm-wave-hb svg { display:block; width:100%; height:8px; }
+
+  /* Chalkboard menu */
+  .gm-board { background:#1e1e1e; padding:14px 18px; box-shadow:inset 0 0 40px rgba(0,0,0,0.4); }
+  .gm-board-title { font-size:7px; text-transform:lowercase; letter-spacing:2.5px; color:#d4a853; text-align:center; margin-bottom:10px; }
+  .gm-board-items { display:flex; flex-direction:column; gap:0; }
+  .gm-board-item { display:flex; justify-content:space-between; align-items:baseline; padding:5px 0; }
+  .gm-board-name { font-family:'Playfair Display',serif; font-size:10px; color:#fdf6ec; font-style:italic; }
+  .gm-board-desc { font-size:7px; color:#a89880; text-align:right; }
+  .gm-board-divider { height:0; border-bottom:1px dashed rgba(212,168,83,0.2); margin:1px 0; }
+
+  /* Ornamental divider (dot · diamond · dot) */
+  .gm-ornament { display:flex; justify-content:center; align-items:center; gap:6px; padding:8px 0; background:#fdf6ec; }
+  .gm-ornament span { display:block; }
+  .gm-ornament span:nth-child(1),.gm-ornament span:nth-child(3) { width:4px; height:4px; background:#c4704b; border-radius:50%; }
+  .gm-ornament span:nth-child(2) { width:6px; height:6px; background:#d4a853; transform:rotate(45deg); border-radius:1px; }
+
+  /* Hours strip */
+  .gm-hours { background:linear-gradient(135deg,#c4704b,#b8634a); padding:10px 16px; text-align:center; }
+  .gm-hours-main { font-family:'Playfair Display',serif; font-size:9px; color:#fdf6ec; font-style:italic; margin-bottom:3px; }
+  .gm-hours-sub { font-size:6px; color:#f0d5b8; letter-spacing:0.5px; }
+
+  /* Community events */
+  .gm-community { background:#fdf6ec; padding:14px 16px; }
+  .gm-community-title { font-size:7px; text-transform:lowercase; letter-spacing:2.5px; color:#2d4a3e; text-align:center; margin-bottom:10px; }
+  .gm-events { display:flex; gap:6px; }
+  .gm-event { flex:1; background:white; border-radius:6px; padding:8px 6px 6px; text-align:center; border:1px solid #e0d5c4; position:relative; overflow:hidden; }
+  .gm-event::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#c4704b,#d4a853); }
+  .gm-event-date { font-size:8px; font-weight:700; color:#c4704b; margin-bottom:2px; margin-top:2px; }
+  .gm-event-name { font-size:7px; color:#2d4a3e; line-height:1.3; }
+
+  /* CTA footer with cascading beans */
+  .gm-cta { background:linear-gradient(135deg,#2d4a3e,#1e3a2e); padding:16px; text-align:center; position:relative; overflow:hidden; }
+  .gm-cta-title { font-family:'Playfair Display',serif; font-size:11px; font-weight:400; color:#fdf6ec; margin-bottom:8px; position:relative; z-index:1; }
+  .gm-cta-btn { display:inline-block; background:#d4a853; color:#2d4a3e; font-size:8px; font-weight:700; padding:5px 16px; border-radius:20px; animation:glow 3s ease-in-out infinite; position:relative; z-index:1; }
+
+  /* Coffee beans — diagonal pour from top-left */
+  @keyframes glow { 0%,100%{box-shadow:0 0 6px rgba(212,168,83,0.3)} 50%{box-shadow:0 0 14px rgba(212,168,83,0.6)} }
+
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Section sequence rail -->
+  <div class="section-rail">
+    <div class="section-rail-inner" id="sectionRail"></div>
+  </div>
+
+  <div class="main-col">
+  <div class="nav-header">
+    <div class="nav">
+      <button class="btn btn-back" id="btnBack" onclick="prevStep()" style="display:none">Back</button>
+      <button class="btn btn-next" id="btnNext" onclick="nextStep()">Let's go</button>
+    </div>
+  </div>
+
+  <div class="step-header">
+    <h1 id="stepTitle">Context Engineering</h1>
+    <p id="stepSubtitle">A prompt-along experience. Build context, watch your output transform.</p>
+  </div>
+
+  <div class="step-content">
+
+    <!-- ============================================ -->
+    <!-- STEP 0: Welcome & Setup -->
+    <!-- ============================================ -->
+    <div class="step active" id="step-0">
+      <p>Think about the best manager you've ever had. When you started a new project, they didn't just say "build the thing" and walk away. They <strong>onboarded</strong> you — shared the vision, explained who the audience was, pointed you to the brand guidelines, walked you through what success looks like.</p>
+      <p>Working with AI is the same job. Claude is remarkably capable, but it's new to your project every time. Your role is to be the manager who onboards it well — and the better that onboarding, the better the work.</p>
+      <p>This is a <strong>prompt-along</strong>. We'll walk through all the different ways you can onboard Claude to your project — from a simple chat message all the way to a full documentation system. You'll type real prompts, build real files, and watch the output transform as the onboarding gets richer. No coding experience needed.</p>
+
+      <div class="dark-card">
+        <h2>You're the manager. Claude is your new hire.</h2>
+        <p>AI doesn't follow instructions like a calculator. It interprets your context and composes solutions — like a talented new team member would. The question isn't "how do I write a better prompt?" It's "how do I set this person up to succeed?"</p>
+      </div>
+
+      <div style="background:white;border-radius:16px;padding:20px;border:1px solid #e8e0d8;margin-bottom:24px">
+        <div class="section-label">Set up your screen</div>
+        <p style="text-align:center;font-size:13px;color:#15465b;margin-bottom:14px">Put these two windows side by side. You'll work between them the whole time.</p>
+        <div style="background:#081f3f;border-radius:12px;padding:10px 10px 14px;position:relative">
+          <div style="display:flex;gap:5px;margin-bottom:10px;padding-left:4px">
+            <div style="width:8px;height:8px;border-radius:50%;background:#ef4444"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#22c55e"></div>
+            <span style="font-size:10px;color:#5a7a8a;margin-left:auto;padding-right:4px">Your desktop</span>
+          </div>
+          <div style="display:flex;gap:8px">
+            <div style="flex:1;background:#f7f3ee;border-radius:8px;padding:12px;border:2px solid #15465b">
+              <div style="font-size:10px;color:#5a7a8a;margin-bottom:8px">Claude Desktop App (Code mode on)</div>
+              <div style="font-size:11px;line-height:1.7">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+                  <div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#d97706,#eba714)"></div>
+                  <span style="font-weight:700;color:#081f3f;font-size:12px">Claude</span>
+                </div>
+                <div style="background:#ffffff;border-radius:6px;padding:8px;border:1px solid #e8e0d8">
+                  <div style="color:#5a7a8a;font-size:10px">Paste prompts here ▍</div>
+                </div>
+              </div>
+            </div>
+            <div style="flex:1;background:#ffffff;border-radius:8px;padding:12px;border:2px solid #d97706">
+              <div style="font-size:10px;color:#15465b;margin-bottom:8px">Browser — This Guide</div>
+              <div style="background:linear-gradient(90deg,#d97706,#eba714);height:4px;border-radius:4px;width:30%;margin-bottom:8px"></div>
+              <div style="font-size:11px;font-weight:700;color:#081f3f;margin-bottom:4px">Context Engineering</div>
+              <div style="height:4px;background:#e8e0d8;border-radius:2px;width:80%;margin-bottom:3px"></div>
+              <div style="height:4px;background:#e8e0d8;border-radius:2px;width:60%;margin-bottom:6px"></div>
+              <div style="font-size:9px;color:#d97706;font-weight:600">Follow steps here →</div>
+            </div>
+          </div>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-20%);background:#d97706;color:white;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px">↔</div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:12px">
+          <div style="flex:1;text-align:center;font-size:12px;color:#081f3f"><strong style="color:#15465b">Left:</strong> Claude app — where you type prompts</div>
+          <div style="flex:1;text-align:center;font-size:12px;color:#081f3f"><strong style="color:#d97706">Right:</strong> This guide — follow along step by step</div>
+        </div>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Step 1 — Create your project folder</div>
+        <div class="action-box-step">
+          <ol>
+            <li><strong>Go to your Desktop</strong> (minimize any open windows so you can see it)</li>
+            <li><strong>Right-click</strong> on an empty spot on your Desktop</li>
+            <li>Select <strong>"New" → "Folder"</strong> (Windows) or <strong>"New Folder"</strong> (Mac)</li>
+            <li>Name it <code style="background:#fff;padding:2px 8px;border-radius:4px;font-weight:600">context-engineering</code></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Step 2 — Open Claude and connect to your folder</div>
+        <div class="action-box-step">
+          <ol>
+            <li><strong>Open the Claude desktop app</strong> on your computer</li>
+            <li>Look for the <strong>"Code" toggle</strong> at the bottom of the chat input — click it to turn it on. This activates Claude Code, which can read and write real files on your computer.</li>
+            <li>You'll see a prompt to <strong>select a project folder</strong>. Click it, then navigate to your Desktop and select the <code style="background:#fff;padding:2px 8px;border-radius:4px;font-weight:600">context-engineering</code> folder you just created.</li>
+            <li>You're connected. Every file Claude creates will appear inside that folder on your Desktop.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">What is Claude Code?</div>
+        <div class="callout-text">Claude Code is a mode inside the Claude desktop app that lets Claude read and write real files on your computer. When you turn it on and connect it to a folder, Claude can create HTML pages, documents, and code — all saved as real files you can open, edit, and share. Think of it as hiring a capable builder and giving them a workspace. The folder is their workspace. Your job is to manage what they build.</div>
+      </div>
+
+      <div class="goal-frame">
+        <div class="goal-label"><span class="icon i-eye" style="font-size:14px"></span> Here's what we're building</div>
+        <p style="text-align:center;font-size:14px;color:#15465b;margin-bottom:16px;line-height:1.7">This is the finished coffee shop landing page — your target. Right now, Claude doesn't know any of this exists. By the end of this guide, your output should look remarkably close to this, built entirely through context engineering.</p>
+        <div class="goal-mockup" id="goalMockup">
+          <div class="gm-hero">
+            <div class="gm-hero-eyebrow">est. 2019 · corner of oak &amp; fifth</div>
+            <div class="gm-hero-tag">Where every<br>morning is<br>a good morning.</div>
+            <div class="gm-hero-btn">Come say hello</div>
+            <div class="gm-steam">
+              <div class="gm-steam-line"></div>
+              <div class="gm-steam-line"></div>
+              <div class="gm-steam-line"></div>
+              <div class="gm-cup"></div>
+            </div>
+          </div>
+          <div class="gm-wave-hb"><svg viewBox="0 0 400 10" preserveAspectRatio="none"><path d="M0,10 L0,4 Q100,0 200,6 Q300,10 400,3 L400,10Z" fill="#1e1e1e"/></svg></div>
+          <div class="gm-board">
+            <div class="gm-board-title">on the board today</div>
+            <div class="gm-board-items">
+              <div class="gm-board-item">
+                <div class="gm-board-name">The Slow Morning</div>
+                <div class="gm-board-desc">oat latte · honey · cardamom</div>
+              </div>
+              <div class="gm-board-divider"></div>
+              <div class="gm-board-item">
+                <div class="gm-board-name">Neighborhood Regular</div>
+                <div class="gm-board-desc">classic drip · bottomless</div>
+              </div>
+              <div class="gm-board-divider"></div>
+              <div class="gm-board-item">
+                <div class="gm-board-name">The Plot Twist</div>
+                <div class="gm-board-desc">espresso tonic · orange peel</div>
+              </div>
+            </div>
+          </div>
+          <div class="gm-ornament"><span></span><span></span><span></span></div>
+          <div class="gm-hours">
+            <div class="gm-hours-main">Open at dawn. Closed when the sunset says so.</div>
+            <div class="gm-hours-sub">dogs welcome · laptops optional · kids get free cocoa</div>
+          </div>
+          <div class="gm-community">
+            <div class="gm-community-title">happening this month</div>
+            <div class="gm-events">
+              <div class="gm-event">
+                <div class="gm-event-date">SAT 15</div>
+                <div class="gm-event-name">Local Art Night</div>
+              </div>
+              <div class="gm-event">
+                <div class="gm-event-date">WED 19</div>
+                <div class="gm-event-name">Poetry Open Mic</div>
+              </div>
+              <div class="gm-event">
+                <div class="gm-event-date">FRI 28</div>
+                <div class="gm-event-name">Bean Tasting</div>
+              </div>
+            </div>
+          </div>
+          <div class="gm-cta">
+            <div class="gm-cta-title">You're always welcome here.</div>
+            <div class="gm-cta-btn">Find us on the corner</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2 style="font-size:20px">Think of this like painting along with Bob Ross.</h2>
+        <p style="font-size:13px;line-height:1.8">You can see the finished painting. Now we'll build it together, one layer of context at a time. With each step, your output will get closer to the target — not because you're copying it, but because you're teaching Claude what "right" looks like for this project.</p>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title" style="color:#b45309">A note on the fun challenge</div>
+        <div class="callout-text">Could you screenshot this target and say "clone this"? Sure. Could you inspect the HTML and hand it to Claude? Absolutely. Those are legitimate approaches. But that's not what we're practicing here. We're building the <em>general skill</em> of onboarding AI through documentation — a skill you'll use on every project, not just this one. So let's see how close you can get by building context, layer by layer.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 1: The Naive Prompt -->
+    <!-- ============================================ -->
+    <div class="step" id="step-1">
+      <p>Let's start where everyone starts — a bare prompt with no context. Copy the prompt below and paste it into your Claude conversation. Then let Claude do its thing.</p>
+
+      <div class="context-meter">
+        <div class="section-label">Context level</div>
+        <div class="meter-bar-track">
+          <div class="meter-bar-fill" style="width:8%;background:#ef4444"></div>
+        </div>
+        <div class="meter-labels">
+          <span class="meter-label-active" style="color:#ef4444">Minimal</span>
+          <span>Rich</span>
+          <span>Engineered</span>
+        </div>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #1 — Paste this into Claude</div>
+        <div class="prompt-block" id="prompt1">Build me a landing page for a coffee shop. Create it as a single index.html file.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt1', this)">Copy this prompt</button>
+      </div>
+
+      <p>Claude will work for a moment, then create an <code>index.html</code> file inside your project folder. You'll see it happening in real time in the chat. When Claude says it's done, you need to open that file in your web browser to see the result.</p>
+
+      <div class="file-find">
+        <div class="section-label">How to find and open the file you just created</div>
+        <div class="file-find-row">
+          <div class="file-find-os">Windows</div>
+          <div class="file-find-steps">
+            <ol style="margin:0;padding-left:18px;line-height:2">
+              <li>Open <strong>File Explorer</strong> (the folder icon on your taskbar)</li>
+              <li>Click <strong>Desktop</strong> in the left sidebar</li>
+              <li>Double-click the <code>context-engineering</code> folder to open it</li>
+              <li>You should see a file called <code>index.html</code> — double-click it</li>
+              <li>It will open in your web browser (Chrome, Edge, etc.)</li>
+            </ol>
+          </div>
+        </div>
+        <div class="file-find-row">
+          <div class="file-find-os">Mac</div>
+          <div class="file-find-steps">
+            <ol style="margin:0;padding-left:18px;line-height:2">
+              <li>Open <strong>Finder</strong> (the smiley face icon in your dock)</li>
+              <li>Click <strong>Desktop</strong> in the left sidebar</li>
+              <li>Double-click the <code>context-engineering</code> folder to open it</li>
+              <li>You should see a file called <code>index.html</code> — double-click it</li>
+              <li>It will open in your default browser (Safari, Chrome, etc.)</li>
+            </ol>
+          </div>
+        </div>
+        <div class="file-find-row">
+          <div class="file-find-os">Tip</div>
+          <div class="file-find-steps">Keep this folder open! You'll be coming back to it throughout this guide. Every time Claude creates or updates a file, it lands here.</div>
+        </div>
+      </div>
+
+      <p>Take a look at what you got. It works. But it's generic — a template that could be for any coffee shop in the world. That's not Claude's fault. It's day one on the job and nobody onboarded it.</p>
+
+      <div class="compare-split">
+        <div class="compare-side compare-naive">
+          <div class="compare-badge" style="background:#fde2e2;color:#991b1b">What you probably see</div>
+          <div style="font-size:13px;color:#15465b;line-height:1.8">
+            <div>Generic hero text</div>
+            <div>Default blue color scheme</div>
+            <div>Placeholder content</div>
+            <div>Stock template layout</div>
+            <div>Could be for anyone</div>
+          </div>
+        </div>
+        <div class="compare-divider"><div class="compare-divider-dot">→</div></div>
+        <div class="compare-side compare-ctx">
+          <div class="compare-badge" style="background:#fef3e2;color:#b45309">It's day one — no onboarding</div>
+          <div style="font-size:13px;color:#15465b;line-height:1.8">
+            <div>Doesn't know your brand</div>
+            <div>Doesn't know your audience</div>
+            <div>Doesn't know your voice</div>
+            <div>Doesn't know your goals</div>
+            <div>Every gap = a best guess</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">The fundamental insight</div>
+        <div class="callout-text">Imagine handing a new hire a task with zero context about the company, the audience, or the goals. They'd produce something generic too — not because they're bad at their job, but because you didn't set them up to succeed. That's what just happened. The good news: there are many different ways to onboard Claude, and we're about to walk through all of them.</div>
+      </div>
+
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 2: In-Prompt Context -->
+    <!-- ============================================ -->
+    <div class="step" id="step-2">
+      <p>Same task. But this time, let's actually brief Claude on the project — who the company is, who the audience is, how it should look and feel. This is like pulling your new hire into a meeting and giving them a verbal overview before they start.</p>
+
+      <div class="context-meter">
+        <div class="section-label">Context level</div>
+        <div class="meter-bar-track">
+          <div class="meter-bar-fill" style="width:30%;background:linear-gradient(90deg,#ef4444,#f59e0b)"></div>
+        </div>
+        <div class="meter-labels">
+          <span>Minimal</span>
+          <span class="meter-label-active">Rich</span>
+          <span>Engineered</span>
+        </div>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #2 — Paste this into Claude</div>
+        <div class="prompt-block" id="prompt2">Rebuild index.html from scratch. This is a landing page for Morning Light Coffee, a quirky neighborhood coffee shop on the corner of Oak & Fifth that roasts its own beans and hosts community events.
+
+Our vibe: part coffee shop, part living room, part community center. We name our drinks things like "The Slow Morning" and "The Plot Twist." We welcome dogs, don't mind if you skip the laptop, and give kids free cocoa.
+
+Use these brand colors: deep forest green (#2d4a3e) as the primary, terracotta (#c4704b) for accents, warm gold (#d4a853) for highlights, and cream (#fdf6ec) for backgrounds. Use a dark chalkboard section (#1e1e1e) for the drink menu. Use Playfair Display for headlines and Inter for body text.
+
+Include: a hero with our tagline "Where every morning is a good morning," a chalkboard-style drink menu, community events, and a warm footer. Make it feel handcrafted — like the shop itself.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt2', this)">Copy this prompt</button>
+      </div>
+
+      <p>Once Claude finishes, go back to your browser where you had <code>index.html</code> open and <strong>press F5</strong> (or Ctrl+R on Windows, Cmd+R on Mac) to refresh the page. See the difference?</p>
+
+      <div class="success-card">
+        <div class="success-icon"><span class="icon i-eye"></span></div>
+        <div class="success-title">Same hire. Better onboarding. Better work.</div>
+        <div class="success-text">You told Claude <em>who the shop is</em>, <em>who the audience is</em>, <em>how it should look</em>, and <em>how it should feel</em>. That briefing directly shaped the result. This is the chat interface as an onboarding tool — you're managing context through conversation.</div>
+      </div>
+
+      <div class="callout callout-blue mt-16">
+        <div class="callout-title" style="color:#15465b">The limitation of verbal briefings</div>
+        <div class="callout-text">A verbal briefing works for one task. But what happens when you close this conversation and start a new one? Claude forgets everything. You'd have to re-brief every time. That's like onboarding the same employee from scratch every morning. Fortunately, the Claude desktop app gives you other levers — ways to create onboarding that persists, so Claude shows up prepared every time.</div>
+      </div>
+
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 3: Project Instructions — CLAUDE.md -->
+    <!-- ============================================ -->
+    <div class="step" id="step-3">
+      <p>When you onboard a new team member, you don't just brief them verbally — you give them written documentation. A handbook, a wiki, a "start here" document.</p>
+      <p>Claude has exactly this: a file called <strong>CLAUDE.md</strong>. When you start a new conversation in the Claude desktop app with Code mode on, it automatically reads this file first — before you even type anything. It's your project's onboarding document. Write it once, and Claude arrives prepared every time.</p>
+
+      <div class="context-meter">
+        <div class="section-label">Context level</div>
+        <div class="meter-bar-track">
+          <div class="meter-bar-fill" style="width:50%;background:linear-gradient(90deg,#f59e0b,#d97706)"></div>
+        </div>
+        <div class="meter-labels">
+          <span>Minimal</span>
+          <span class="meter-label-active">Rich</span>
+          <span>Engineered</span>
+        </div>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #3 — Paste this into Claude</div>
+        <div class="prompt-block" id="prompt3">Create a CLAUDE.md file in the root of this project with the following project instructions:
+
+# Context Engineering Project
+
+## Brand: Morning Light Coffee
+- Quirky neighborhood coffee shop, corner of Oak & Fifth
+- Roasts own beans, hosts community events, names drinks creatively
+- Vibe: part coffee shop, part living room, part community center
+- Tagline: "Where every morning is a good morning"
+- Never use: "fast service," "grab and go," "premium blend," "artisan crafted"
+
+## Visual Identity
+- Primary: deep forest green #2d4a3e
+- Accent: terracotta #c4704b
+- Highlight: warm gold #d4a853
+- Background: cream #fdf6ec
+- Chalkboard: near-black #1e1e1e (for menu sections)
+- Headlines: Playfair Display (regular weight only, NEVER bold)
+- Body text: Inter (regular 400, semi-bold 600)
+- Never use pure black text or cold gray backgrounds
+
+## Rules
+- All output should be self-contained HTML files (no frameworks)
+- Design should feel handcrafted and warm, like the shop itself
+- Always include generous whitespace and rounded corners
+- Chalkboard sections use dark background with warm-toned text</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt3', this)">Copy this prompt</button>
+      </div>
+
+      <p>Claude just created a file called <code>CLAUDE.md</code> in your project folder. If you open your <code>context-engineering</code> folder on your Desktop, you'll see it there alongside <code>index.html</code>. From now on, <strong>every new conversation</strong> you start with Claude in this folder will read that file first and follow those rules.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Now test it — start a fresh conversation</div>
+        <div class="action-box-step">
+          <ol>
+            <li><strong>Start a new conversation</strong> in the Claude desktop app. Click the <strong>"New chat"</strong> button (or press Ctrl+N / Cmd+N). Make sure Code mode is still on and your <code>context-engineering</code> folder is still selected.</li>
+            <li>This is important — a new conversation means Claude has "forgotten" everything you said before. But it will still read your CLAUDE.md file automatically.</li>
+            <li>Paste this much simpler prompt:</li>
+          </ol>
+        </div>
+        <div class="prompt-block" id="prompt3b">Rebuild index.html with a hero section, a 3-card "what we do" section, and a footer with a CTA. Follow the project instructions.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt3b', this)">Copy this prompt</button>
+      </div>
+
+      <p>Go back to your browser and refresh the page (F5 or Ctrl+R / Cmd+R). You gave a <em>much shorter prompt</em> this time — but the output should still be on-brand. Claude read the CLAUDE.md file automatically and applied your brand colors, typography, and tone without you having to repeat any of it.</p>
+
+      <div class="success-card">
+        <div class="success-icon"><span class="icon i-sparkle"></span></div>
+        <div class="success-title">Less briefing. Better results.</div>
+        <div class="success-text">Claude arrived pre-onboarded. The CLAUDE.md file did the briefing for you — like an employee handbook that every new hire reads before they start. This is the first big lever beyond the chat interface: persistent project instructions.</div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">Where does CLAUDE.md live and how does it work?<span class="expand-arrow">▼</span></button>
+        <div class="expand-body">
+          CLAUDE.md sits inside your project folder — right next to your other files. If you open your <code>context-engineering</code> folder in File Explorer (Windows) or Finder (Mac), you'll see it listed there as a file. You don't need to open it yourself. Every time you start a new conversation with Claude Code pointed at this folder, Claude automatically reads CLAUDE.md first and follows the rules inside it.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 4: Project Documentation -->
+    <!-- ============================================ -->
+    <div class="step" id="step-4">
+      <p>A good onboarding document sets the ground rules. But a truly well-managed team member also gets access to deeper references — the brand guide, the style guide, the project wiki. Documents they can consult whenever they need specifics.</p>
+      <p>Let's give Claude that same resource library. We'll create a documentation folder and start with a brand guide.</p>
+
+      <div class="context-meter">
+        <div class="section-label">Context level</div>
+        <div class="meter-bar-track">
+          <div class="meter-bar-fill" style="width:70%;background:linear-gradient(90deg,#d97706,#16a34a)"></div>
+        </div>
+        <div class="meter-labels">
+          <span>Minimal</span>
+          <span>Rich</span>
+          <span class="meter-label-active">Engineered</span>
+        </div>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #4 — Paste this into Claude</div>
+        <div class="prompt-block" id="prompt4">Create a docs/ folder in this project. Inside it, create brand-guide.md with the following content:
+
+# Morning Light Coffee Brand Guide
+
+## Color System: The Morning Palette
+| Role | Hex | Usage |
+|------|-----|-------|
+| Primary | #2d4a3e | Headers, navigation, footer, primary text |
+| Secondary | #3a6355 | Hero gradients, hover states |
+| Accent | #c4704b | CTAs, highlights, interactive elements |
+| Highlight | #d4a853 | Gold accents, eyebrow text, special labels |
+| Background | #fdf6ec | Page backgrounds |
+| Surface | #ffffff | Cards, content areas |
+| Chalkboard | #1e1e1e | Menu/board sections — dark with warm light text |
+
+## Typography
+- Display: Playfair Display Regular (400 weight ONLY, never bold)
+- Body: Inter Regular (400) and Semi-bold (600)
+- Minimum body text: 16px
+- Line height: 1.6 for body copy
+
+## Voice & Tone
+- Neighborly and a little quirky — like a friend who owns a shop
+- Warm and unhurried — mornings should never feel rushed
+- Playful but genuine — fun without trying too hard
+- Specific over generic — name the drink, describe the flavor
+
+## Signature Elements
+- Drink names are creative and conversational: "The Slow Morning," "The Plot Twist"
+- Hours are described poetically, not clinically
+- Community events are front and center, not an afterthought
+- Dogs welcome, laptops optional — this is a vibe, not a workspace
+
+## Prohibited
+- Never say: "fast service," "grab and go," "fuel up," "caffeine fix," "premium"
+- Never use corporate or chain restaurant language
+- Never use cold, clinical aesthetics
+- Never use Playfair Display bold weight
+- Never use generic placeholder text — everything should feel specific
+
+## Design Principles
+1. Handcrafted warmth — like a chalkboard, not a billboard
+2. Personality in every detail
+3. Intentional whitespace
+4. Dark + light contrast (chalkboard sections break up the page)
+5. Rounded corners (8-16px)
+
+Now update CLAUDE.md to reference this file. Add a line that says:
+"For detailed brand guidelines, see @docs/brand-guide.md"</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt4', this)">Copy this prompt</button>
+      </div>
+
+      <p>Now let's see the difference. The CLAUDE.md now points to a detailed brand guide. Claude can drill into that reference whenever it needs specifics.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Now rebuild with full documentation</div>
+        <div class="prompt-block" id="prompt4b">Rebuild index.html completely. Reference the brand guide for all visual decisions. I want:
+
+- A hero with our location "corner of Oak & Fifth" and tagline "Where every morning is a good morning"
+- A dark chalkboard menu section featuring: "The Slow Morning" (oat latte, honey, cardamom), "Neighborhood Regular" (classic drip, bottomless), and "The Plot Twist" (espresso tonic, orange peel)
+- A terracotta strip with our hours philosophy
+- A community events section
+- A CTA footer: "You're always welcome here"
+
+Make it the best version yet. Follow every brand guideline precisely.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt4b', this)">Copy this prompt</button>
+      </div>
+
+      <p>Refresh your browser again (F5). This version should be significantly more polished — precise colors, correct typography, consistent voice, thoughtful spacing. The brand guide gave AI a detailed reference to work from, not just high-level rules.</p>
+
+      <div class="callout callout-amber">
+        <div class="callout-title" style="color:#b45309">Documents pointing to documents</div>
+        <div class="callout-text">Notice what happened: CLAUDE.md references the brand guide with <code>@docs/brand-guide.md</code>. This creates a hierarchy — like an onboarding doc that says "for brand details, see the brand guide." Claude starts with the overview and drills into detail as needed. You're building a project wiki that Claude navigates on its own.</div>
+      </div>
+
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 5: Folder Architecture -->
+    <!-- ============================================ -->
+    <div class="step" id="step-5">
+      <p>A well-run project doesn't just have a brand guide — it has specs, requirements, and clear definitions of what success looks like. These are the documents that let a team member work <em>independently</em> instead of needing to check in on every decision. Let's build that for Claude.</p>
+
+      <div class="context-meter">
+        <div class="section-label">Context level</div>
+        <div class="meter-bar-track">
+          <div class="meter-bar-fill" style="width:85%;background:linear-gradient(90deg,#16a34a,#059669)"></div>
+        </div>
+        <div class="meter-labels">
+          <span>Minimal</span>
+          <span>Rich</span>
+          <span class="meter-label-active">Engineered</span>
+        </div>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #5 — Paste this into Claude</div>
+        <div class="prompt-block" id="prompt5">Create docs/page-spec.md with a specification for our landing page:
+
+# Landing Page Specification
+
+## Purpose
+Welcome neighbors and newcomers to the shop. Make them feel like they already belong. Primary audience: local residents, remote workers, and anyone who values a good morning.
+
+## Sections (in order)
+1. **Hero** — Location eyebrow text: "est. 2019 · corner of oak & fifth" (lowercase, gold color). Tagline: "Where every morning is a good morning." CTA button: "Come say hello." Forest green gradient background with subtle decorative gold circles.
+2. **The Board** — Dark chalkboard-style section (#1e1e1e background). Title: "on the board today" (lowercase, gold). List 3 signature drinks as name + description pairs: "The Slow Morning" (oat latte, honey, cardamom), "Neighborhood Regular" (classic drip, bottomless), "The Plot Twist" (espresso tonic, orange peel). Drink names in italic Playfair Display. Dotted dividers between items.
+3. **Hours Strip** — Terracotta background. Poetic hours: "Open at dawn. Closed when the sunset says so." Subline: "dogs welcome · laptops optional · kids get free cocoa"
+4. **Community** — Cream background. Title: "happening this month" (lowercase). 3 event cards: each shows a date badge and event name — "SAT 15 / Local Art Night," "WED 19 / Poetry Open Mic," "FRI 28 / Bean Tasting."
+5. **CTA Footer** — Forest green background. "You're always welcome here." Gold button: "Find us on the corner."
+
+## Tone Requirements
+- Lowercase section labels create casual intimacy
+- Everything should feel handwritten, not typeset
+- Specific details over generic descriptions — name the drink, name the event
+- Short sentences, conversational rhythm
+
+Also update CLAUDE.md to reference this spec:
+"For page specification, see @docs/page-spec.md"</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt5', this)">Copy this prompt</button>
+      </div>
+
+      <div class="action-box mt-16">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Now rebuild from the full context stack</div>
+        <div class="prompt-block" id="prompt5b">Rebuild index.html from scratch. Use the page spec for structure and content, and the brand guide for all visual decisions. This should be the definitive version — every section specified, every color on-brand, every word in our voice. Make it something we'd be proud to tape in the shop window.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt5b', this)">Copy this prompt</button>
+      </div>
+
+      <p>Refresh your browser (F5). This should feel like a real, finished product — not a prototype. The spec told AI <em>exactly</em> what to build. The brand guide told it <em>exactly</em> how it should look and sound.</p>
+
+      <div class="folder-tree">
+        <div class="tree-header section-label" style="text-align:left;margin-bottom:0">Your project now looks like this</div>
+        <div id="folderTree">
+          <div class="tree-item folder" style="padding-left:12px">
+            <span class="tree-icon"><span class="icon i-folder"></span></span>
+            <span class="tree-name folder-name">context-engineering</span>
+          </div>
+          <div class="tree-item" style="padding-left:32px" data-file="claudemd" data-tooltip="Project instructions — AI reads this first. Points to brand guide and page spec for detail." data-color="#d97706">
+            <span class="tree-icon"><span class="icon i-file"></span></span>
+            <span class="tree-name">CLAUDE.md</span>
+            <span class="tree-hint" style="color:#d97706">hover me</span>
+          </div>
+          <div class="tree-tooltip" id="tip-claudemd" style="margin-left:32px;border-left:3px solid #d97706"></div>
+          <div class="tree-item" style="padding-left:32px" data-file="indexhtml" data-tooltip="The landing page AI built — open this in your browser to see the result." data-color="#e76f51">
+            <span class="tree-icon"><span class="icon i-file"></span></span>
+            <span class="tree-name">index.html</span>
+            <span class="tree-hint" style="color:#e76f51">hover me</span>
+          </div>
+          <div class="tree-tooltip" id="tip-indexhtml" style="margin-left:32px;border-left:3px solid #e76f51"></div>
+          <div class="tree-item folder" style="padding-left:32px">
+            <span class="tree-icon"><span class="icon i-folder"></span></span>
+            <span class="tree-name folder-name">docs</span>
+          </div>
+          <div class="tree-item" style="padding-left:52px" data-file="brand" data-tooltip="Colors, fonts, voice, prohibited language — ensures AI creates on-brand output every time." data-color="#15465b">
+            <span class="tree-icon"><span class="icon i-file"></span></span>
+            <span class="tree-name">brand-guide.md</span>
+            <span class="tree-hint" style="color:#15465b">hover me</span>
+          </div>
+          <div class="tree-tooltip" id="tip-brand" style="margin-left:52px;border-left:3px solid #15465b"></div>
+          <div class="tree-item" style="padding-left:52px" data-file="spec" data-tooltip="What to build, in what order, for whom — turns your vision into AI-executable requirements." data-color="#2a9d8f">
+            <span class="tree-icon"><span class="icon i-file"></span></span>
+            <span class="tree-name">page-spec.md</span>
+            <span class="tree-hint" style="color:#2a9d8f">hover me</span>
+          </div>
+          <div class="tree-tooltip" id="tip-spec" style="margin-left:52px;border-left:3px solid #2a9d8f"></div>
+        </div>
+        <div class="tree-footer" id="treeFooter">Hover over a file to see what it does</div>
+      </div>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#16a34a">Look at how far you've come</div>
+        <div class="callout-text">Compare this output to your very first prompt. Same Claude. Same capabilities. The difference is entirely in how well you onboarded it. Three documents turned a day-one new hire into a team member who deeply understands your project.</div>
+      </div>
+
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 6: Memory & The Feedback Loop -->
+    <!-- ============================================ -->
+    <div class="step" id="step-6">
+      <p>Here's where it gets really interesting. A great manager doesn't just onboard once and walk away — they give feedback, and the team evolves. The project documentation stays current. Decisions get recorded so nobody has to re-learn them.</p>
+      <p>Claude can do the same thing. It doesn't just <em>read</em> your documentation — you can have Claude <em>create and update</em> documentation. This gives your project a living memory that persists between conversations.</p>
+
+      <div class="context-meter">
+        <div class="section-label">Context level</div>
+        <div class="meter-bar-track">
+          <div class="meter-bar-fill" style="width:100%;background:linear-gradient(90deg,#059669,#16a34a,#d97706)"></div>
+        </div>
+        <div class="meter-labels">
+          <span>Minimal</span>
+          <span>Rich</span>
+          <span class="meter-label-active" style="color:#059669">Engineered</span>
+        </div>
+      </div>
+
+      <div class="dark-card">
+        <h2>Documentation is AI's memory.</h2>
+        <p>Between conversations, AI forgets everything. But if the documentation is up to date, it remembers everything it needs to.</p>
+      </div>
+
+      <p>Go look at the landing page in your browser. Something probably isn't perfect. Maybe you want to change the tagline, tweak a color, or adjust the tone. Here's the key move: <strong>don't just fix the output — fix the documentation.</strong></p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #6 — Give feedback AND update docs</div>
+        <div class="prompt-block" id="prompt6">I like the page but I have some feedback:
+
+1. The hero section needs more breathing room — more padding above and below
+2. The CTA buttons should have slightly rounded corners (border-radius: 24px) and a subtle hover shadow
+3. The card descriptions feel too long — keep them to one sentence each
+
+Make these changes to index.html, AND update the relevant docs to reflect these decisions:
+- Add the button style preferences to the brand guide
+- Update the page spec to note that card descriptions should be single sentences
+
+This way, these decisions carry forward into future work.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt6', this)">Copy this prompt</button>
+      </div>
+
+      <p>Refresh your browser (F5). The page improved. But more importantly — <strong>the documentation improved</strong>. Your feedback is now permanent. The next time AI builds anything in this project, it already knows about your button preferences and card description rules.</p>
+
+      <div class="flow-diagram">
+        <div class="section-label" style="color:#eba714">The context engineering loop</div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="flow-step-icon"><span class="icon i-edit"></span></div>
+            <div class="flow-step-label">You direct</div>
+            <div class="flow-step-desc">Set goals, give requirements</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-icon"><span class="icon i-zap"></span></div>
+            <div class="flow-step-label">AI builds</div>
+            <div class="flow-step-desc">Executes based on context</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-icon"><span class="icon i-eye"></span></div>
+            <div class="flow-step-label">You review</div>
+            <div class="flow-step-desc">Evaluate the output</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-icon"><span class="icon i-refresh"></span></div>
+            <div class="flow-step-label">AI updates docs</div>
+            <div class="flow-step-desc">Records decisions</div>
+          </div>
+        </div>
+        <div class="flow-footer">↻ Docs carry forward into the next conversation</div>
+      </div>
+
+      <p>This is the full managerial loop: <strong>you direct, Claude builds, you review, and the documentation evolves.</strong> You don't need to read every document yourself — that's Claude's job. Your job is to manage the inputs, evaluate the outputs, and make sure decisions get recorded. Every correction becomes a permanent improvement to how Claude understands your project.</p>
+
+      <div class="section-label mt-16">More prompts that create memory</div>
+
+      <div class="iter-card">
+        <div class="iter-text">"That section doesn't match our voice. Make it warmer, and update the brand guide with an example of the right tone."</div>
+        <button class="iter-copy" onclick="copyIterText(this)">Copy</button>
+      </div>
+      <div class="iter-card">
+        <div class="iter-text">"I decided we're going with a single-column layout. Update the page spec and rebuild."</div>
+        <button class="iter-copy" onclick="copyIterText(this)">Copy</button>
+      </div>
+      <div class="iter-card">
+        <div class="iter-text">"Review the current docs and update anything that's out of date based on what we've actually built."</div>
+        <button class="iter-copy" onclick="copyIterText(this)">Copy</button>
+      </div>
+
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 7: The Full Picture -->
+    <!-- ============================================ -->
+    <div class="step" id="step-7">
+      <p>Let's put it all together. You've now used every layer of context engineering — and you built them all yourself.</p>
+
+      <div class="layer-stack">
+        <div class="layer-block" style="background:linear-gradient(135deg,#081f3f,#0d2a4f);color:#faf5f0">
+          <div class="layer-num" style="color:#d97706">01</div>
+          <div class="layer-info">
+            <div class="layer-title">In-Prompt Context</div>
+            <div class="layer-desc" style="color:#8aa4b8">Details typed directly into a conversation. Good for one-off tasks. You did this in step 2.</div>
+          </div>
+          <div class="layer-icon"><span class="icon i-chat"></span></div>
+        </div>
+        <div class="layer-block" style="background:linear-gradient(135deg,#15465b,#1d6a84);color:#faf5f0">
+          <div class="layer-num" style="color:#eba714">02</div>
+          <div class="layer-info">
+            <div class="layer-title">Project Instructions (CLAUDE.md)</div>
+            <div class="layer-desc" style="color:#a8c4d4">Persistent rules AI reads automatically. The foundation. You built this in step 3.</div>
+          </div>
+          <div class="layer-icon"><span class="icon i-sliders"></span></div>
+        </div>
+        <div class="layer-block" style="background:linear-gradient(135deg,#1d6a84,#2a9d8f);color:#faf5f0">
+          <div class="layer-num" style="color:#faf5f0">03</div>
+          <div class="layer-info">
+            <div class="layer-title">Project Documentation</div>
+            <div class="layer-desc" style="color:#c8e6e0">Brand guide, page spec — detailed references that shape everything AI creates. You built these in steps 4-5.</div>
+          </div>
+          <div class="layer-icon"><span class="icon i-book"></span></div>
+        </div>
+        <div class="layer-block" style="background:linear-gradient(135deg,#2a9d8f,#34d399);color:#081f3f">
+          <div class="layer-num" style="color:#081f3f">04</div>
+          <div class="layer-info">
+            <div class="layer-title">Document Hierarchy</div>
+            <div class="layer-desc" style="color:#0d4f3c">CLAUDE.md points to docs/. Docs reference each other. AI navigates a structured system. You built this in step 5.</div>
+          </div>
+          <div class="layer-icon"><span class="icon i-map"></span></div>
+        </div>
+        <div class="layer-block" style="background:linear-gradient(135deg,#d97706,#eba714);color:#081f3f">
+          <div class="layer-num" style="color:#78350f">05</div>
+          <div class="layer-info">
+            <div class="layer-title">AI-Maintained Memory</div>
+            <div class="layer-desc" style="color:#78350f">Feedback → doc updates. Decisions persist between sessions. You did this in step 6.</div>
+          </div>
+          <div class="layer-icon"><span class="icon i-database"></span></div>
+        </div>
+      </div>
+
+      <div class="dark-card">
+        <div style="font-size:36px;margin-bottom:8px"><span class="icon i-target"></span></div>
+        <h2>Match the onboarding to the ambition.</h2>
+        <p>A quick task needs a quick briefing. A serious project needs a full onboarding system. You now know how to build both — and every lever in between.</p>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">When to use each layer<span class="expand-arrow">▼</span></button>
+        <div class="expand-body">
+          <div style="line-height:2.2">
+            <strong>Quick one-off task:</strong> A chat message is fine — like a quick hallway ask<br>
+            <strong>Ongoing project:</strong> Add CLAUDE.md — like an onboarding doc<br>
+            <strong>Polished output:</strong> Add brand guide and spec docs — like a team wiki<br>
+            <strong>Multi-week project:</strong> Organize docs into folders with cross-references — like a full project workspace<br>
+            <strong>Long-running work:</strong> Have Claude maintain status, decisions, and progress docs — like a self-updating team knowledge base
+          </div>
+        </div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">Why this is a superpower for probabilistic systems<span class="expand-arrow">▼</span></button>
+        <div class="expand-body">
+          Documentation gives AI both the <strong>steering</strong> to stay on track and the <strong>freedom</strong> to compose creative solutions. You define the boundaries — AI fills the space inside them. That's why context-engineered output feels <em>new</em> and not predetermined. You're giving it the ingredients. The recipe it composes can surprise you. If the outcome was fully predetermined, AI wouldn't be that interesting of a tool. The magic is in the interpretation.
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 8: You're a Context Engineer -->
+    <!-- ============================================ -->
+    <div class="step" id="step-8">
+      <div class="dark-card">
+        <div style="font-size:36px;margin-bottom:8px"><span class="icon i-sparkle"></span></div>
+        <h2 style="font-size:24px">You're a context engineer.</h2>
+        <p>You didn't just learn a concept. You managed AI like a great manager manages a team — through clear onboarding, good documentation, and a feedback loop that makes everything better over time.</p>
+      </div>
+
+      <div style="font-size:16px;font-weight:600;color:#081f3f;margin-bottom:16px">What you built:</div>
+      <div class="mb-20">
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-target"></span></span><span class="recap-text">A no-onboarding baseline that showed what happens when Claude starts cold.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-chat"></span></span><span class="recap-text">A verbal briefing through chat that proved how much a good conversation shapes quality.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-sliders"></span></span><span class="recap-text">A CLAUDE.md onboarding document that makes every new conversation start prepared.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-book"></span></span><span class="recap-text">A brand guide that gives Claude deep reference material — like a team wiki.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-map"></span></span><span class="recap-text">A page spec that turns your vision into clear requirements Claude can execute independently.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-refresh"></span></span><span class="recap-text">A feedback loop where Claude updates its own documentation — creating living project memory.</span></div>
+      </div>
+
+      <div style="font-size:16px;font-weight:600;color:#081f3f;margin-bottom:12px">Apply this to your next project:</div>
+      <div class="next-grid">
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-file"></span></div>
+          <div class="next-card-title">Start with CLAUDE.md</div>
+          <div class="next-card-desc">5 rules for any new project</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-edit"></span></div>
+          <div class="next-card-title">Write a brand guide</div>
+          <div class="next-card-desc">Voice, colors, what to avoid</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-folder"></span></div>
+          <div class="next-card-title">Spec before you build</div>
+          <div class="next-card-desc">Requirements → execution</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-refresh"></span></div>
+          <div class="next-card-title">Close the loop</div>
+          <div class="next-card-desc">Feedback → update docs</div>
+        </div>
+      </div>
+
+      <p class="text-sm text-muted text-center">The gap between "person who uses AI" and "person who gets extraordinary results from AI" isn't technical skill — it's the managerial skill of onboarding well. You just learned it.</p>
+    </div>
+
+  </div>
+  </div><!-- /main-col -->
+
+  <!-- Target sidebar -->
+  <div class="target-sidebar" id="targetSidebar">
+    <div class="target-sidebar-inner">
+      <div class="target-label">Your target</div>
+      <div class="goal-mockup" id="sidebarMockup" onclick="openTargetModal()"></div>
+      <div class="target-expand-hint">Click to enlarge</div>
+      <div class="target-note" id="targetNote"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STEPS = [
+  { title: "Context Engineering", subtitle: "A prompt-along experience. Build context, watch your output transform." },
+  { title: "The Naive Prompt", subtitle: "Start where everyone starts — and see what generic output looks like." },
+  { title: "In-Prompt Context", subtitle: "Same task, richer prompt. Watch the output change." },
+  { title: "Project Instructions", subtitle: "Create CLAUDE.md — persistent rules AI follows every time." },
+  { title: "Project Documentation", subtitle: "Build a brand guide. See the output go from good to polished." },
+  { title: "Folder Architecture", subtitle: "Add a page spec. Watch AI build exactly what you envisioned." },
+  { title: "Memory & Feedback", subtitle: "Close the loop — feedback that updates documentation permanently." },
+  { title: "The Full Stack", subtitle: "All five layers, working together." },
+  { title: "You're a Context Engineer", subtitle: "What you built, and where to go next." },
+];
+
+let currentStep = 0;
+
+const RAIL_THUMBS = [
+  { label: "Setup",
+    visual: '<div style="display:flex;gap:4px"><div style="width:26px;height:30px;border-radius:4px;border:2px solid currentColor;opacity:0.5"></div><div style="width:26px;height:30px;border-radius:4px;border:2px solid currentColor"></div></div>' },
+  { label: "Naive",
+    visual: '<div style="width:52px;height:28px;border:2px dashed currentColor;border-radius:6px;opacity:0.4;display:flex;align-items:center;justify-content:center"><span style="font-size:16px">?</span></div>' },
+  { label: "Prompt",
+    visual: '<div style="width:56px;height:32px;background:currentColor;opacity:0.15;border-radius:5px;position:relative;overflow:hidden"><div style="position:absolute;top:8px;left:8px;width:20px;height:4px;background:currentColor;opacity:1;border-radius:2px"></div><div style="position:absolute;top:18px;left:8px;width:32px;height:4px;background:currentColor;opacity:0.5;border-radius:2px"></div></div>' },
+  { label: "Rules",
+    visual: '<div style="width:52px;display:flex;flex-direction:column;gap:4px"><div style="display:flex;gap:6px;align-items:center"><div style="width:16px;height:8px;border-radius:2px;background:currentColor"></div><div style="flex:1;height:3px;background:currentColor;opacity:0.3;border-radius:2px"></div></div><div style="display:flex;gap:6px;align-items:center"><div style="width:16px;height:8px;border-radius:2px;background:currentColor;opacity:0.8"></div><div style="flex:1;height:3px;background:currentColor;opacity:0.3;border-radius:2px"></div></div><div style="display:flex;gap:6px;align-items:center"><div style="width:16px;height:8px;border-radius:2px;background:currentColor;opacity:0.6"></div><div style="flex:1;height:3px;background:currentColor;opacity:0.3;border-radius:2px"></div></div></div>' },
+  { label: "Brand",
+    visual: '<div style="position:relative;width:56px;height:36px"><div style="position:absolute;bottom:16px;left:6px;right:6px;height:16px;border:2px solid currentColor;border-radius:4px;opacity:0.25"></div><div style="position:absolute;bottom:8px;left:3px;right:3px;height:16px;border:2px solid currentColor;border-radius:4px;opacity:0.5"></div><div style="position:absolute;bottom:0;left:0;right:0;height:16px;border:2px solid currentColor;border-radius:4px"></div></div>' },
+  { label: "Spec",
+    visual: '<div style="width:52px;display:flex;flex-direction:column;gap:4px"><div style="height:4px;background:currentColor;border-radius:2px"></div><div style="height:4px;background:currentColor;border-radius:2px;width:72%;margin-left:10px;opacity:0.6"></div><div style="height:4px;background:currentColor;border-radius:2px;width:72%;margin-left:10px;opacity:0.6"></div><div style="height:4px;background:currentColor;border-radius:2px;width:50%;margin-left:20px;opacity:0.4"></div></div>' },
+  { label: "Memory",
+    visual: '<div style="width:34px;height:34px;border:3px solid currentColor;border-radius:50%;border-top-color:transparent;position:relative"><div style="position:absolute;top:-3px;right:8px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid currentColor"></div></div>' },
+  { label: "Stack",
+    visual: '<div style="display:flex;flex-direction:column;gap:2px;width:52px"><div style="height:5px;background:currentColor;border-radius:2px"></div><div style="height:5px;background:currentColor;border-radius:2px;opacity:0.8"></div><div style="height:5px;background:currentColor;border-radius:2px;opacity:0.6"></div><div style="height:5px;background:currentColor;border-radius:2px;opacity:0.4"></div><div style="height:5px;background:currentColor;border-radius:2px;opacity:0.2"></div></div>' },
+  { label: "Done",
+    visual: '<div style="font-size:30px;line-height:1">&#9733;</div>' },
+];
+
+const railEl = document.getElementById("sectionRail");
+STEPS.forEach((step, i) => {
+  if (i > 0) {
+    const conn = document.createElement("div");
+    conn.className = "rail-connector upcoming";
+    conn.id = "rail-conn-" + i;
+    railEl.appendChild(conn);
+  }
+  const thumb = document.createElement("button");
+  thumb.className = "rail-thumb" + (i === 0 ? " current" : " upcoming");
+  thumb.id = "rail-thumb-" + i;
+  thumb.setAttribute("data-label", step.title);
+  thumb.innerHTML = '<div class="rail-thumb-visual">' + RAIL_THUMBS[i].visual + '</div><div class="rail-thumb-label">' + RAIL_THUMBS[i].label + '</div>';
+  thumb.onclick = () => goToStep(i);
+  railEl.appendChild(thumb);
+});
+
+function goToStep(n) {
+  document.getElementById("step-" + currentStep).classList.remove("active");
+  currentStep = n;
+  document.getElementById("step-" + currentStep).classList.add("active");
+  document.getElementById("stepTitle").textContent = STEPS[n].title;
+  document.getElementById("stepSubtitle").textContent = STEPS[n].subtitle;
+  document.getElementById("btnBack").style.display = n > 0 ? "" : "none";
+  const btnNext = document.getElementById("btnNext");
+  if (n >= STEPS.length - 1) { btnNext.style.display = "none"; }
+  else { btnNext.style.display = ""; btnNext.textContent = n === 0 ? "Let's go" : "Next step"; }
+  STEPS.forEach((_, i) => {
+    const thumb = document.getElementById("rail-thumb-" + i);
+    if (thumb) thumb.className = "rail-thumb " + (i < n ? "completed" : i === n ? "current" : "upcoming");
+    if (i > 0) { const conn = document.getElementById("rail-conn-" + i); if (conn) conn.className = "rail-connector " + (i <= n ? "completed" : "upcoming"); }
+  });
+  // Sidebar visibility
+  const sidebar = document.getElementById("targetSidebar");
+  const sidebarNote = document.getElementById("targetNote");
+  if (SIDEBAR_NOTES[n]) {
+    sidebar.classList.add("visible");
+    sidebarNote.textContent = SIDEBAR_NOTES[n];
+  } else {
+    sidebar.classList.remove("visible");
+  }
+  window.scrollTo(0, 0);
+}
+
+function nextStep() { if (currentStep < STEPS.length - 1) goToStep(currentStep + 1); }
+function prevStep() { if (currentStep > 0) goToStep(currentStep - 1); }
+
+// Folder tree hover
+document.querySelectorAll(".tree-item[data-file]").forEach(item => {
+  const file = item.getAttribute("data-file");
+  const tip = document.getElementById("tip-" + file);
+  const hint = item.querySelector(".tree-hint");
+  item.addEventListener("mouseenter", () => {
+    tip.textContent = item.getAttribute("data-tooltip");
+    tip.classList.add("visible");
+    if (hint) hint.textContent = "";
+    const footer = document.getElementById("treeFooter");
+    if (footer) footer.textContent = "";
+  });
+  item.addEventListener("mouseleave", () => {
+    tip.classList.remove("visible");
+    if (hint) hint.textContent = "hover me";
+    const footer = document.getElementById("treeFooter");
+    if (footer) footer.textContent = "Hover over a file to see what it does";
+  });
+});
+
+function toggleExpand(card) { card.classList.toggle("open"); }
+
+// Sidebar step notes
+const SIDEBAR_NOTES = {
+  1: "Your output probably looks nothing like this yet. Notice the wrong colors, generic text, and missing sections. Every gap is context Claude didn't have.",
+  2: "Getting closer! Colors and tone should be improving. But specific sections, content structure, and details still differ.",
+  3: "Right colors and fonts should now appear automatically — even with a short prompt. But Claude is still guessing at the content and sections.",
+  4: "Visual design should be very close now. The layout and content are getting there — a detailed spec will fix the rest.",
+  5: "This should be very close. Right sections, right order, right colors, right voice. Any remaining gaps are the kind feedback will fix.",
+  6: "After feedback and doc updates, your output should be remarkably close. Not identical — but clearly the same vision, the same brand."
+};
+
+// Populate sidebar mockup
+(function() {
+  const src = document.getElementById("goalMockup");
+  const sidebar = document.getElementById("sidebarMockup");
+  if (src && sidebar) sidebar.innerHTML = src.innerHTML;
+})();
+
+function copyPrompt(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add("copied");
+    btn.textContent = "Copied to clipboard!";
+    setTimeout(() => { btn.classList.remove("copied"); btn.textContent = "Copy this prompt"; }, 2000);
+  });
+}
+
+function copyIterText(btn) {
+  const text = btn.parentElement.querySelector(".iter-text").textContent.replace(/^"|"$/g, "");
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.textContent = "Copy"; }, 1500);
+  });
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") nextStep();
+  if (e.key === "ArrowLeft" || e.key === "ArrowUp") prevStep();
+  if (e.key === "Escape") closeTargetModal();
+});
+
+function openTargetModal() {
+  var overlay = document.getElementById("targetModal");
+  var modalMockup = document.getElementById("modalMockup");
+  var src = document.getElementById("goalMockup");
+  if (overlay && modalMockup && src) {
+    modalMockup.innerHTML = src.innerHTML;
+    overlay.classList.add("open");
+  }
+}
+function closeTargetModal() {
+  var overlay = document.getElementById("targetModal");
+  if (overlay) overlay.classList.remove("open");
+}
+</script>
+
+<!-- Target enlarged modal -->
+<div class="target-modal-overlay" id="targetModal" onclick="if(event.target===this)closeTargetModal()">
+  <div class="target-modal">
+    <button class="target-modal-close" onclick="closeTargetModal()">&times;</button>
+    <div class="target-modal-label">Your target</div>
+    <div class="goal-mockup" id="modalMockup"></div>
+  </div>
+</div>
+
+</body>
+</html>
