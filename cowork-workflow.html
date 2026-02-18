@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building Your First AI Workflow — Prompt Along</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Zilla+Slab&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #faf5f0; color: #081f3f; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .container { display: flex; gap: 24px; max-width: 780px; margin: 0 auto; padding: 20px 16px 20px 4px; min-height: 100vh; }
+  .main-col { flex: 1; min-width: 0; }
+
+  /* Section rail */
+  .section-rail { width: 88px; flex-shrink: 0; padding-top: 8px; }
+  .section-rail-inner { position: sticky; top: 80px; display: flex; flex-direction: column; align-items: center; }
+  .rail-thumb { width: 80px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; transition: all 0.25s ease; padding: 8px 6px 6px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-family: 'Inter', sans-serif; background: #f0ebe4; color: #b8a898; }
+  .rail-thumb-visual { display: flex; align-items: center; justify-content: center; height: 44px; }
+  .rail-thumb-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1; text-align: center; }
+  .rail-thumb.upcoming { background: #f0ebe4; color: #b8a898; border-color: transparent; }
+  .rail-thumb.upcoming .rail-thumb-visual { opacity: 0.45; }
+  .rail-thumb.completed { background: #fef3e2; color: #b45309; border-color: #eba714; }
+  .rail-thumb.current { background: #d97706; color: white; border-color: #b45309; box-shadow: 0 2px 10px rgba(217,119,6,0.4); transform: scale(1.06); }
+  .rail-connector { width: 2px; height: 6px; flex-shrink: 0; }
+  .rail-connector.completed { background: #eba714; }
+  .rail-connector.upcoming { background: #e8e0d8; }
+  .rail-thumb:hover::after { content: attr(data-label); position: absolute; left: 86px; top: 50%; transform: translateY(-50%); background: #081f3f; color: #faf5f0; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; white-space: nowrap; pointer-events: none; z-index: 30; }
+  .rail-thumb:hover::before { content: ''; position: absolute; left: 80px; top: 50%; transform: translateY(-50%); border: 5px solid transparent; border-right-color: #081f3f; pointer-events: none; z-index: 30; }
+
+  /* Icons */
+  .icon { display:inline-block;width:1em;height:1em;background:currentColor;vertical-align:-0.125em;flex-shrink:0;-webkit-mask:no-repeat center/contain;mask:no-repeat center/contain; }
+  .i-folder{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M2 6a2 2 0 012-2h4l3 3h9a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M2 6a2 2 0 012-2h4l3 3h9a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2z'/%3E%3C/svg%3E");}
+  .i-file{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");}
+  .i-eye{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");}
+  .i-gear{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");}
+  .i-zap{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");}
+  .i-sparkle{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");}
+  .i-check{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");}
+  .i-chat{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");}
+  .i-search{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");}
+  .i-rocket{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L8 14h8z'/%3E%3Cpath d='M10 14l-2 8 4-3 4 3-2-8'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L8 14h8z'/%3E%3Cpath d='M10 14l-2 8 4-3 4 3-2-8'/%3E%3C/svg%3E");}
+  .i-star{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");}
+  .i-target{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");}
+  .i-wrench{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");}
+  .i-grid{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18M3 15h18M9 3v18M15 3v18'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18M3 15h18M9 3v18M15 3v18'/%3E%3C/svg%3E");}
+  .i-refresh{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");}
+  .i-layers{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E");}
+  .i-edit{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E");}
+  .i-monitor{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='2' y='3' width='20' height='14' rx='2'/%3E%3Cpath d='M8 21h8M12 17v4'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='2' y='3' width='20' height='14' rx='2'/%3E%3Cpath d='M8 21h8M12 17v4'/%3E%3C/svg%3E");}
+  .i-chart{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M18 20V10M12 20V4M6 20v-6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M18 20V10M12 20V4M6 20v-6'/%3E%3C/svg%3E");}
+
+  /* Step header */
+  .step-header { margin-bottom: 24px; }
+  .step-header h1 { font-family: 'Zilla Slab', serif; font-size: 28px; font-weight: 400; color: #081f3f; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .step-header p { font-size: 16px; color: #15465b; }
+
+  /* Content */
+  .step-content { margin-bottom: 32px; }
+  .step { display: none; }
+  .step.active { display: block; min-height: calc(100vh - 240px); }
+  .step > p { font-size: 17px; line-height: 1.8; color: #081f3f; margin-bottom: 28px; }
+
+  /* Nav */
+  .nav-header { position: sticky; top: 0; background: #faf5f0; padding: 8px 0 12px; z-index: 10; }
+  .nav-header::after { content:''; display:block; height:20px; margin:0 -16px; background:linear-gradient(to top,transparent,#faf5f0); pointer-events:none; position:absolute; bottom:-20px; left:0; right:0; }
+  .nav { display: flex; gap: 12px; }
+  .btn { padding: 14px 20px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; font-family: 'Inter', sans-serif; }
+  .btn:hover { opacity: 0.9; }
+  .btn-back { flex: 1; border: 1px solid #e8e0d8; background: white; color: #15465b; }
+  .btn-next { flex: 2; background: #d97706; color: white; }
+
+  /* Components */
+  .callout { padding: 18px 22px; border-radius: 0 12px 12px 0; margin-bottom: 28px; }
+  .callout-purple { background: #fef9f0; border-left: 4px solid #081f3f; }
+  .callout-green { background: #f0fdf4; border-left: 4px solid #16a34a; }
+  .callout-blue { background: #f0f5f7; border-left: 4px solid #15465b; }
+  .callout-amber { background: #fef9f0; border-left: 4px solid #d97706; }
+  .callout-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .callout-text { font-size: 13px; color: #15465b; line-height: 1.7; }
+
+  .dark-card { background: #081f3f; border-radius: 16px; padding: 32px; margin-bottom: 32px; text-align: center; }
+  .dark-card h2 { font-family: 'Zilla Slab', serif; font-size: 22px; font-weight: 400; color: #faf5f0; margin-bottom: 8px; }
+  .dark-card p { font-size: 14px; color: #eba714; line-height: 1.7; }
+
+  .section-label { font-size:11px; font-weight:600; color:#15465b; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; text-align:center; font-family:'Inter',sans-serif; }
+
+  .prompt-block { background:#081f3f; color:#faf5f0; border-radius:12px; padding:20px; font-size:14px; line-height:1.7; font-family:monospace; white-space:pre-wrap; margin-bottom:12px; }
+  .copy-btn { width:100%; padding:10px 20px; border-radius:8px; border:none; font-size:14px; font-weight:600; cursor:pointer; background:#d97706; color:white; transition:background 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Inter',sans-serif; }
+  .copy-btn.copied { background:#059669; }
+
+  .action-box { background:linear-gradient(135deg,#fef9f0,#fef3e2); border:2px solid #d97706; border-radius:16px; padding:24px; margin-bottom:32px; }
+  .action-box-label { font-size:11px; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .action-box-step { font-size:14px; color:#081f3f; line-height:1.8; }
+  .action-box-step ol { padding-left:20px; }
+  .action-box-step li { margin-bottom:6px; }
+
+  .expand-card { border: 1px solid #e8e0d8; border-radius: 12px; margin-bottom: 28px; overflow: hidden; background: white; }
+  .expand-header { width:100%; padding:14px 18px; background:none; border:none; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:15px; font-weight:600; color:#081f3f; text-align:left; font-family:inherit; }
+  .expand-arrow { font-size:12px; color:#15465b; transition:transform 0.2s; }
+  .expand-card.open .expand-arrow { transform:rotate(180deg); }
+  .expand-body { padding:0 18px 16px; color:#15465b; font-size:14px; line-height:1.7; display:none; }
+  .expand-card.open .expand-body { display:block; }
+
+  .success-card { background:#f0fdf4; border-radius:12px; padding:24px; border:1px solid #bbf7d0; text-align:center; margin-top:20px; margin-bottom:28px; }
+  .success-icon { font-size:28px; margin-bottom:8px; }
+  .success-title { font-size:16px; font-weight:700; color:#15803d; margin-bottom:8px; }
+  .success-text { font-size:14px; color:#15465b; line-height:1.7; }
+
+  .folder-tree { background:white; border-radius:16px; border:1px solid #e8e0d8; padding:20px 12px; margin-bottom:32px; }
+  .tree-header { padding:0 12px 10px; border-bottom:1px solid #f0ebe4; margin-bottom:8px; }
+  .tree-item { display:flex; align-items:center; gap:8px; padding:6px 12px; border-radius:8px; cursor:pointer; transition:background 0.15s; }
+  .tree-item:hover { background:#fef9f0; }
+  .tree-item.folder { cursor:default; }
+  .tree-item.folder:hover { background:transparent; }
+  .tree-icon { font-size:16px; }
+  .tree-name { font-family:monospace; font-size:14px; color:#081f3f; }
+  .tree-name.folder-name { color:#081f3f; font-weight:700; }
+  .tree-hint { font-size:11px; font-weight:600; margin-left:auto; opacity:0.5; transition:opacity 0.15s; }
+  .tree-item:hover .tree-hint { opacity:1; }
+  .tree-tooltip { padding:8px 14px; border-radius:0 8px 8px 0; font-size:13px; color:#15465b; line-height:1.5; margin-bottom:4px; background:#faf5f0; display:none; }
+  .tree-tooltip.visible { display:block; }
+  .tree-footer { text-align:center; font-size:12px; color:#15465b; margin-top:10px; font-style:italic; }
+
+  /* Compare split */
+  .compare-split { display:flex; gap:0; margin-bottom:28px; border-radius:16px; overflow:hidden; border:1px solid #e8e0d8; }
+  .compare-side { flex:1; padding:20px; }
+  .compare-naive { background:#f7f3ee; }
+  .compare-ctx { background:#fef9f0; }
+  .compare-badge { font-size:10px; font-weight:700; padding:4px 10px; border-radius:20px; display:inline-block; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px; }
+  .compare-divider { width:2px; background:#e8e0d8; position:relative; display:flex; align-items:center; justify-content:center; }
+  .compare-divider-dot { position:absolute; background:white; border:2px solid #e8e0d8; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:12px; }
+
+  /* Recap list */
+  .recap-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f0ebe4; align-items:flex-start; }
+  .recap-item:last-child { border-bottom:none; }
+  .recap-num { font-size:14px; font-weight:700; color:#d97706; min-width:24px; padding-top:2px; }
+  .recap-text { font-size:14px; color:#15465b; line-height:1.6; }
+
+  /* Next grid */
+  .next-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px; }
+  .next-card { background:white; border-radius:12px; padding:16px; border:1px solid #e8e0d8; text-align:center; }
+  .next-card-icon { font-size:24px; margin-bottom:6px; }
+  .next-card-title { font-size:14px; font-weight:700; color:#081f3f; margin-bottom:4px; }
+  .next-card-desc { font-size:12px; color:#15465b; line-height:1.4; }
+
+  /* Trace diagram */
+  .trace-flow { background:linear-gradient(135deg,#081f3f,#15465b); border-radius:16px; padding:24px; margin-bottom:32px; }
+  .trace-step { display:flex; align-items:center; gap:12px; padding:8px 0; }
+  .trace-num { width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#faf5f0; flex-shrink:0; }
+  .trace-text { font-size:13px; color:#faf5f0; line-height:1.5; }
+  .trace-text strong { color:#eba714; }
+  .trace-arrow { text-align:center; color:#d97706; font-size:14px; padding:2px 0; padding-left:8px; }
+
+  .text-center { text-align:center; }
+  .text-muted { color:#15465b; }
+  .text-sm { font-size:15px; line-height:1.7; }
+  .mt-16 { margin-top:24px; }
+  .mb-20 { margin-bottom:28px; }
+  .mb-24 { margin-bottom:32px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="section-rail">
+    <div class="section-rail-inner" id="sectionRail"></div>
+  </div>
+
+  <div class="main-col">
+  <div class="nav-header">
+    <div class="nav">
+      <button class="btn btn-back" id="btnBack" onclick="prevStep()" style="display:none">Back</button>
+      <button class="btn btn-next" id="btnNext" onclick="nextStep()">Let's go</button>
+    </div>
+  </div>
+
+  <div class="step-header">
+    <h1 id="stepTitle">Building Your First AI Workflow</h1>
+    <p id="stepSubtitle">Graduate from Claude Chat to Claude Cowork. Build a content repurposing system.</p>
+  </div>
+
+  <div class="step-content">
+
+    <!-- ============================================ -->
+    <!-- STEP 0: Welcome -->
+    <!-- ============================================ -->
+    <div class="step active" id="step-0">
+      <p>You've used Claude Chat. You've uploaded files to a Claude Project. You've seen how giving Claude more context produces better work. Now it's time to graduate. You're going to build a <strong>system</strong> — not just send prompts.</p>
+      <p>In this prompt-along, you'll build a content repurposing pipeline with Claude Cowork. You'll drop in a piece of source content — a blog post, meeting notes, anything you've written — and Claude will transform it into social media posts, email newsletters, summaries, and more. All managed through a structured folder on your computer.</p>
+
+      <div class="dark-card">
+        <h2>You already know how to manage AI. You've been practicing.</h2>
+        <p>Every time you uploaded a brand guide to a Claude Project, you were building context. Every time you set project instructions, you were writing steering documents. Cowork is the same skill set — with no walls.</p>
+      </div>
+
+      <!-- What you'll build — output preview strip -->
+      <div style="margin-bottom:28px">
+        <div class="section-label" style="margin-bottom:12px">Here's what your system will produce</div>
+        <p style="font-size:14px;color:#15465b;margin-bottom:16px">From a single piece of source content, your pipeline will generate all of these — automatically, consistently, every time you run it.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <!-- LinkedIn -->
+          <div style="background:white;border-radius:12px;border:1px solid #e8e0d8;padding:14px;display:flex;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;border-radius:50%;background:#0a66c2;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z"/></svg>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#081f3f">LinkedIn Post</div>
+              <div style="font-size:10px;color:#b8a898">Professional thought leadership</div>
+            </div>
+          </div>
+          <!-- Twitter -->
+          <div style="background:white;border-radius:12px;border:1px solid #e8e0d8;padding:14px;display:flex;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;border-radius:50%;background:#081f3f;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#081f3f">Twitter Thread</div>
+              <div style="font-size:10px;color:#b8a898">Bite-sized insights</div>
+            </div>
+          </div>
+          <!-- Newsletter -->
+          <div style="background:white;border-radius:12px;border:1px solid #e8e0d8;padding:14px;display:flex;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;border-radius:50%;background:#d97706;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7"/></svg>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#081f3f">Email Newsletter</div>
+              <div style="font-size:10px;color:#b8a898">Subscriber-ready section</div>
+            </div>
+          </div>
+          <!-- Summary -->
+          <div style="background:white;border-radius:12px;border:1px solid #e8e0d8;padding:14px;display:flex;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;border-radius:50%;background:#15465b;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h8"/></svg>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#081f3f">Summary Brief</div>
+              <div style="font-size:10px;color:#b8a898">Clean executive summary</div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:12px;color:#b8a898;text-align:center;margin-top:10px">One source in → multiple outputs out — each tailored to its platform</p>
+      </div>
+
+      <div class="compare-split">
+        <div class="compare-side compare-naive">
+          <div class="compare-badge" style="background:#f0ebe4;color:#081f3f">Claude Projects — where you've been</div>
+          <div style="font-size:13px;color:#15465b;line-height:2">
+            <div>Upload files manually</div>
+            <div>Flat file list, no subfolders</div>
+            <div>Limited number of project files</div>
+            <div>Can't edit files in place</div>
+            <div>Chat-only interface</div>
+          </div>
+        </div>
+        <div class="compare-divider"><div class="compare-divider-dot">&#8594;</div></div>
+        <div class="compare-side compare-ctx">
+          <div class="compare-badge" style="background:#fef3e2;color:#b45309">Claude Cowork — where you're going</div>
+          <div style="font-size:13px;color:#15465b;line-height:2">
+            <div>Claude reads &amp; writes files directly</div>
+            <div>Full directory with nested folders</div>
+            <div>As many files as you need</div>
+            <div>Claude edits files automatically</div>
+            <div>Chat + file system + tool access</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#16a34a">New to Claude Projects?</div>
+        <div class="callout-text">That's fine too. This tutorial teaches the principles from scratch — Cowork just lets you apply them at full scale from the start.</div>
+      </div>
+
+      <!-- Three-window setup -->
+      <div style="background:white;border-radius:16px;padding:20px;border:1px solid #e8e0d8;margin-bottom:28px">
+        <div class="section-label">Set up your screen — three windows</div>
+        <p style="text-align:center;font-size:13px;color:#15465b;margin-bottom:14px">Unlike previous tutorials, you'll work between <strong>three</strong> windows. Arrange them side by side.</p>
+        <div style="background:#081f3f;border-radius:12px;padding:10px 10px 14px;position:relative">
+          <div style="display:flex;gap:5px;margin-bottom:10px;padding-left:4px">
+            <div style="width:8px;height:8px;border-radius:50%;background:#ef4444"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#22c55e"></div>
+            <span style="font-size:10px;color:#5a7a8a;margin-left:auto;padding-right:4px">Your desktop</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <div style="flex:1;background:#fff;border-radius:8px;padding:10px;border:2px solid #d97706">
+              <div style="font-size:9px;color:#15465b;margin-bottom:6px">Browser — This Guide</div>
+              <div style="background:linear-gradient(90deg,#d97706,#eba714);height:3px;border-radius:3px;width:30%;margin-bottom:6px"></div>
+              <div style="font-size:10px;font-weight:700;color:#081f3f;margin-bottom:3px">AI Workflow</div>
+              <div style="height:3px;background:#e8e0d8;border-radius:2px;width:80%;margin-bottom:2px"></div>
+              <div style="height:3px;background:#e8e0d8;border-radius:2px;width:60%"></div>
+            </div>
+            <div style="flex:1;background:#f7f3ee;border-radius:8px;padding:10px;border:2px solid #15465b">
+              <div style="font-size:9px;color:#5a7a8a;margin-bottom:6px">Claude Cowork</div>
+              <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
+                <div style="width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,#d97706,#eba714)"></div>
+                <span style="font-weight:700;color:#081f3f;font-size:10px">Claude</span>
+              </div>
+              <div style="background:#fff;border-radius:4px;padding:5px;border:1px solid #e8e0d8">
+                <div style="color:#5a7a8a;font-size:9px">Talk to Claude here &#9646;</div>
+              </div>
+            </div>
+            <div style="flex:1;background:#f7f3ee;border-radius:8px;padding:10px;border:2px solid #16a34a">
+              <div style="font-size:9px;color:#5a7a8a;margin-bottom:6px">File Explorer</div>
+              <div style="display:flex;flex-direction:column;gap:3px">
+                <div style="display:flex;align-items:center;gap:4px"><span style="font-size:12px" class="icon i-folder"></span><span style="font-size:9px;font-weight:700;color:#081f3f">content-workflow</span></div>
+                <div style="margin-left:14px;display:flex;flex-direction:column;gap:2px">
+                  <div style="height:3px;background:#e8e0d8;border-radius:2px;width:70%"></div>
+                  <div style="height:3px;background:#e8e0d8;border-radius:2px;width:50%"></div>
+                </div>
+                <div style="font-size:8px;color:#16a34a;font-weight:600;margin-top:2px">Watch files appear</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:12px">
+          <div style="flex:1;text-align:center;font-size:11px;color:#081f3f"><strong style="color:#d97706">Left:</strong> This guide — follow along</div>
+          <div style="flex:1;text-align:center;font-size:11px;color:#081f3f"><strong style="color:#15465b">Center:</strong> Claude Cowork — conversations &amp; work</div>
+          <div style="flex:1;text-align:center;font-size:11px;color:#081f3f"><strong style="color:#16a34a">Right:</strong> File Explorer — watch it build</div>
+        </div>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Set up your workspace</div>
+        <div class="action-box-step">
+          <ol>
+            <li><strong>Create a folder</strong> on your Desktop called <code style="background:#fff;padding:2px 8px;border-radius:4px;font-weight:600">content-workflow</code></li>
+            <li><strong>Open the Claude Cowork app</strong> on your computer (requires a Pro, Max, Team, or Enterprise subscription)</li>
+            <li><strong>Point Cowork at your folder</strong> — select the <code style="background:#fff;padding:2px 8px;border-radius:4px;font-weight:600">content-workflow</code> folder when prompted. This gives Claude read and write access to that directory.</li>
+            <li><strong>Open File Explorer</strong> (Windows) or <strong>Finder</strong> (Mac) and navigate to the <code style="background:#fff;padding:2px 8px;border-radius:4px;font-weight:600">content-workflow</code> folder</li>
+            <li><strong>Arrange all three windows</strong> side by side on your screen</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">What is Claude Cowork?</div>
+        <div class="callout-text">Claude Cowork is a mode in the Claude desktop app that gives Claude native access to a folder on your computer. Unlike Claude Chat (where you upload files one by one), Cowork can read, create, and edit files directly — like a teammate who has access to the shared drive. You don't need to configure anything technical. Just point it at a folder and start talking.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 1: The Onboarding Conversation -->
+    <!-- ============================================ -->
+    <div class="step" id="step-1">
+      <p>When you onboard a new team member, you don't hand them a task on day one. You have a conversation. You explain the project, the goals, who the audience is, what success looks like. Claude is your new team member. Let's onboard it.</p>
+      <p>The key insight: <strong>you don't have to write all the documentation yourself.</strong> You have a conversation with Claude about what you want, and Claude drafts the documentation based on what you tell it. Your job is to talk about your project — Claude's job is to turn that into structured files.</p>
+
+      <div class="dark-card">
+        <h2>Talk first. Document second.</h2>
+        <p>The best steering documents come from conversations, not from sitting down and writing a spec from scratch. Tell Claude what you're trying to do. Let it ask you questions. Then have it crystallize your answers into files.</p>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #1 — Start the onboarding conversation</div>
+        <div class="prompt-block" id="prompt1">I'm starting a new project. I want to build a content repurposing system. Here's the idea:
+
+I regularly create content — blog posts, meeting notes, project updates, long-form writing. Right now, each piece of content gets used once and forgotten. I want a system where I can drop a piece of source content into this folder, and you help me turn it into multiple outputs: social media posts, an email newsletter section, a summary brief, and a key quotes collection.
+
+Before we build anything, I want you to understand the project fully. Ask me questions about:
+- Who my audience is across these different channels
+- What tone and voice I use (or want to use)
+- What platforms I post on and their constraints
+- What a good output looks like for each format
+- How I want to review and approve outputs before they go live
+
+Ask me 3-5 questions to start. We'll go back and forth until you have a clear picture.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt1', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">Notice what's happening</div>
+        <div class="callout-text">You're not asking Claude to produce anything yet. You're starting a <em>conversation</em> — the same way you'd sit down with a new hire over coffee and explain the project. Claude's questions will surface details you might not have thought to include. That's the value.</div>
+      </div>
+
+      <p>Claude will ask you questions. Answer them naturally — use your own voice, your own brand, your own audience. There's no wrong answer. The point is to surface the details Claude needs to build a system tailored to <em>your</em> work.</p>
+
+      <div class="callout callout-amber">
+        <div class="callout-title" style="color:#b45309">Take your time with this</div>
+        <div class="callout-text">Go back and forth 3-4 rounds with Claude. The more Claude understands now, the less you'll need to correct later. This conversation <em>is</em> the foundation of the whole system. Don't rush it.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 2: Crystallize into Documents -->
+    <!-- ============================================ -->
+    <div class="step" id="step-2">
+      <p>You've had the conversation. Claude now understands your project. But if you closed this chat and started a new one, Claude would forget everything. Let's fix that. We're going to ask Claude to take everything it learned and write it down — as real files in your folder.</p>
+      <p>Watch your file explorer as you send this next prompt. You're about to see the folder go from empty to populated.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #2 — Generate the steering documents</div>
+        <div class="prompt-block" id="prompt2">Great, I think you have a solid understanding of my project now. I'd like you to create the following documentation files in this workspace. Base everything on our conversation — don't use generic placeholders.
+
+1. Create a docs/ folder and inside it create:
+   - project-overview.md — What this project is, who it's for, what we're trying to achieve. This is the north star document.
+   - brand-guidelines.md — My voice, tone, style across channels. What I sound like, what I never say, and how I adapt for different platforms.
+   - process.md — Step-by-step instructions for how you should process a new piece of source content. What to read first, what to produce, in what order, and where to save outputs.
+
+2. Create a CLAUDE.md file in the root of the workspace that references all of these docs. This should contain:
+   - A one-paragraph project summary
+   - Rules for how you work in this project (always read process.md first, always follow brand guidelines, etc.)
+   - References to each doc with @docs/filename.md syntax
+
+Save everything as real files. I want to see them in my file explorer.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt2', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">Look at your file explorer right now</div>
+        <div class="callout-text">A moment ago, that folder was empty. Now it has a structure — folders, documents, a project configuration file. You didn't write any of those documents by hand. You had a conversation, and Claude turned it into a workspace. <strong>The conversation was the work. The documents are the output.</strong></div>
+      </div>
+
+      <div class="folder-tree">
+        <div class="tree-header section-label" style="text-align:left;margin-bottom:0">Your workspace now looks like this</div>
+        <div>
+          <div class="tree-item folder" style="padding-left:12px">
+            <span class="tree-icon"><span class="icon i-folder"></span></span>
+            <span class="tree-name folder-name">content-workflow</span>
+          </div>
+          <div class="tree-item" style="padding-left:32px" data-file="claude-md" data-tooltip="Project instructions — Claude reads this first, every time. Points to your other docs for detail." data-color="#d97706">
+            <span class="tree-icon"><span class="icon i-file"></span></span>
+            <span class="tree-name">CLAUDE.md</span>
+            <span class="tree-hint" style="color:#d97706">hover me</span>
+          </div>
+          <div class="tree-tooltip" id="tip-claude-md" style="margin-left:32px;border-left:3px solid #d97706"></div>
+          <div class="tree-item folder" style="padding-left:32px">
+            <span class="tree-icon"><span class="icon i-folder"></span></span>
+            <span class="tree-name folder-name">docs</span>
+          </div>
+          <div class="tree-item" style="padding-left:52px" data-file="overview" data-tooltip="What we're building and why — the north star Claude checks before doing anything." data-color="#15465b">
+            <span class="tree-icon"><span class="icon i-file"></span></span>
+            <span class="tree-name">project-overview.md</span>
+            <span class="tree-hint" style="color:#15465b">hover me</span>
+          </div>
+          <div class="tree-tooltip" id="tip-overview" style="margin-left:52px;border-left:3px solid #15465b"></div>
+          <div class="tree-item" style="padding-left:52px" data-file="brand" data-tooltip="Your voice, tone, and style — ensures Claude sounds like you on every platform." data-color="#16a34a">
+            <span class="tree-icon"><span class="icon i-file"></span></span>
+            <span class="tree-name">brand-guidelines.md</span>
+            <span class="tree-hint" style="color:#16a34a">hover me</span>
+          </div>
+          <div class="tree-tooltip" id="tip-brand" style="margin-left:52px;border-left:3px solid #16a34a"></div>
+          <div class="tree-item" style="padding-left:52px" data-file="process" data-tooltip="Step-by-step workflow — the choreography Claude follows when processing content." data-color="#d97706">
+            <span class="tree-icon"><span class="icon i-file"></span></span>
+            <span class="tree-name">process.md</span>
+            <span class="tree-hint" style="color:#d97706">hover me</span>
+          </div>
+          <div class="tree-tooltip" id="tip-process" style="margin-left:52px;border-left:3px solid #d97706"></div>
+        </div>
+        <div class="tree-footer">Hover over a file to see what it does</div>
+      </div>
+
+      <p>Open each file. Read them. These are <em>your</em> documents — written in <em>your</em> voice, based on <em>your</em> answers. If something doesn't sound right, we'll fix it in a moment. But first, let's understand why this structure matters.</p>
+
+      <div class="success-card">
+        <div class="success-icon"><span class="icon i-sparkle"></span></div>
+        <div class="success-title">Conversation became documentation.</div>
+        <div class="success-text">You didn't write a spec from scratch. You talked about your project, and Claude crystallized it into files that will persist across every future session. That's the workflow: talk, then crystallize.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 3: Why Directory Structure Matters -->
+    <!-- ============================================ -->
+    <div class="step" id="step-3">
+      <p>This step has no prompt to copy. It's a pause. Because the directory structure you just created is the most important thing in the entire project, and most people blow right past it.</p>
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2>The folder is three things at once.</h2>
+        <p>It's Claude's workspace. It's your map. It's the iteration surface. If you understand the folder, you can debug any problem, improve any output, and scale the system indefinitely.</p>
+      </div>
+
+      <div style="background:white;border-radius:16px;border:1px solid #e8e0d8;margin-bottom:28px;overflow:hidden">
+        <div style="padding:20px 22px 16px;border-bottom:1px solid #f0ebe4">
+          <div style="font-size:15px;font-weight:600;color:#081f3f;margin-bottom:4px"><span class="icon i-folder" style="font-size:16px;color:#d97706"></span> &nbsp;The folder is Claude's workspace</div>
+          <div style="font-size:13px;color:#15465b;line-height:1.7">Claude needs to know where to find things — inputs, instructions, outputs. A flat folder with 30 files is chaos. Claude will grab the wrong context, overwrite things, or lose track of state. A well-structured directory is like a well-organized kitchen: everything has a place, and the chef can move fast because they're not searching for ingredients.</div>
+        </div>
+        <div style="padding:20px 22px 16px;border-bottom:1px solid #f0ebe4">
+          <div style="font-size:15px;font-weight:600;color:#081f3f;margin-bottom:4px"><span class="icon i-search" style="font-size:16px;color:#d97706"></span> &nbsp;The folder is your map</div>
+          <div style="font-size:13px;color:#15465b;line-height:1.7">When something goes wrong — and it will — you need to trace the problem. "The newsletter tone is off" becomes a solvable problem when you can say: "Claude read brand-guidelines.md, then source-content.md, then wrote to outputs/newsletter.md. The issue is in brand-guidelines.md — it doesn't mention that we're casual on email but professional on LinkedIn." Without structure, debugging is just "I don't know, it sounds wrong."</div>
+        </div>
+        <div style="padding:20px 22px 16px">
+          <div style="font-size:15px;font-weight:600;color:#081f3f;margin-bottom:4px"><span class="icon i-refresh" style="font-size:16px;color:#d97706"></span> &nbsp;The folder is the iteration surface</div>
+          <div style="font-size:13px;color:#15465b;line-height:1.7">When you want to improve the system, you're not rewriting prompts — you're editing files in specific folders. Want better social posts? Edit docs/brand-guidelines.md. Want a different process order? Edit docs/process.md. The directory structure tells you <em>where to make changes</em> — which is half the battle.</div>
+        </div>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-target" style="font-size:14px"></span> Comprehension check — test yourself</div>
+        <div class="action-box-step">
+          <p style="margin-bottom:12px">Before we continue, look at each folder and file in your workspace. For each one, answer these three questions:</p>
+          <ol>
+            <li><strong>What goes in here?</strong> (inputs, outputs, instructions, templates, tracking)</li>
+            <li><strong>Who puts things here?</strong> (you, Claude, or both)</li>
+            <li><strong>When does this folder get used?</strong> (at the start, during processing, at the end, ongoing)</li>
+          </ol>
+          <p style="margin-top:12px">If you can't answer those three questions for a folder, ask Claude what it's for. And if you <em>can</em> answer them — you understand how Claude will navigate your system.</p>
+        </div>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">This is what separates casual AI users from effective AI managers</div>
+        <div class="callout-text">Most tutorials would say "create these folders" and move on. But the directory structure is the system. It determines how Claude works, how you debug problems, and how the project improves over time. Invest in understanding it now — it pays dividends on every single task.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 4: Expand the Workspace -->
+    <!-- ============================================ -->
+    <div class="step" id="step-4">
+      <p>Your workspace has steering documents, but it doesn't have places for the actual work to happen yet. There's no input folder, no output folder, no place for templates or tracking. Let's have Claude design the rest — and ask it to show us what the system looks like.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #3 — Build out the full directory</div>
+        <div class="prompt-block" id="prompt3">Now I want to build out the full directory structure for this project. Right now we have docs/ with our steering documents. But we need places for:
+- Source content I'll drop in for processing
+- Outputs organized by type (social posts, newsletters, summaries, etc.)
+- Templates for each output type (so outputs are consistent)
+- A tracking system so we know what's been processed and what's pending review
+
+Propose a complete directory structure. Create all the folders and add a brief README.md inside each one explaining what goes there and who manages it (me or you). Also create an initial task-tracker.md in the tracking folder.
+
+After you create everything, show me an artifact that visualizes the complete directory structure — like a map of the workspace. For each folder, show its purpose and whether I manage it or you manage it.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt3', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">Artifacts are your review surface</div>
+        <div class="callout-text">Notice that last line — "show me an artifact." The raw files live in the folder, but <strong>artifacts are how you review and think</strong>. You'll see a visual representation of your workspace rendered in the conversation, while the actual files appear in your file explorer simultaneously. The folder is the warehouse. The artifact is the showroom.</div>
+      </div>
+
+      <p>Look at your file explorer. The workspace just expanded significantly. Now let's trace how content will actually flow through it before we run anything.</p>
+
+      <!-- Two-layer workflow diagram: unified columns with flow nodes on top, directories below -->
+      <div style="background:linear-gradient(135deg,#081f3f,#15465b);border-radius:16px;padding:24px 16px;margin-bottom:32px;overflow-x:auto">
+        <div class="section-label" style="color:#eba714;margin-bottom:16px">The journey of a piece of content through your system</div>
+
+        <div style="display:flex;align-items:stretch;min-width:600px">
+
+          <!-- Column 1: Ingest / inputs -->
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;text-align:center">
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(217,119,6,0.2);border:2px solid #d97706;display:flex;align-items:center;justify-content:center;margin-bottom:6px"><span class="icon i-edit" style="font-size:20px;color:#d97706"></span></div>
+            <div style="font-size:11px;font-weight:700;color:#faf5f0">Ingest</div>
+            <div style="font-size:9px;color:#eba714;margin-bottom:10px">You drop content in</div>
+            <div style="width:2px;height:14px;background:rgba(217,119,6,0.4);margin-bottom:10px"></div>
+            <div style="background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.3);border-radius:8px;padding:8px 8px;width:100%;max-width:110px">
+              <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:4px"><span class="icon i-folder" style="font-size:13px;color:#d97706"></span><span style="font-size:10px;font-weight:700;color:#d97706">inputs/</span></div>
+              <div style="font-size:9px;color:#faf5f0;opacity:0.7;line-height:1.3">blog-post.md</div>
+            </div>
+          </div>
+
+          <!-- Arrow -->
+          <div style="display:flex;align-items:center;padding-top:14px;color:#d97706;font-size:16px;flex-shrink:0;width:20px;justify-content:center">&#8594;</div>
+
+          <!-- Column 2: Read / docs -->
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;text-align:center">
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:6px"><span class="icon i-file" style="font-size:20px;color:#faf5f0"></span></div>
+            <div style="font-size:11px;font-weight:700;color:#faf5f0">Read</div>
+            <div style="font-size:9px;color:#eba714;margin-bottom:10px">Process + guidelines</div>
+            <div style="width:2px;height:14px;background:rgba(255,255,255,0.15);margin-bottom:10px"></div>
+            <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 8px;width:100%;max-width:110px">
+              <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:4px"><span class="icon i-folder" style="font-size:13px;color:#faf5f0;opacity:0.7"></span><span style="font-size:10px;font-weight:700;color:#faf5f0;opacity:0.8">docs/</span></div>
+              <div style="font-size:9px;color:#faf5f0;opacity:0.5;line-height:1.3">process.md<br>brand-guidelines.md</div>
+            </div>
+          </div>
+
+          <!-- Arrow -->
+          <div style="display:flex;align-items:center;padding-top:14px;color:#d97706;font-size:16px;flex-shrink:0;width:20px;justify-content:center">&#8594;</div>
+
+          <!-- Column 3: Format / templates -->
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;text-align:center">
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:6px"><span class="icon i-layers" style="font-size:20px;color:#faf5f0"></span></div>
+            <div style="font-size:11px;font-weight:700;color:#faf5f0">Format</div>
+            <div style="font-size:9px;color:#eba714;margin-bottom:10px">Apply templates</div>
+            <div style="width:2px;height:14px;background:rgba(255,255,255,0.15);margin-bottom:10px"></div>
+            <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 8px;width:100%;max-width:110px">
+              <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:4px"><span class="icon i-folder" style="font-size:13px;color:#faf5f0;opacity:0.7"></span><span style="font-size:10px;font-weight:700;color:#faf5f0;opacity:0.8">templates/</span></div>
+              <div style="font-size:9px;color:#faf5f0;opacity:0.5;line-height:1.3">linkedin.md<br>newsletter.md</div>
+            </div>
+          </div>
+
+          <!-- Arrow -->
+          <div style="display:flex;align-items:center;padding-top:14px;color:#d97706;font-size:16px;flex-shrink:0;width:20px;justify-content:center">&#8594;</div>
+
+          <!-- Column 4: Generate / outputs -->
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;text-align:center">
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(217,119,6,0.2);border:2px solid #d97706;display:flex;align-items:center;justify-content:center;margin-bottom:6px"><span class="icon i-zap" style="font-size:20px;color:#d97706"></span></div>
+            <div style="font-size:11px;font-weight:700;color:#faf5f0">Generate</div>
+            <div style="font-size:9px;color:#eba714;margin-bottom:10px">Write all outputs</div>
+            <div style="width:2px;height:14px;background:rgba(217,119,6,0.4);margin-bottom:10px"></div>
+            <div style="background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.3);border-radius:8px;padding:8px 8px;width:100%;max-width:110px">
+              <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:4px"><span class="icon i-folder" style="font-size:13px;color:#d97706"></span><span style="font-size:10px;font-weight:700;color:#d97706">outputs/</span></div>
+              <div style="font-size:9px;color:#faf5f0;opacity:0.7;line-height:1.3">social/ email/<br>quotes/ summary/</div>
+            </div>
+          </div>
+
+          <!-- Arrow -->
+          <div style="display:flex;align-items:center;padding-top:14px;color:#d97706;font-size:16px;flex-shrink:0;width:20px;justify-content:center">&#8594;</div>
+
+          <!-- Column 5: Track / tracking -->
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;text-align:center">
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:6px"><span class="icon i-check" style="font-size:20px;color:#faf5f0"></span></div>
+            <div style="font-size:11px;font-weight:700;color:#faf5f0">Track</div>
+            <div style="font-size:9px;color:#eba714;margin-bottom:10px">Log + flag for review</div>
+            <div style="width:2px;height:14px;background:rgba(255,255,255,0.15);margin-bottom:10px"></div>
+            <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:8px 8px;width:100%;max-width:110px">
+              <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:4px"><span class="icon i-folder" style="font-size:13px;color:#faf5f0;opacity:0.7"></span><span style="font-size:10px;font-weight:700;color:#faf5f0;opacity:0.8">tracking/</span></div>
+              <div style="font-size:9px;color:#faf5f0;opacity:0.5;line-height:1.3">task-tracker.md<br>decisions-log.md</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="text-align:center;margin-top:16px;font-size:11px;color:#eba714;font-style:italic">Each workflow step maps to a folder. Content flows left to right — input to output.</div>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">The directory is the assembly line</div>
+        <div class="callout-text">You should be able to point to every folder in your file explorer right now and say what role it plays in that journey. Each folder is a station. Content moves through stations, and at each one, either you or Claude does something to it. This is the n8n-style workflow — built with folders instead of code.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 5: Preview Before You Run -->
+    <!-- ============================================ -->
+    <div class="step" id="step-5">
+      <p>A good manager doesn't let a new team member ship their first deliverable without a review. Before we run the full pipeline on real content, let's see a preview — and calibrate the system.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #4 — Drop in content and preview</div>
+        <div class="prompt-block" id="prompt4">I'm going to give you a piece of source content. Before you process it through the full pipeline, I want you to show me a PREVIEW of what each output would look like. Don't save anything to the output folders yet — just show me as artifacts so I can review.
+
+Here's the source content:
+[PASTE YOUR OWN BLOG POST, MEETING NOTES, OR ANY WRITING HERE — or use this sample:]
+
+---
+Title: Why We Moved Our Team Standup to Async
+
+Last month, our team made a small change that had a big impact. We replaced our daily 15-minute standup meeting with an async update in Slack. Here's what happened.
+
+The problem wasn't the standup itself — it was the timing. With team members across three time zones, our 10am EST call meant 7am for the West Coast folks and 11pm for our colleague in Tokyo. Nobody was at their best.
+
+We switched to a simple Slack template: What I did yesterday. What I'm doing today. Any blockers. Everyone posts by their own morning. The whole team reads the thread when they're ready.
+
+The results surprised us. Updates got more detailed (people write better than they talk at 7am). Blockers got flagged faster (people read the thread throughout the day). And we got 75 minutes back per week — per person.
+
+The downside? We lost some of the spontaneous conversation. To fix that, we added a weekly 30-minute "coffee chat" with no agenda. It's optional, it's casual, and it's become the highlight of the week.
+
+Would we go back? Not a chance.
+---
+
+Show me what each output would look like:
+1. The LinkedIn post
+2. The Twitter/X thread
+3. The email newsletter section
+4. The summary brief
+5. The key quotes
+
+Render each one as it would appear on the actual platform — LinkedIn in a LinkedIn-style frame, tweets in a tweet-style frame, etc.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt4', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title" style="color:#b45309">This is your review checkpoint</div>
+        <div class="callout-text">You told Claude "don't save anything yet." You're looking at what the system <em>would</em> produce — not committing to it. If the previews look off, you fix the steering documents, not the output.</div>
+      </div>
+
+      <p>Look at the previews Claude generated. For each one, ask yourself: Does this sound like me? Is the tone right for this platform? Is it the right length? Would I actually post this?</p>
+      <p>If something's off — that's perfect. That's the whole point of previewing. Let's fix it.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #5 — Give feedback and iterate</div>
+        <div class="prompt-block" id="prompt5">Here's my feedback on the previews:
+
+[GIVE YOUR ACTUAL FEEDBACK — for example:]
+- The LinkedIn post is too formal. I write more conversationally on LinkedIn — shorter sentences, more personal.
+- The Twitter thread is good but the first tweet needs a stronger hook.
+- The email newsletter section is too long. I want 2-3 sentences max with a link to the full post.
+- The summary brief is great as-is.
+
+Based on this feedback, do two things:
+1. Show me updated previews so I can see the changes
+2. Update docs/brand-guidelines.md to capture these preferences permanently so you get it right next time. I don't want to give this feedback again.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt5', this)">Copy this prompt</button>
+      </div>
+
+      <div class="dark-card">
+        <h2>Iterate on the system, not the deliverable.</h2>
+        <p>You didn't fix the LinkedIn post. You fixed the brand guidelines that generate LinkedIn posts. Every future LinkedIn post will now be better — not just this one. That's the difference between doing work and building a system.</p>
+      </div>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#16a34a">The system just got smarter</div>
+        <div class="callout-text">Look at your file explorer. The brand-guidelines.md file just changed. Open it — you'll see your feedback incorporated into the document. Every round of feedback permanently improves all future outputs. This is the compounding effect.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 6: Run the System -->
+    <!-- ============================================ -->
+    <div class="step" id="step-6">
+      <p>The steering documents are calibrated. The previews look right. Now let's run it for real. This is where it gets exciting — and where having three windows open pays off.</p>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">Arrange your windows</div>
+        <div class="callout-text">Cowork on the left, this guide in the center, file explorer on the right. You're going to watch Claude work — and see files appear in your directory in real time.</div>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #6 — Execute the pipeline</div>
+        <div class="prompt-block" id="prompt6">I'm happy with the previews. Now run the full content repurposing pipeline:
+
+1. Read the source content from inputs/
+2. Follow the process defined in docs/process.md
+3. Apply the brand guidelines from docs/brand-guidelines.md
+4. Use the templates in templates/ for each output format
+5. Save all outputs to the appropriate folders in outputs/
+6. Update tracking/task-tracker.md with what was processed
+
+When you're done, show me a summary artifact — a visual dashboard showing what was created, where it lives, and what's ready for my review.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt6', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">Watch your file explorer</div>
+        <div class="callout-text">See the files appearing? Each one is a real file on your computer — you can open it, edit it, share it, copy it to another tool. The directory is the system of record. The artifact Claude shows you is a view into that record.</div>
+      </div>
+
+      <!-- Output preview — what good looks like -->
+      <div style="margin-bottom:28px">
+        <div class="section-label" style="margin-bottom:8px">What good outputs look like</div>
+        <p style="font-size:14px;color:#15465b;margin-bottom:16px">If everything worked, your outputs folder now has files like these. Yours will reflect your brand and source content — this shows the structure and quality to aim for.</p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+          <!-- LinkedIn -->
+          <div style="background:white;border-radius:12px;border:1px solid #e8e0d8;padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:28px;height:28px;border-radius:50%;background:#0a66c2;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z"/></svg>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:#081f3f">LinkedIn Post</div>
+            </div>
+            <div style="font-size:12px;color:#3a3a3a;line-height:1.6">
+              <p style="margin-bottom:6px">I used to think content creation was a volume game. Create more, post more, hope something lands.</p>
+              <p style="margin-bottom:6px">But the real leverage is in <strong>repurposing</strong>. One deep piece of thinking, adapted for each context where your audience lives.</p>
+              <p style="color:#b8a898;font-style:italic;font-size:11px">[ ... your voice, your content ... ]</p>
+            </div>
+            <div style="margin-top:auto;font-size:9px;color:#b8a898;font-family:monospace;border-top:1px solid #f0ebe4;padding-top:8px">outputs/social/linkedin-post.md</div>
+          </div>
+
+          <!-- Twitter -->
+          <div style="background:white;border-radius:12px;border:1px solid #e8e0d8;padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:28px;height:28px;border-radius:50%;background:#081f3f;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:#081f3f">Twitter Thread</div>
+            </div>
+            <div style="font-size:12px;color:#3a3a3a;line-height:1.6;border-left:2px solid #e8e0d8;padding-left:12px">
+              <p style="margin-bottom:6px"><strong style="font-size:11px">1/5</strong> Most people create content like it's disposable. One post, one use, move on.</p>
+              <p style="margin-bottom:6px"><strong style="font-size:11px">2/5</strong> Your audience doesn't live in one place. They're on LinkedIn AND Twitter AND in their inbox.</p>
+              <p style="color:#b8a898;font-style:italic;font-size:11px"><strong style="font-size:11px">3/5</strong> [ ... continues ... ]</p>
+            </div>
+            <div style="margin-top:auto;font-size:9px;color:#b8a898;font-family:monospace;border-top:1px solid #f0ebe4;padding-top:8px">outputs/social/twitter-thread.md</div>
+          </div>
+
+          <!-- Newsletter -->
+          <div style="background:white;border-radius:12px;border:1px solid #e8e0d8;padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:28px;height:28px;border-radius:50%;background:#d97706;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7"/></svg>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:#081f3f">Email Newsletter</div>
+            </div>
+            <div style="font-size:12px;color:#3a3a3a;line-height:1.6">
+              <div style="font-family:'Zilla Slab',serif;font-size:15px;color:#081f3f;margin-bottom:6px">The Case for Content Repurposing</div>
+              <p style="margin-bottom:6px">You wrote something good last week. It got some engagement — then disappeared into the feed. Here's what most creators miss...</p>
+              <p style="color:#b8a898;font-style:italic;font-size:11px">[ ... deeper analysis for subscribers ... ]</p>
+            </div>
+            <div style="margin-top:auto;font-size:9px;color:#b8a898;font-family:monospace;border-top:1px solid #f0ebe4;padding-top:8px">outputs/newsletter/section.md</div>
+          </div>
+
+          <!-- Summary Brief -->
+          <div style="background:white;border-radius:12px;border:1px solid #e8e0d8;padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:28px;height:28px;border-radius:50%;background:#15465b;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h8"/></svg>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:#081f3f">Summary Brief</div>
+            </div>
+            <div style="font-size:12px;color:#3a3a3a;line-height:1.6">
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <span style="font-size:9px;font-weight:700;background:#f0ebe4;color:#15465b;padding:2px 6px;border-radius:4px">SOURCE</span>
+                <span style="font-size:11px;color:#081f3f">Blog post</span>
+              </div>
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <span style="font-size:9px;font-weight:700;background:#f0ebe4;color:#15465b;padding:2px 6px;border-radius:4px">THEMES</span>
+                <span style="font-size:11px;color:#081f3f">Leverage, audience context, compounding</span>
+              </div>
+              <p style="color:#b8a898;font-style:italic;font-size:11px">[ ... executive summary + key quotes ... ]</p>
+            </div>
+            <div style="margin-top:auto;font-size:9px;color:#b8a898;font-family:monospace;border-top:1px solid #f0ebe4;padding-top:8px">outputs/briefs/summary.md</div>
+          </div>
+        </div>
+
+        <div class="callout callout-green">
+          <div class="callout-title" style="color:#16a34a">Your outputs will be different — and that's the point</div>
+          <div class="callout-text">These examples show the <em>structure</em> and <em>quality level</em> to aim for. If Claude captured your tone from the onboarding conversation, the outputs should sound like you — not like a generic template.</div>
+        </div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">What's actually happening under the hood?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p style="margin-bottom:12px">When Claude runs a multi-step task like this, it's orchestrating a sequence of operations:</p>
+          <ol style="padding-left:20px;margin-bottom:12px;line-height:2">
+            <li>Read docs/process.md to understand the workflow</li>
+            <li>Read docs/brand-guidelines.md to understand the constraints</li>
+            <li>Read the source content from inputs/</li>
+            <li>Read templates/ to understand the output formats</li>
+            <li>Generate each output — some in sequence (analysis first, then derivatives), some in parallel (social posts and newsletter can run simultaneously)</li>
+            <li>Write each output to the correct folder</li>
+            <li>Update the tracking file</li>
+          </ol>
+          <p><strong>The steering documents are the choreography.</strong> Claude didn't need you to tell it the order of operations — it read process.md and followed it. The instructions live in the files, not in your head.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 7: Review With Claude as Interface -->
+    <!-- ============================================ -->
+    <div class="step" id="step-7">
+      <p>Your output folders now have real files in them. You <em>could</em> open each one in a text editor — but raw markdown files can look intimidating and hard to evaluate. Let's do something better. Claude can render your outputs as visual artifacts, showing you exactly how each piece would appear on the actual platform.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #7 — View outputs as visual artifacts</div>
+        <div class="prompt-block" id="prompt7">Show me the outputs you just created. For each one, render it as it would appear on the actual platform:
+- The LinkedIn post in a LinkedIn-style frame
+- The tweets in a Twitter-style thread
+- The email newsletter section in an email layout
+- The summary brief as a clean formatted document
+
+I want to review them here in the conversation and give you feedback before I copy them anywhere.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt7', this)">Copy this prompt</button>
+      </div>
+
+      <p>This is the pattern: the files live in the folder, but you review them in the conversation. Claude renders them visually — styled, formatted, in context. A markdown file in a folder is hard to evaluate. A LinkedIn post in a LinkedIn-shaped frame is easy to evaluate.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #8 — Refine and save</div>
+        <div class="prompt-block" id="prompt8">The LinkedIn post needs a tweak — [give your specific feedback]. Update it and save the changes back to the outputs folder.
+
+If this reflects a general preference (not a one-off edit), update the brand guidelines too so future posts get it right automatically.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt8', this)">Copy this prompt</button>
+      </div>
+
+      <div class="dark-card">
+        <h2>Claude doesn't have a fixed interface. The interface is whatever you need it to be.</h2>
+        <p>Traditional software gives you one view. Claude generates any view you ask for — from the same underlying data in your folder.</p>
+      </div>
+
+      <p>Try these to see the pattern in action:</p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
+        <div style="background:#faf5f0;border-radius:12px;padding:14px 18px;border:1px solid #e8e0d8;font-size:14px;color:#081f3f;line-height:1.6;font-style:italic">"Show me everything you produced today as a visual summary"</div>
+        <div style="background:#faf5f0;border-radius:12px;padding:14px 18px;border:1px solid #e8e0d8;font-size:14px;color:#081f3f;line-height:1.6;font-style:italic">"Compare the LinkedIn post to the tweets side by side"</div>
+        <div style="background:#faf5f0;border-radius:12px;padding:14px 18px;border:1px solid #e8e0d8;font-size:14px;color:#081f3f;line-height:1.6;font-style:italic">"Show me the project status — what's created, pending review, and finalized"</div>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">The directory is the database. Claude is the query engine.</div>
+        <div class="callout-text">Instead of returning rows, Claude returns visual results. The better your folder structure, the more ways Claude can slice and present your data. This is why the directory matters — it's the schema that makes generative UI possible.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 8: Debug the System -->
+    <!-- ============================================ -->
+    <div class="step" id="step-8">
+      <p>Something in your outputs probably isn't perfect. That's normal — and it's an opportunity to learn the most important long-term skill: debugging a system, not just fixing an output.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #9 — Diagnose an issue</div>
+        <div class="prompt-block" id="prompt9">Show me the [output that feels off — e.g., LinkedIn post or newsletter] alongside the brand guidelines you used to write it. Display them side by side as an artifact so I can see where the gap is between what I wanted and what was produced.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt9', this)">Copy this prompt</button>
+      </div>
+
+      <p>Look at the side-by-side. The gap between what you wanted and what you got is visible now. It lives in one of three places:</p>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">1. The source content<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">Was the original clear enough? Did it have the information Claude needed to produce a good output? Check your <code>inputs/</code> folder. If the source material is thin, the outputs will be too.</div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">2. The instructions<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">Did the brand guidelines cover this case? Did the process describe the right steps? Check <code>docs/</code>. If the guidelines say "conversational tone" but don't specify what that means for LinkedIn vs. Twitter, Claude will guess — and guessing produces inconsistency.</div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">3. A one-off preference<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">Maybe the output is fine and you just have a preference for this specific piece. In that case, fix the output directly — don't change the system. Not every edit needs to be a system-level change.</div>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">Always ask: is this a system fix or a one-off?</div>
+        <div class="callout-text">Every fix you make to a steering document permanently improves all future outputs. Every fix you make to an individual output helps only that output. <strong>Fix the system when you can. Fix the output when you must.</strong></div>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #10 — Fix and document</div>
+        <div class="prompt-block" id="prompt10">I found the issue — [describe what's wrong and which doc or process caused it].
+
+Update the relevant steering document to fix this, and log what we changed and why in tracking/decisions-log.md so we have a record.
+
+Then reprocess just the affected output using the updated guidelines.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt10', this)">Copy this prompt</button>
+      </div>
+
+      <div class="success-card">
+        <div class="success-icon"><span class="icon i-refresh"></span></div>
+        <div class="success-title">The feedback loop is complete.</div>
+        <div class="success-text">Run &#8594; Review &#8594; Diagnose &#8594; Fix docs &#8594; Re-run. This is the loop that makes the system compound over time. Every cycle makes it permanently smarter.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 9: Project Dashboard -->
+    <!-- ============================================ -->
+    <div class="step" id="step-9">
+      <p>You've built a working content repurposing system. You've run it, reviewed outputs, debugged issues, and improved the steering documents. Now let's build the view that ties it all together — a project dashboard you can summon anytime.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #11 — Generate the management dashboard</div>
+        <div class="prompt-block" id="prompt11">Build me a project dashboard that shows the current state of everything in this workspace. Include:
+
+- Workspace map — Visual directory tree showing all folders and their purposes
+- Pipeline status — What content has been processed, what outputs were created, what's pending review
+- Output gallery — Previews of each output, organized by type
+- Recent changes — What documents were updated and when
+- System health — Are all steering docs current? Any known gaps or TODOs?
+
+Make it something I can ask you to regenerate anytime I check in. This is my control panel for the project.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt11', this)">Copy this prompt</button>
+      </div>
+
+      <p>This dashboard isn't a static file. It's generated fresh every time you ask for it, pulling from the real state of your folder. Next week, when you've processed more content, the same prompt gives you an updated dashboard. The system is alive because the folder is alive.</p>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">Every artifact in this tutorial followed the same pattern</div>
+        <div class="callout-text">The directory map, the flow diagram, the output previews, the debugging side-by-side, this dashboard — every one was a generated view into your folder. The folder is the source of truth. Claude is the interface. You decide what view you need. That's the whole model.</div>
+      </div>
+
+      <div class="dark-card">
+        <h2>The directory is the record. Claude is the interface. You're the manager.</h2>
+        <p>Files persist between sessions. Artifacts are views you summon when you need them. Your folder is tool-agnostic, portable, and permanent. Claude is the lens through which you see and shape it.</p>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 10: What You Built -->
+    <!-- ============================================ -->
+    <div class="step" id="step-10">
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2>You didn't learn to write better prompts. You learned to build systems.</h2>
+        <p>The skill isn't prompting — it's management. Define the workspace. Create the instructions. Run the system. Review the outputs. Fix the docs. Repeat. Everything else scales from there.</p>
+      </div>
+
+      <div class="section-label">The principles behind what you built</div>
+      <div style="background:white;border-radius:16px;border:1px solid #e8e0d8;padding:20px;margin-bottom:32px">
+        <div class="recap-item">
+          <div class="recap-num">1</div>
+          <div class="recap-text"><strong>The folder is the memory.</strong> Claude doesn't remember between sessions. Your folder does. Every file is context you can hand back next time.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">2</div>
+          <div class="recap-text"><strong>Conversations become documents.</strong> You don't write specs from scratch. You talk through the project and Claude crystallizes it into persistent files.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">3</div>
+          <div class="recap-text"><strong>Structure creates workflow.</strong> Each folder is a station in the assembly line. Content flows through them. The directory <em>is</em> the process.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">4</div>
+          <div class="recap-text"><strong>The directory is the interface.</strong> Claude generates any view you need from the organized data. The better the structure, the more powerful the views.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">5</div>
+          <div class="recap-text"><strong>Iterate on the system, not the output.</strong> Fix the steering docs, and all future outputs improve. That's how the project compounds.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">6</div>
+          <div class="recap-text"><strong>The system compounds.</strong> Every feedback loop makes it permanently smarter. Early work feeds later work. The folder gets richer over time.</div>
+        </div>
+      </div>
+
+      <div class="section-label">Where this goes next</div>
+      <div class="next-grid">
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-layers"></span></div>
+          <div class="next-card-title">Add more content types</div>
+          <div class="next-card-desc">Drop different source content — meeting notes, project updates, research. The same system processes them all.</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-wrench"></span></div>
+          <div class="next-card-title">Connect external tools</div>
+          <div class="next-card-desc">Add MCP connectors to post to LinkedIn, send newsletters, or pull feedback from Slack. The folder stays the hub.</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-monitor"></span></div>
+          <div class="next-card-title">Graduate to Claude Code</div>
+          <div class="next-card-desc">When workflows get complex — automated scheduling, data processing — Claude Code gives full programming power. Same principles.</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-rocket"></span></div>
+          <div class="next-card-title">Build another system</div>
+          <div class="next-card-desc">Apply this to any project: client reporting, research workflows, project management. The pattern is always the same.</div>
+        </div>
+      </div>
+
+      <div class="success-card">
+        <div class="success-icon"><span class="icon i-star"></span></div>
+        <div class="success-title">You're a systems builder now.</div>
+        <div class="success-text">You took an empty folder and turned it into a working content repurposing pipeline — complete with steering documents, a processing workflow, output management, and a feedback loop. That's not prompting. That's project management. And the same approach works for anything you want to build with AI.</div>
+      </div>
+    </div>
+
+  </div><!-- step-content -->
+  </div><!-- main-col -->
+</div><!-- container -->
+
+<script>
+const STEPS = [
+  { title: "Building Your First AI Workflow", subtitle: "Graduate from Claude Chat to Claude Cowork. Build a content repurposing system." },
+  { title: "The Onboarding Conversation", subtitle: "Before building anything, define the project through conversation." },
+  { title: "Crystallize the Conversation", subtitle: "Turn your onboarding conversation into persistent steering documents." },
+  { title: "Your Directory Is the System", subtitle: "The folder structure isn't just organization — it's the workflow itself." },
+  { title: "Expand the Workspace", subtitle: "Build out inputs, outputs, templates, and tracking. Trace the flow." },
+  { title: "Preview Before You Run", subtitle: "See what the outputs will look like. Iterate on the instructions, not the output." },
+  { title: "Run the Full Pipeline", subtitle: "Let Claude process your content. Watch the directory fill up in real time." },
+  { title: "Claude Is Your Interface", subtitle: "Don't open raw files. Ask Claude to show you outputs the way your audience sees them." },
+  { title: "When Something's Off — Trace It", subtitle: "Don't guess. Diagnose. The directory is your diagnostic tool." },
+  { title: "The View From Above", subtitle: "Ask Claude for a project dashboard — a living view of your workspace." },
+  { title: "You're Managing AI Like a Project", subtitle: "A workspace, a workflow, a feedback loop. Here's what you built." },
+];
+
+let currentStep = 0;
+
+const RAIL_THUMBS = [
+  { label: "Start",
+    visual: '<div style="display:flex;gap:4px"><div style="width:24px;height:28px;border-radius:4px;border:2px solid currentColor;opacity:0.5"></div><div style="width:24px;height:28px;border-radius:4px;border:2px solid currentColor"></div><div style="width:24px;height:28px;border-radius:4px;border:2px solid currentColor;opacity:0.5"></div></div>' },
+  { label: "Onboard",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-chat" style="font-size:28px"></span></div>' },
+  { label: "Docs",
+    visual: '<div style="display:flex;flex-direction:column;gap:3px;width:48px"><div style="display:flex;gap:5px;align-items:center"><div style="width:14px;height:7px;border-radius:2px;background:currentColor"></div><div style="flex:1;height:3px;background:currentColor;opacity:0.3;border-radius:2px"></div></div><div style="display:flex;gap:5px;align-items:center"><div style="width:14px;height:7px;border-radius:2px;background:currentColor;opacity:0.8"></div><div style="flex:1;height:3px;background:currentColor;opacity:0.3;border-radius:2px"></div></div><div style="display:flex;gap:5px;align-items:center"><div style="width:14px;height:7px;border-radius:2px;background:currentColor;opacity:0.6"></div><div style="flex:1;height:3px;background:currentColor;opacity:0.3;border-radius:2px"></div></div></div>' },
+  { label: "Structure",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-folder" style="font-size:28px"></span></div>' },
+  { label: "Expand",
+    visual: '<div style="display:flex;flex-direction:column;gap:2px;width:48px"><div style="height:4px;background:currentColor;border-radius:2px"></div><div style="height:4px;background:currentColor;border-radius:2px;width:72%;margin-left:10px;opacity:0.7"></div><div style="height:4px;background:currentColor;border-radius:2px;width:72%;margin-left:10px;opacity:0.7"></div><div style="height:4px;background:currentColor;border-radius:2px;width:50%;margin-left:20px;opacity:0.5"></div><div style="height:4px;background:currentColor;border-radius:2px;width:50%;margin-left:20px;opacity:0.5"></div></div>' },
+  { label: "Preview",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-eye" style="font-size:28px"></span></div>' },
+  { label: "Run",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-zap" style="font-size:28px"></span></div>' },
+  { label: "Review",
+    visual: '<div style="width:48px;height:28px;border:2px solid currentColor;border-radius:6px;position:relative;overflow:hidden"><div style="position:absolute;top:6px;left:6px;width:16px;height:4px;background:currentColor;opacity:0.6;border-radius:2px"></div><div style="position:absolute;top:14px;left:6px;width:24px;height:4px;background:currentColor;opacity:0.4;border-radius:2px"></div></div>' },
+  { label: "Debug",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-search" style="font-size:28px"></span></div>' },
+  { label: "Dash",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-grid" style="font-size:28px"></span></div>' },
+  { label: "Done",
+    visual: '<div style="font-size:30px;line-height:1">&#9733;</div>' },
+];
+
+const railEl = document.getElementById("sectionRail");
+STEPS.forEach((step, i) => {
+  if (i > 0) {
+    const conn = document.createElement("div");
+    conn.className = "rail-connector upcoming";
+    conn.id = "rail-conn-" + i;
+    railEl.appendChild(conn);
+  }
+  const thumb = document.createElement("button");
+  thumb.className = "rail-thumb" + (i === 0 ? " current" : " upcoming");
+  thumb.id = "rail-thumb-" + i;
+  thumb.setAttribute("data-label", step.title);
+  thumb.innerHTML = '<div class="rail-thumb-visual">' + RAIL_THUMBS[i].visual + '</div><div class="rail-thumb-label">' + RAIL_THUMBS[i].label + '</div>';
+  thumb.onclick = () => goToStep(i);
+  railEl.appendChild(thumb);
+});
+
+function goToStep(n) {
+  document.getElementById("step-" + currentStep).classList.remove("active");
+  currentStep = n;
+  document.getElementById("step-" + currentStep).classList.add("active");
+  document.getElementById("stepTitle").textContent = STEPS[n].title;
+  document.getElementById("stepSubtitle").textContent = STEPS[n].subtitle;
+  document.getElementById("btnBack").style.display = n > 0 ? "" : "none";
+  const btnNext = document.getElementById("btnNext");
+  if (n >= STEPS.length - 1) { btnNext.style.display = "none"; }
+  else { btnNext.style.display = ""; btnNext.textContent = n === 0 ? "Let's go" : "Next step"; }
+  STEPS.forEach((_, i) => {
+    const thumb = document.getElementById("rail-thumb-" + i);
+    if (thumb) thumb.className = "rail-thumb " + (i < n ? "completed" : i === n ? "current" : "upcoming");
+    if (i > 0) { const conn = document.getElementById("rail-conn-" + i); if (conn) conn.className = "rail-connector " + (i <= n ? "completed" : "upcoming"); }
+  });
+  window.scrollTo(0, 0);
+}
+
+function nextStep() { if (currentStep < STEPS.length - 1) goToStep(currentStep + 1); }
+function prevStep() { if (currentStep > 0) goToStep(currentStep - 1); }
+
+// Folder tree hover
+document.querySelectorAll(".tree-item[data-file]").forEach(item => {
+  const file = item.getAttribute("data-file");
+  const tip = document.getElementById("tip-" + file);
+  const hint = item.querySelector(".tree-hint");
+  if (!tip) return;
+  item.addEventListener("mouseenter", () => {
+    tip.textContent = item.getAttribute("data-tooltip");
+    tip.classList.add("visible");
+    if (hint) hint.textContent = "";
+  });
+  item.addEventListener("mouseleave", () => {
+    tip.classList.remove("visible");
+    if (hint) hint.textContent = "hover me";
+  });
+});
+
+function toggleExpand(card) { card.classList.toggle("open"); }
+
+function copyPrompt(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add("copied");
+    btn.textContent = "Copied to clipboard!";
+    setTimeout(() => { btn.classList.remove("copied"); btn.textContent = "Copy this prompt"; }, 2000);
+  });
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") nextStep();
+  if (e.key === "ArrowLeft" || e.key === "ArrowUp") prevStep();
+});
+</script>
+</body>
+</html>
