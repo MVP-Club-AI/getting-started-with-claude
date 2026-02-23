@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://mvp-club-ai.github.io/getting-started-with-claude/">
-    <img src="https://img.shields.io/badge/%E2%96%B6%20START%20HERE-mvp--club--ai.github.io-d97706?style=for-the-badge&labelColor=081f3f" alt="Start Here">
+    <img src="https://img.shields.io/badge/%E2%96%B6%20%20START%20HERE%20%20%E2%80%94%20%20mvp--club--ai.github.io-d97706?style=for-the-badge&labelColor=081f3f&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik04IDVsMTEgN0w4IDE5eiIvPjwvc3ZnPg==&logoColor=white&logoWidth=20" alt="Start Here" height="50">
   </a>
 </p>
 
