@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://mvp-club-ai.github.io/getting-started-with-claude/">
+    <img src="assets/banner.jpeg" alt="MVP Club — What Will You Build?" width="100%">
+  </a>
+</p>
+
 # Getting Started with Claude Code
 
 **Hands-on tutorials that take you from your first conversation with Claude to building automated systems that run without you.**
