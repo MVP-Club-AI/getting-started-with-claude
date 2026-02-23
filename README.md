@@ -8,13 +8,24 @@
 
 **Hands-on tutorials that take you from your first conversation with Claude to building automated systems that run without you.**
 
-<p align="center">
-  <a href="https://mvp-club-ai.github.io/getting-started-with-claude/">
-    <img src="https://img.shields.io/badge/%E2%96%B6%20%20START%20HERE%20%20%E2%80%94%20%20mvp--club--ai.github.io-d97706?style=for-the-badge&labelColor=081f3f&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik04IDVsMTEgN0w4IDE5eiIvPjwvc3ZnPg==&logoColor=white&logoWidth=20" alt="Start Here" height="50">
-  </a>
-</p>
-
-> **All tutorials are on the deployed site above.** This repo is the source code — the learning experience lives at the GitHub Pages link. Open it in your browser to get started.
+<table align="center">
+  <tr>
+    <td align="center" width="320">
+      <a href="https://mvp-club-ai.github.io/getting-started-with-claude/">
+        <img src="https://img.shields.io/badge/%E2%96%B6%20%20START%20HERE-Open%20the%20tutorial%20site-d97706?style=for-the-badge&labelColor=081f3f&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik04IDVsMTEgN0w4IDE5eiIvPjwvc3ZnPg==&logoColor=white&logoWidth=20" alt="Start Here" height="56">
+      </a>
+      <br><br>
+      <strong>mvp-club-ai.github.io/getting-started-with-claude</strong>
+      <br>
+      <sub>All tutorials live on this deployed site. Open it in your browser to get started.</sub>
+    </td>
+    <td width="380">
+      <a href="https://mvp-club-ai.github.io/getting-started-with-claude/">
+        <img src="assets/site-preview.png" alt="Tutorial site preview" width="380" style="border-radius:8px;border:1px solid #e8e0d8">
+      </a>
+    </td>
+  </tr>
+</table>
 
 ---
 
