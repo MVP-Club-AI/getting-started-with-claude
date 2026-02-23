@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Three Layers of AI-Native Work — Prompt Along</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Zilla+Slab&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #faf5f0; color: #081f3f; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .container { display: flex; gap: 24px; max-width: 780px; margin: 0 auto; padding: 20px 16px 20px 4px; min-height: 100vh; }
+  .main-col { flex: 1; min-width: 0; }
+
+  /* Section rail */
+  .section-rail { width: 88px; flex-shrink: 0; padding-top: 8px; }
+  .section-rail-inner { position: sticky; top: 80px; display: flex; flex-direction: column; align-items: center; }
+  .rail-thumb { width: 80px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; transition: all 0.25s ease; padding: 8px 6px 6px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-family: 'Inter', sans-serif; background: #f0ebe4; color: #b8a898; }
+  .rail-thumb-visual { display: flex; align-items: center; justify-content: center; height: 44px; }
+  .rail-thumb-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1; text-align: center; }
+  .rail-thumb.upcoming { background: #f0ebe4; color: #b8a898; border-color: transparent; }
+  .rail-thumb.upcoming .rail-thumb-visual { opacity: 0.45; }
+  .rail-thumb.completed { background: #fef3e2; color: #b45309; border-color: #eba714; }
+  .rail-thumb.current { background: #d97706; color: white; border-color: #b45309; box-shadow: 0 2px 10px rgba(217,119,6,0.4); transform: scale(1.06); }
+  .rail-connector { width: 2px; height: 6px; flex-shrink: 0; }
+  .rail-connector.completed { background: #eba714; }
+  .rail-connector.upcoming { background: #e8e0d8; }
+  .rail-thumb:hover::after { content: attr(data-label); position: absolute; left: 86px; top: 50%; transform: translateY(-50%); background: #081f3f; color: #faf5f0; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; white-space: nowrap; pointer-events: none; z-index: 30; }
+  .rail-thumb:hover::before { content: ''; position: absolute; left: 80px; top: 50%; transform: translateY(-50%); border: 5px solid transparent; border-right-color: #081f3f; pointer-events: none; z-index: 30; }
+
+  /* Icons */
+  .icon { display:inline-block;width:1em;height:1em;background:currentColor;vertical-align:-0.125em;flex-shrink:0;-webkit-mask:no-repeat center/contain;mask:no-repeat center/contain; }
+  .i-layers{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E");}
+  .i-chat{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");}
+  .i-file{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");}
+  .i-zap{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");}
+  .i-target{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");}
+  .i-eye{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");}
+  .i-check{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");}
+  .i-search{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");}
+  .i-gear{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");}
+  .i-sparkle{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");}
+  .i-star{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");}
+  .i-wrench{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");}
+  .i-refresh{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");}
+  .i-compass{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z'/%3E%3C/svg%3E");}
+
+  /* Step header */
+  .step-header { margin-bottom: 24px; }
+  .step-header h1 { font-family: 'Zilla Slab', serif; font-size: 28px; font-weight: 400; color: #081f3f; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .step-header p { font-size: 16px; color: #15465b; }
+
+  /* Content */
+  .step-content { margin-bottom: 32px; }
+  .step { display: none; }
+  .step.active { display: block; min-height: calc(100vh - 240px); }
+  .step > p { font-size: 17px; line-height: 1.8; color: #081f3f; margin-bottom: 28px; }
+
+  /* Nav */
+  .nav-header { position: sticky; top: 0; background: #faf5f0; padding: 8px 0 12px; z-index: 10; }
+  .nav-header::after { content:''; display:block; height:20px; margin:0 -16px; background:linear-gradient(to top,transparent,#faf5f0); pointer-events:none; position:absolute; bottom:-20px; left:0; right:0; }
+  .nav { display: flex; gap: 12px; }
+  .btn { padding: 14px 20px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; font-family: 'Inter', sans-serif; }
+  .btn:hover { opacity: 0.9; }
+  .btn-back { flex: 1; border: 1px solid #e8e0d8; background: white; color: #15465b; }
+  .btn-next { flex: 2; background: #d97706; color: white; }
+
+  /* Components */
+  .callout { padding: 18px 22px; border-radius: 0 12px 12px 0; margin-bottom: 28px; }
+  .callout-purple { background: #fef9f0; border-left: 4px solid #081f3f; }
+  .callout-green { background: #f0fdf4; border-left: 4px solid #16a34a; }
+  .callout-blue { background: #f0f5f7; border-left: 4px solid #15465b; }
+  .callout-amber { background: #fef9f0; border-left: 4px solid #d97706; }
+  .callout-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .callout-text { font-size: 13px; color: #15465b; line-height: 1.7; }
+
+  .dark-card { background: #081f3f; border-radius: 16px; padding: 32px; margin-bottom: 32px; text-align: center; }
+  .dark-card h2 { font-family: 'Zilla Slab', serif; font-size: 22px; font-weight: 400; color: #faf5f0; margin-bottom: 8px; }
+  .dark-card p { font-size: 14px; color: #eba714; line-height: 1.7; }
+
+  .section-label { font-size:11px; font-weight:600; color:#15465b; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; text-align:center; font-family:'Inter',sans-serif; }
+
+  .prompt-block { background:#081f3f; color:#faf5f0; border-radius:12px; padding:20px; font-size:14px; line-height:1.7; font-family:monospace; white-space:pre-wrap; margin-bottom:12px; }
+  .copy-btn { width:100%; padding:10px 20px; border-radius:8px; border:none; font-size:14px; font-weight:600; cursor:pointer; background:#d97706; color:white; transition:background 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Inter',sans-serif; }
+  .copy-btn.copied { background:#059669; }
+
+  .action-box { background:linear-gradient(135deg,#fef9f0,#fef3e2); border:2px solid #d97706; border-radius:16px; padding:24px; margin-bottom:32px; }
+  .action-box-label { font-size:11px; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .action-box-step { font-size:14px; color:#081f3f; line-height:1.8; }
+  .action-box-step ol { padding-left:20px; }
+  .action-box-step li { margin-bottom:6px; }
+
+  .expand-card { border: 1px solid #e8e0d8; border-radius: 12px; margin-bottom: 28px; overflow: hidden; background: white; }
+  .expand-header { width:100%; padding:14px 18px; background:none; border:none; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:15px; font-weight:600; color:#081f3f; text-align:left; font-family:inherit; }
+  .expand-arrow { font-size:12px; color:#15465b; transition:transform 0.2s; }
+  .expand-card.open .expand-arrow { transform:rotate(180deg); }
+  .expand-body { padding:0 18px 16px; color:#15465b; font-size:14px; line-height:1.7; display:none; }
+  .expand-card.open .expand-body { display:block; }
+
+  .success-card { background:#f0fdf4; border-radius:12px; padding:24px; border:1px solid #bbf7d0; text-align:center; margin-top:20px; margin-bottom:28px; }
+  .success-icon { font-size:28px; margin-bottom:8px; }
+  .success-title { font-size:16px; font-weight:700; color:#15803d; margin-bottom:8px; }
+  .success-text { font-size:14px; color:#15465b; line-height:1.7; }
+
+  /* Recap list */
+  .recap-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f0ebe4; align-items:flex-start; }
+  .recap-item:last-child { border-bottom:none; }
+  .recap-num { font-size:14px; font-weight:700; color:#d97706; min-width:24px; padding-top:2px; }
+  .recap-text { font-size:14px; color:#15465b; line-height:1.6; }
+
+  /* Next grid */
+  .next-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px; }
+  .next-card { background:white; border-radius:12px; padding:16px; border:1px solid #e8e0d8; text-align:center; }
+  .next-card-icon { font-size:24px; margin-bottom:6px; }
+  .next-card-title { font-size:14px; font-weight:700; color:#081f3f; margin-bottom:4px; }
+  .next-card-desc { font-size:12px; color:#15465b; line-height:1.4; }
+
+  /* Layer diagram */
+  .layer-stack { display:flex; flex-direction:column; gap:0; margin-bottom:32px; border-radius:16px; overflow:hidden; border:1px solid #e8e0d8; }
+  .layer-row { padding:20px 22px; display:flex; align-items:center; gap:16px; }
+  .layer-row:not(:last-child) { border-bottom:1px solid #e8e0d8; }
+  .layer-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .layer-content { flex:1; }
+  .layer-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:2px; }
+  .layer-title { font-size:15px; font-weight:600; color:#081f3f; margin-bottom:2px; }
+  .layer-desc { font-size:13px; color:#15465b; line-height:1.6; }
+  .layer-who { font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; display:inline-block; margin-top:6px; }
+
+  /* Compare split */
+  .compare-split { display:flex; gap:0; margin-bottom:28px; border-radius:16px; overflow:hidden; border:1px solid #e8e0d8; }
+  .compare-side { flex:1; padding:20px; }
+  .compare-naive { background:#f7f3ee; }
+  .compare-ctx { background:#fef9f0; }
+  .compare-badge { font-size:10px; font-weight:700; padding:4px 10px; border-radius:20px; display:inline-block; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px; }
+  .compare-divider { width:2px; background:#e8e0d8; position:relative; display:flex; align-items:center; justify-content:center; }
+  .compare-divider-dot { position:absolute; background:white; border:2px solid #e8e0d8; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:12px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="section-rail">
+    <div class="section-rail-inner" id="sectionRail"></div>
+  </div>
+
+  <div class="main-col">
+  <div class="nav-header">
+    <div class="nav">
+      <button class="btn btn-back" id="btnBack" onclick="prevStep()" style="display:none">Back</button>
+      <button class="btn btn-next" id="btnNext" onclick="nextStep()">Let's go</button>
+    </div>
+  </div>
+
+  <div class="step-header">
+    <h1 id="stepTitle">The Three Layers of AI-Native Work</h1>
+    <p id="stepSubtitle">A new mental model for knowledge work — and where you fit in it.</p>
+  </div>
+
+  <div class="step-content">
+
+    <!-- ============================================ -->
+    <!-- STEP 0: The Shift -->
+    <!-- ============================================ -->
+    <div class="step active" id="step-0">
+      <p>Knowledge work has always been a cottage industry. You went to school, learned some approaches, and then you developed your own idiosyncratic way of getting things done. Your methods lived in your head. Your value was inseparable from your personal process. That era is ending.</p>
+
+      <p>Not because you're being replaced — but because the structure of the work itself is changing. AI doesn't just help you do your existing job faster. It splits the job into layers, and each layer requires a different kind of attention.</p>
+
+      <div class="dark-card">
+        <h2>You're not learning a tool. You're learning a new structure for work itself.</h2>
+        <p>This tutorial walks you through that structure by applying it to a real task from your own job. By the end, you'll have decomposed one piece of your work into a system that AI can execute — and you'll see exactly where your human value concentrates.</p>
+      </div>
+
+      <div class="compare-split">
+        <div class="compare-side compare-naive">
+          <div class="compare-badge" style="background:#f0ebe4;color:#081f3f">The old model</div>
+          <div style="font-size:13px;color:#15465b;line-height:2">
+            <div>You carry context in your head</div>
+            <div>You decide what to do</div>
+            <div>You do the work</div>
+            <div>You evaluate the output</div>
+            <div>Everything is you</div>
+          </div>
+        </div>
+        <div class="compare-divider"><div class="compare-divider-dot">&#8594;</div></div>
+        <div class="compare-side compare-ctx">
+          <div class="compare-badge" style="background:#fef3e2;color:#b45309">The new model</div>
+          <div style="font-size:13px;color:#15465b;line-height:2">
+            <div>Context lives in a data layer</div>
+            <div>You set the intent</div>
+            <div>AI handles the execution</div>
+            <div>You verify the outcomes</div>
+            <div>Layers have clear owners</div>
+          </div>
+        </div>
+      </div>
+
+      <p>In this prompt-along, you'll use Claude to decompose a task you actually do at work. You'll extract the data layer, write the execution layer, run it, and then verify the output. Along the way, you'll see where the gaps in your own knowledge live — and what that means for your career.</p>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">What you'll need</div>
+        <div class="callout-text">Access to Claude (claude.ai, Claude Cowork, or Claude Code — any of them work). A task you do regularly at work — something you could describe to a colleague who was covering for you. That's it.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 1: The Three Layers -->
+    <!-- ============================================ -->
+    <div class="step" id="step-1">
+      <p>Before we touch Claude, let's establish the mental model. All knowledge work — regardless of field — can be decomposed into three layers. This isn't a metaphor. It's a structural description of how AI-native organizations are reorganizing work right now.</p>
+
+      <div class="layer-stack">
+        <div class="layer-row" style="background:#fef9f0">
+          <div class="layer-icon" style="background:#d97706"><span class="icon i-target" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#d97706">Layer 3 — Top</div>
+            <div class="layer-title">Intent &amp; Verification</div>
+            <div class="layer-desc">What should exist? Why? And did the output actually achieve it? This is where you decide what to build, what problem to solve, what value to create — and where you evaluate whether the result served its purpose.</div>
+            <div class="layer-who" style="background:#fef3e2;color:#b45309">Human layer</div>
+          </div>
+        </div>
+        <div class="layer-row" style="background:#f0f5f7">
+          <div class="layer-icon" style="background:#15465b"><span class="icon i-gear" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#15465b">Layer 2 — Middle</div>
+            <div class="layer-title">Execution</div>
+            <div class="layer-desc">The how and the what of what gets done. The steps, the transformations, the logic, the production of output. This is the work itself — the part that used to take most of your time.</div>
+            <div class="layer-who" style="background:#e0ecf0;color:#15465b">AI layer (human-managed)</div>
+          </div>
+        </div>
+        <div class="layer-row" style="background:white">
+          <div class="layer-icon" style="background:#081f3f"><span class="icon i-layers" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#081f3f">Layer 1 — Foundation</div>
+            <div class="layer-title">Data &amp; Context</div>
+            <div class="layer-desc">Everything the system needs to know to do the work. Domain knowledge, examples, brand guidelines, past outputs, customer information, institutional knowledge. The substrate everything runs on.</div>
+            <div class="layer-who" style="background:#f0ebe4;color:#081f3f">AI layer (human-managed)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">The key insight</div>
+        <div class="callout-text">AI handles the data layer and the execution layer. Humans sit at intent and verification. But — and this is critical — humans are <em>responsible</em> for all three layers. You don't do the execution, but you manage the instructions. You don't maintain the data manually, but you decide what context the system needs and you're accountable for its quality. Your levers for improving the system are: improve the data, improve the instructions, and sharpen your verification.</div>
+      </div>
+
+      <p>This is true whether you're in sales, UX, marketing, engineering, analytics, learning design, or operations. The three layers are universal. The specifics change. The structure doesn't.</p>
+
+      <div class="callout callout-amber">
+        <div class="callout-title" style="color:#b45309">Pause and think</div>
+        <div class="callout-text">Before you continue, pick a task you do regularly at work. It should be something substantial enough that it takes you real effort — not "send an email" but something like "write a weekly status report" or "qualify incoming leads" or "create a project plan from meeting notes" or "prepare a client presentation." You'll use this task for the rest of the tutorial.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 2: Describe Your Task -->
+    <!-- ============================================ -->
+    <div class="step" id="step-2">
+      <p>You've picked your task. Now we're going to do something that feels simple but is actually the hardest skill in AI-native work: you're going to externalize everything you know about how you do this task. Right now, that knowledge lives in your head. We need to get it out.</p>
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2>The gap between what you know and what you can explain is the gap between you and an AI system.</h2>
+        <p>Every piece of context you can't articulate is a piece of context AI won't have. And when AI fills in the gaps, it guesses — and its guesses are generic, not customer-centric.</p>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #1 — Externalize your task knowledge</div>
+        <div class="prompt-block" id="prompt1">I want to decompose a task I do regularly at work into a system that AI can execute. The task is: [DESCRIBE YOUR TASK IN 1-2 SENTENCES].
+
+Before we build anything, I need to externalize everything I know about how I do this task. Interview me. Ask me questions about:
+
+- What information do I need before I start this task? Where does it come from?
+- What does the actual process look like step by step? What decisions do I make along the way?
+- What does a great output look like vs. a mediocre one? How do I tell the difference?
+- What context or judgment do I bring that wouldn't be obvious to someone new?
+- How do I know when the task is actually done — and done well?
+
+Ask me 3-4 questions at a time. We'll go several rounds. Push me to be specific — if I give you a vague answer, ask me to give an example or explain what I mean. The goal is to get everything out of my head and into words.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt1', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">This conversation is the work</div>
+        <div class="callout-text">It might feel like you're just chatting. You're not. You're doing the most valuable thing you can do in an AI-native workflow: converting tacit knowledge into explicit knowledge. Every detail you externalize here becomes data that makes the system better. Go 3-5 rounds. Don't rush.</div>
+      </div>
+
+      <p>Be honest with yourself during this conversation. When Claude asks you something and your instinct is "I just know" or "it depends" — that's the signal. Those are the moments where your implicit expertise lives. Push yourself to explain the "just know" and specify what "it depends" depends on.</p>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#16a34a">You'll feel the gap</div>
+        <div class="callout-text">At some point during this conversation, you'll hit something you struggle to explain. That's normal — and it's the most important moment in this tutorial. That gap between what you know and what you can articulate is exactly the gap that determines AI output quality. Recognizing it is step one.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 3: Extract the Data Layer -->
+    <!-- ============================================ -->
+    <div class="step" id="step-3">
+      <p>You've spent several rounds explaining your task. Claude now has a rich picture of what you do and how you think about it. Now we're going to extract the first layer: the data and context that your task depends on.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #2 — Extract the data layer</div>
+        <div class="prompt-block" id="prompt2">Based on everything I've told you, I want you to create a context document — a single file that captures all the data and context needed to do this task well.
+
+Organize it into sections:
+1. **Domain context** — Background knowledge about my field, my organization, my customers, or my industry that someone would need to do this task well
+2. **Input requirements** — What information needs to exist before the task can begin? Where does it come from? What format is it in?
+3. **Quality standards** — What does good output look like? What are the criteria I use to judge quality? Include specific examples from what I told you.
+4. **Edge cases and judgment calls** — The things that "depend" — the contextual decisions that require understanding the situation. Document the factors that influence these decisions.
+5. **What's still in my head** — Be honest. Based on our conversation, what areas did I struggle to explain, or where did my answers stay vague? List what you think is still implicit and not yet documented.
+
+That last section is the most important one. Don't be polite about it — tell me where the gaps are.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt2', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">Section 5 is the mirror</div>
+        <div class="callout-text">Most people skip this. Don't. The "what's still in my head" section tells you exactly where your system will produce mediocre output — because that's where the AI doesn't have enough context to make good decisions. Every gap here is a lever you can pull later to make the system better.</div>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-target" style="font-size:14px"></span> Comprehension check</div>
+        <div class="action-box-step">
+          <p style="margin-bottom:12px">Read the context document Claude produced. For each section, ask yourself:</p>
+          <ol>
+            <li><strong>Is this accurate?</strong> Did Claude capture what I actually said, or did it add generic filler?</li>
+            <li><strong>Is this complete?</strong> Could someone who reads only this document understand the context well enough to do the task?</li>
+            <li><strong>What's missing?</strong> What did I forget to mention? What did I assume was obvious?</li>
+          </ol>
+          <p style="margin-top:12px">If you find gaps, tell Claude. Fill them in now. This document is the foundation — everything downstream depends on it.</p>
+        </div>
+      </div>
+
+      <p>This is the data layer. In an AI-native organization, this layer exists as persistent documentation — not as knowledge locked in someone's head. The quality of this layer directly determines the quality of everything built on top of it.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 4: Build the Execution Layer -->
+    <!-- ============================================ -->
+    <div class="step" id="step-4">
+      <p>The data layer tells the system what it needs to know. The execution layer tells it what to do. This is where you write the instructions — not for a person, but for a system. The precision required here is different from anything you've written before.</p>
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2>Instructions for humans vs. instructions for AI.</h2>
+        <p>When you brief a colleague, they fill in gaps with judgment, context, and a Slack message asking "did you mean X or Y?" AI doesn't have that layer. It builds what you describe. If the description is ambiguous, the output is a guess.</p>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #3 — Write the execution instructions</div>
+        <div class="prompt-block" id="prompt3">Now I want you to write the execution instructions for this task. This is a step-by-step specification that tells an AI system exactly how to do the work, assuming it has access to the context document we just created.
+
+Write it as a clear process document with:
+
+1. **Inputs** — What the system receives to start. Be specific about format and source.
+2. **Steps** — The exact sequence of operations, in order. For each step, include:
+   - What to do
+   - What to reference (which part of the context document)
+   - What decisions to make and how to make them
+   - What the output of this step feeds into
+3. **Output specification** — What the final output should look like. Format, length, structure, tone. Be precise enough that two different AI sessions would produce structurally similar results.
+4. **Guardrails** — What the system should never do. Common mistakes to avoid. Boundaries on tone, content, or scope.
+
+Write this as if you're programming a very capable but very literal system. It will follow these instructions exactly. Anything left ambiguous will be interpreted by the system's best guess — not by human judgment.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt3', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title" style="color:#b45309">The precision test</div>
+        <div class="callout-text">Read the execution instructions Claude drafted. Now imagine you're handing these to a brand new contractor who has never worked with you before. They can read the context document and these instructions — nothing else. No Slack, no meetings, no "quick question." Would the output be good? Where would it fall apart? Those failure points are your next editing targets.</div>
+      </div>
+
+      <p>If something feels underspecified, tell Claude and refine it together. This is iterative. The first draft is never precise enough. The third draft usually is.</p>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">You're learning the highest-leverage skill in AI-native work</div>
+        <div class="callout-text">The ability to write execution instructions that are precise enough for a system to follow — without human intervention — is what separates people who use AI effectively from people who spend their time correcting AI output. This skill transfers to every AI tool, every task, every domain. It's not about prompting. It's about thinking clearly enough to describe what you want with no ambiguity.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 5: Run It -->
+    <!-- ============================================ -->
+    <div class="step" id="step-5">
+      <p>You have the data layer and the execution layer. Now we let the system run. You're going to hand Claude both documents and a real input, and watch it execute the task you used to do yourself.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #4 — Execute the task</div>
+        <div class="prompt-block" id="prompt4">Now I want you to actually do the task. Here's how:
+
+1. Reference the context document we built (the data layer) for all background knowledge, quality standards, and edge case handling.
+2. Follow the execution instructions we wrote (the execution layer) step by step.
+3. Here is the input for this run: [PASTE YOUR ACTUAL INPUT — a real status update, a real set of meeting notes, a real lead, a real brief, whatever your task normally starts with]
+
+Do not ask me any clarifying questions. Work entirely from the context document and execution instructions. If something is ambiguous, make your best judgment call and flag it in a note at the end — tell me what was unclear and what you decided.
+
+This is important: I want to see where the system works and where it breaks. Don't try to be perfect — try to be faithful to the instructions.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt4', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">Why "don't ask clarifying questions" matters</div>
+        <div class="callout-text">In a real AI-native workflow, the system doesn't get to ask you questions mid-execution. It has the data layer and the execution instructions — and that's it. By telling Claude not to ask, you're simulating the real operating condition. The notes at the end where Claude flags what was unclear are pure gold — they tell you exactly where your specifications need work.</div>
+      </div>
+
+      <p>This might feel uncomfortable. You're watching a system do your task, and you can't intervene. That discomfort is the identity shift happening in real time. You're moving from "person who does the work" to "person who designs and evaluates the system that does the work."</p>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#16a34a">Don't edit the output yet</div>
+        <div class="callout-text">Your instinct will be to jump in and fix things. Resist it. We need to see the raw output — warts and all — so we can diagnose where the system needs improvement. Fixing the output fixes one instance. Fixing the system fixes every future instance.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 6: Verify — The Human Layer -->
+    <!-- ============================================ -->
+    <div class="step" id="step-6">
+      <p>This is where your value lives. Not in the execution — in the evaluation. You're now operating at the intent and verification layer, which is the layer that never gets automated because it requires understanding what the output is <em>for</em>.</p>
+
+      <div class="dark-card">
+        <h2>Verification isn't "does it look right." It's three separate questions.</h2>
+        <p>Output quality. Goal achievement. System diagnosis. Each one tells you something different — and each one points to a different lever.</p>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #5 — Structured verification</div>
+        <div class="prompt-block" id="prompt5">I want to evaluate the output you just produced. Help me do a structured verification by walking through three lenses:
+
+**Lens 1 — Output quality**
+Compare the output against the quality standards in our context document. For each standard, rate whether the output meets it, partially meets it, or misses it. Be specific — quote the standard and point to the part of the output that does or doesn't satisfy it.
+
+**Lens 2 — Goal achievement**
+The intent behind this task is: [STATE THE REAL-WORLD GOAL — e.g., "help my manager understand project status so they can make resourcing decisions" or "convince a prospect that our product solves their specific problem"]. Based on that intent, would this output actually achieve the goal if I used it as-is? Where would it succeed? Where would it fall short?
+
+**Lens 3 — System diagnosis**
+For every gap or weakness you identified: is the root cause in the data layer (missing or insufficient context), the execution layer (unclear or incorrect instructions), or the verification layer (standards we haven't defined yet)? For each issue, tell me which layer to fix and what specifically to change.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt5', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">Lens 3 is the whole point</div>
+        <div class="callout-text">Most people stop at "the output isn't great" and either fix it manually or blame the AI. Lens 3 forces you to trace every problem back to a specific layer. Missing context? That's the data layer — add it. Unclear instructions? That's the execution layer — refine it. No way to evaluate quality? That's the verification layer — define the standard. Every issue has a root cause, and every root cause points to a specific lever you can pull.</div>
+      </div>
+
+      <p>Read the diagnosis carefully. You're building the skill of seeing through the output to the system behind it. This is the transition from "doing the work" to "managing the system that does the work."</p>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">What about verification with a time delay?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p>For some tasks, you can verify the output immediately — you can read it and know if it's good. But for many knowledge work tasks, the real verification happens later. Did the status report actually help the manager make the right decision? Did the lead qualification actually predict which deals closed? Did the project plan actually prevent the risks it identified?</p>
+          <p style="margin-top:10px">This is the hardest part of verification. You need a system for tracking outcomes over time. At minimum: keep a log. Record what you sent, what you expected to happen, and — weeks or months later — what actually happened. That log becomes the highest-value data in your entire system, because it connects outputs to real-world impact.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 7: Identify Your Levers -->
+    <!-- ============================================ -->
+    <div class="step" id="step-7">
+      <p>You've run the system once. You've verified the output. You've diagnosed where the gaps are. Now let's make this concrete: what are your three levers, and what would you pull first?</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #6 — Map your improvement levers</div>
+        <div class="prompt-block" id="prompt6">Based on everything we've done — the context document, the execution instructions, the output, and the verification — I want you to create an improvement map. Show me my three levers and what I'd change in each one to get meaningfully better output next time.
+
+**Data layer improvements**
+What context is missing or thin? What knowledge am I still carrying in my head that isn't in the document? What examples, templates, or reference material would make the biggest difference if I added them?
+
+**Execution layer improvements**
+Which instructions are too vague? Where did the system have to guess? Which steps need more specificity, and which are overspecified and could be simplified? What guardrails are missing?
+
+**Verification layer improvements**
+What quality standards don't exist yet but should? What outcomes should I be tracking over time? How would I set up a lightweight system to check whether outputs are actually achieving their goals?
+
+For each lever, rank the improvements from highest impact to lowest. I want to know what to fix first.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt6', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title" style="color:#b45309">This is your roadmap</div>
+        <div class="callout-text">Print this out. Screenshot it. Save it. This improvement map is the single most actionable document you'll get from this tutorial. It tells you exactly how to make the system better — and each improvement compounds. Fix the data layer and every future execution improves. Fix the execution layer and every future output gets closer. Define verification standards and you'll know immediately when something is off.</div>
+      </div>
+
+      <!-- Three-lever visual -->
+      <div style="background:linear-gradient(135deg,#081f3f,#15465b);border-radius:16px;padding:24px;margin-bottom:32px">
+        <div class="section-label" style="color:#eba714;margin-bottom:16px">Your three levers</div>
+        <div style="display:flex;gap:12px">
+          <div style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px;text-align:center">
+            <div style="font-size:24px;margin-bottom:8px"><span class="icon i-layers" style="font-size:24px;color:#eba714"></span></div>
+            <div style="font-size:12px;font-weight:700;color:#faf5f0;margin-bottom:4px">Data</div>
+            <div style="font-size:11px;color:#faf5f0;opacity:0.7;line-height:1.4">Add context, examples, domain knowledge. The richer the foundation, the better everything above it.</div>
+          </div>
+          <div style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px;text-align:center">
+            <div style="font-size:24px;margin-bottom:8px"><span class="icon i-gear" style="font-size:24px;color:#eba714"></span></div>
+            <div style="font-size:12px;font-weight:700;color:#faf5f0;margin-bottom:4px">Execution</div>
+            <div style="font-size:11px;color:#faf5f0;opacity:0.7;line-height:1.4">Refine instructions, remove ambiguity, add guardrails. Precision in, precision out.</div>
+          </div>
+          <div style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px;text-align:center">
+            <div style="font-size:24px;margin-bottom:8px"><span class="icon i-check" style="font-size:24px;color:#eba714"></span></div>
+            <div style="font-size:12px;font-weight:700;color:#faf5f0;margin-bottom:4px">Verification</div>
+            <div style="font-size:11px;color:#faf5f0;opacity:0.7;line-height:1.4">Define standards, track outcomes, build feedback loops. Know whether it's working.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 8: See Your New Role -->
+    <!-- ============================================ -->
+    <div class="step" id="step-8">
+      <p>Let's zoom out. You just decomposed one task into the three-layer model. Now let's see what this means for your role — not abstractly, but concretely, based on what you just experienced.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #7 — Map the role shift</div>
+        <div class="prompt-block" id="prompt7">I want to understand what just happened to my role. Based on the task we decomposed, help me see the shift.
+
+Create a comparison with two columns:
+
+**Column 1: Where my time went before**
+List the specific activities I described during our conversation — the steps I personally performed, the decisions I made, the context I held in my head, the quality checks I did informally.
+
+**Column 2: Where my time goes now**
+Map each of those activities to the three-layer model. For each one, tell me:
+- Does this become part of the data layer (context I maintain)?
+- Does this become part of the execution layer (instructions I write and refine)?
+- Does this stay with me at the intent/verification layer?
+- Or does it disappear entirely because the system handles it?
+
+Then tell me: if I applied this model to every task I do, what would my job description actually say? Not my current title — what would I actually spend my time on?</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt7', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">The identity question</div>
+        <div class="callout-text">This is the moment that makes people uncomfortable. If the execution layer is handled by AI, and I was spending 60-70% of my time in the execution layer... what am I? The answer: you're the person who understands the problem deeply enough to design the system, and who can evaluate whether the system's output actually serves real humans. That's harder than execution. It's also more valuable.</div>
+      </div>
+
+      <p>Look at the role map Claude produced. Notice what moved out of your hands and what concentrated in your hands. The things that concentrated — intent setting, verification, data curation, instruction refinement — those are the skills that define your value going forward. Not because someone decided they should be, but because that's what's left when execution gets automated.</p>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">What if my organization isn't ready for this?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p>Most organizations aren't. The three-layer model describes where things are heading, not where most teams are today. But you don't need your organization to reorganize for this to be useful to you personally.</p>
+          <p style="margin-top:10px">Start applying the model to your own work. Build context documents for your tasks. Write execution instructions. Track what works and what doesn't. You'll get faster, your output will get more consistent, and — critically — you'll develop the skills that matter most as the shift accelerates. When your organization does start moving in this direction, you'll be the person who already knows how to operate in the new model.</p>
+        </div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">This feels like it only applies to repetitive tasks<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p>It feels that way because repetitive tasks are the easiest to decompose. But the model applies to creative and strategic work too — the layers just look different.</p>
+          <p style="margin-top:10px">For a creative task like designing a campaign concept: the data layer is brand knowledge, audience research, competitive landscape, and past campaign performance. The execution layer is the creative brief and the process for generating concepts. Intent is the strategic goal. Verification is whether the concept resonates with the target audience. The structure is the same — the content is different.</p>
+          <p style="margin-top:10px">The question isn't "is my work decomposable?" It's "which parts of my work require genuine human judgment and which parts are execution that I've been doing manually because no alternative existed?"</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 9: What You Built -->
+    <!-- ============================================ -->
+    <div class="step" id="step-9">
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2>You didn't learn to use an AI tool. You learned to see the structure of your own work.</h2>
+        <p>Data. Execution. Intent and verification. Three layers, three levers, one mental model that applies to everything you do.</p>
+      </div>
+
+      <div class="section-label">What you built in this session</div>
+      <div style="background:white;border-radius:16px;border:1px solid #e8e0d8;padding:20px;margin-bottom:32px">
+        <div class="recap-item">
+          <div class="recap-num">1</div>
+          <div class="recap-text"><strong>A context document (data layer).</strong> Everything the system needs to know to do your task — extracted from your head and put into words. This is the foundation. Its quality determines everything.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">2</div>
+          <div class="recap-text"><strong>Execution instructions (execution layer).</strong> A step-by-step specification precise enough for an AI to follow without asking questions. This is the skill most people lack — and the one that matters most.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">3</div>
+          <div class="recap-text"><strong>A verification framework.</strong> Three lenses — output quality, goal achievement, system diagnosis — that let you evaluate output systematically instead of by gut feel.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">4</div>
+          <div class="recap-text"><strong>An improvement map.</strong> Specific changes to each layer, ranked by impact. A roadmap for making the system better with every iteration.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">5</div>
+          <div class="recap-text"><strong>A role map.</strong> A clear picture of where your time goes now — and where your value concentrates in an AI-native workflow.</div>
+        </div>
+      </div>
+
+      <div class="section-label">The principles behind the three layers</div>
+      <div style="background:white;border-radius:16px;border:1px solid #e8e0d8;padding:20px;margin-bottom:32px">
+        <div class="recap-item">
+          <div class="recap-num">1</div>
+          <div class="recap-text"><strong>All knowledge work decomposes into three layers.</strong> Data, execution, intent and verification. The specifics change by domain. The structure doesn't.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">2</div>
+          <div class="recap-text"><strong>AI handles data and execution. Humans own intent and verification.</strong> But you're responsible for all three layers — you manage the data, you manage the instructions, you set the intent, and you verify the outcomes.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">3</div>
+          <div class="recap-text"><strong>You have three levers.</strong> Improve the data. Improve the instructions. Sharpen the verification. Every improvement compounds — fix the data layer and all future execution gets better.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">4</div>
+          <div class="recap-text"><strong>The gap between what you know and what you can explain is the gap between you and an effective AI system.</strong> Externalizing implicit knowledge is the foundational skill. Everything else depends on it.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">5</div>
+          <div class="recap-text"><strong>Fix the system, not the output.</strong> When the output isn't right, trace the problem to its layer and fix the root cause. One fix improves every future run.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">6</div>
+          <div class="recap-text"><strong>Your value is moving to the edges.</strong> Not execution in the middle, but intent at the top and data quality at the bottom. The people who thrive understand the problem deeply enough to design the system — and can evaluate whether what it produces serves real humans.</div>
+        </div>
+      </div>
+
+      <div class="section-label">Where this goes next</div>
+      <div class="next-grid">
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-refresh"></span></div>
+          <div class="next-card-title">Iterate your system</div>
+          <div class="next-card-desc">Run your task again with the improvements from the map. Each cycle makes the data layer richer and the instructions sharper.</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-layers"></span></div>
+          <div class="next-card-title">Decompose another task</div>
+          <div class="next-card-desc">Apply the three-layer model to a second task. The more you practice, the faster the decomposition becomes.</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-compass"></span></div>
+          <div class="next-card-title">Map your whole role</div>
+          <div class="next-card-desc">List every task you do. Classify each one by which layer your time goes to. See the full picture of where your role is headed.</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-wrench"></span></div>
+          <div class="next-card-title">Build it in Cowork</div>
+          <div class="next-card-desc">Move your context document and execution instructions into a Cowork folder. Make it a persistent, reusable system.</div>
+        </div>
+      </div>
+
+      <div class="success-card">
+        <div class="success-icon"><span class="icon i-star"></span></div>
+        <div class="success-title">You see the layers now.</div>
+        <div class="success-text">Every task you do, every project you manage, every problem you solve — you'll start seeing the data layer, the execution layer, and the intent and verification layer. That's the mental model. Once you see it, you can't unsee it. And the people who see it clearly are the ones who will thrive as the shift accelerates.</div>
+      </div>
+    </div>
+
+  </div><!-- step-content -->
+  </div><!-- main-col -->
+</div><!-- container -->
+
+<script>
+const STEPS = [
+  { title: "The Three Layers of AI-Native Work", subtitle: "A new mental model for knowledge work — and where you fit in it." },
+  { title: "The Three Layers", subtitle: "Data. Execution. Intent & Verification. The structure behind all knowledge work." },
+  { title: "Describe Your Task", subtitle: "Pick a real task from your job and externalize everything you know about it." },
+  { title: "Extract the Data Layer", subtitle: "Turn your tacit knowledge into a structured context document." },
+  { title: "Build the Execution Layer", subtitle: "Write instructions precise enough for a system to follow without asking questions." },
+  { title: "Run It", subtitle: "Let the system execute your task. Watch what works and what breaks." },
+  { title: "Verify the Output", subtitle: "Evaluate through three lenses: quality, goal achievement, and system diagnosis." },
+  { title: "Identify Your Levers", subtitle: "Map the specific improvements to each layer — data, execution, verification." },
+  { title: "See Your New Role", subtitle: "Understand where your time goes now and where your value concentrates." },
+  { title: "What You Built", subtitle: "A mental model, a decomposed task, and a roadmap for the shift." },
+];
+
+let currentStep = 0;
+
+const RAIL_THUMBS = [
+  { label: "Start",
+    visual: '<div style="display:flex;gap:4px"><div style="width:24px;height:28px;border-radius:4px;border:2px solid currentColor;opacity:0.5"></div><div style="width:24px;height:28px;border-radius:4px;border:2px solid currentColor"></div><div style="width:24px;height:28px;border-radius:4px;border:2px solid currentColor;opacity:0.5"></div></div>' },
+  { label: "Layers",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-layers" style="font-size:28px"></span></div>' },
+  { label: "Describe",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-chat" style="font-size:28px"></span></div>' },
+  { label: "Data",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-file" style="font-size:28px"></span></div>' },
+  { label: "Execute",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-gear" style="font-size:28px"></span></div>' },
+  { label: "Run",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-zap" style="font-size:28px"></span></div>' },
+  { label: "Verify",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-eye" style="font-size:28px"></span></div>' },
+  { label: "Levers",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-wrench" style="font-size:28px"></span></div>' },
+  { label: "Role",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-compass" style="font-size:28px"></span></div>' },
+  { label: "Done",
+    visual: '<div style="font-size:30px;line-height:1">&#9733;</div>' },
+];
+
+const railEl = document.getElementById("sectionRail");
+STEPS.forEach((step, i) => {
+  if (i > 0) {
+    const conn = document.createElement("div");
+    conn.className = "rail-connector upcoming";
+    conn.id = "rail-conn-" + i;
+    railEl.appendChild(conn);
+  }
+  const thumb = document.createElement("button");
+  thumb.className = "rail-thumb" + (i === 0 ? " current" : " upcoming");
+  thumb.id = "rail-thumb-" + i;
+  thumb.setAttribute("data-label", step.title);
+  thumb.innerHTML = '<div class="rail-thumb-visual">' + RAIL_THUMBS[i].visual + '</div><div class="rail-thumb-label">' + RAIL_THUMBS[i].label + '</div>';
+  thumb.onclick = () => goToStep(i);
+  railEl.appendChild(thumb);
+});
+
+function goToStep(n) {
+  document.getElementById("step-" + currentStep).classList.remove("active");
+  currentStep = n;
+  document.getElementById("step-" + currentStep).classList.add("active");
+  document.getElementById("stepTitle").textContent = STEPS[n].title;
+  document.getElementById("stepSubtitle").textContent = STEPS[n].subtitle;
+  document.getElementById("btnBack").style.display = n > 0 ? "" : "none";
+  const btnNext = document.getElementById("btnNext");
+  if (n >= STEPS.length - 1) { btnNext.style.display = "none"; }
+  else { btnNext.style.display = ""; btnNext.textContent = n === 0 ? "Let's go" : "Next step"; }
+  STEPS.forEach((_, i) => {
+    const thumb = document.getElementById("rail-thumb-" + i);
+    if (thumb) thumb.className = "rail-thumb " + (i < n ? "completed" : i === n ? "current" : "upcoming");
+    if (i > 0) { const conn = document.getElementById("rail-conn-" + i); if (conn) conn.className = "rail-connector " + (i <= n ? "completed" : "upcoming"); }
+  });
+  window.scrollTo(0, 0);
+}
+
+function nextStep() { if (currentStep < STEPS.length - 1) goToStep(currentStep + 1); }
+function prevStep() { if (currentStep > 0) goToStep(currentStep - 1); }
+
+function toggleExpand(card) { card.classList.toggle("open"); }
+
+function copyPrompt(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add("copied");
+    btn.textContent = "Copied to clipboard!";
+    setTimeout(() => { btn.classList.remove("copied"); btn.textContent = "Copy this prompt"; }, 2000);
+  });
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") nextStep();
+  if (e.key === "ArrowLeft" || e.key === "ArrowUp") prevStep();
+});
+</script>
+</body>
+</html>

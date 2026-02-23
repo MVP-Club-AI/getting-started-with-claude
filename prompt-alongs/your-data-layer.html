@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Hard Drive Is a Database — Prompt Along</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Zilla+Slab&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #faf5f0; color: #081f3f; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .container { display: flex; gap: 24px; max-width: 780px; margin: 0 auto; padding: 20px 16px 20px 4px; min-height: 100vh; }
+  .main-col { flex: 1; min-width: 0; }
+
+  /* Section rail */
+  .section-rail { width: 88px; flex-shrink: 0; padding-top: 8px; }
+  .section-rail-inner { position: sticky; top: 80px; display: flex; flex-direction: column; align-items: center; }
+  .rail-thumb { width: 80px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; transition: all 0.25s ease; padding: 8px 6px 6px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-family: 'Inter', sans-serif; background: #f0ebe4; color: #b8a898; }
+  .rail-thumb-visual { display: flex; align-items: center; justify-content: center; height: 44px; }
+  .rail-thumb-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1; text-align: center; }
+  .rail-thumb.upcoming { background: #f0ebe4; color: #b8a898; border-color: transparent; }
+  .rail-thumb.upcoming .rail-thumb-visual { opacity: 0.45; }
+  .rail-thumb.completed { background: #fef3e2; color: #b45309; border-color: #eba714; }
+  .rail-thumb.current { background: #d97706; color: white; border-color: #b45309; box-shadow: 0 2px 10px rgba(217,119,6,0.4); transform: scale(1.06); }
+  .rail-connector { width: 2px; height: 6px; flex-shrink: 0; }
+  .rail-connector.completed { background: #eba714; }
+  .rail-connector.upcoming { background: #e8e0d8; }
+  .rail-thumb:hover::after { content: attr(data-label); position: absolute; left: 86px; top: 50%; transform: translateY(-50%); background: #081f3f; color: #faf5f0; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; white-space: nowrap; pointer-events: none; z-index: 30; }
+  .rail-thumb:hover::before { content: ''; position: absolute; left: 80px; top: 50%; transform: translateY(-50%); border: 5px solid transparent; border-right-color: #081f3f; pointer-events: none; z-index: 30; }
+
+  /* Icons */
+  .icon { display:inline-block;width:1em;height:1em;background:currentColor;vertical-align:-0.125em;flex-shrink:0;-webkit-mask:no-repeat center/contain;mask:no-repeat center/contain; }
+  .i-layers{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E");}
+  .i-chat{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");}
+  .i-file{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");}
+  .i-zap{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");}
+  .i-target{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");}
+  .i-eye{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");}
+  .i-check{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");}
+  .i-search{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");}
+  .i-gear{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");}
+  .i-sparkle{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");}
+  .i-star{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");}
+  .i-wrench{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");}
+  .i-refresh{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");}
+  .i-compass{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z'/%3E%3C/svg%3E");}
+  .i-folder{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z'/%3E%3C/svg%3E");}
+  .i-hdd{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12H2'/%3E%3Cpath d='M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z'/%3E%3Cline x1='6' y1='16' x2='6.01' y2='16'/%3E%3Cline x1='10' y1='16' x2='10.01' y2='16'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12H2'/%3E%3Cpath d='M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z'/%3E%3Cline x1='6' y1='16' x2='6.01' y2='16'/%3E%3Cline x1='10' y1='16' x2='10.01' y2='16'/%3E%3C/svg%3E");}
+  .i-map{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z'/%3E%3Cpath d='M8 2v16'/%3E%3Cpath d='M16 6v16'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z'/%3E%3Cpath d='M8 2v16'/%3E%3Cpath d='M16 6v16'/%3E%3C/svg%3E");}
+
+  /* Step header */
+  .step-header { margin-bottom: 24px; }
+  .step-header h1 { font-family: 'Zilla Slab', serif; font-size: 28px; font-weight: 400; color: #081f3f; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .step-header p { font-size: 16px; color: #15465b; }
+
+  /* Content */
+  .step-content { margin-bottom: 32px; }
+  .step { display: none; }
+  .step.active { display: block; min-height: calc(100vh - 240px); }
+  .step > p { font-size: 17px; line-height: 1.8; color: #081f3f; margin-bottom: 28px; }
+
+  /* Nav */
+  .nav-header { position: sticky; top: 0; background: #faf5f0; padding: 8px 0 12px; z-index: 10; }
+  .nav-header::after { content:''; display:block; height:20px; margin:0 -16px; background:linear-gradient(to top,transparent,#faf5f0); pointer-events:none; position:absolute; bottom:-20px; left:0; right:0; }
+  .nav { display: flex; gap: 12px; }
+  .btn { padding: 14px 20px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; font-family: 'Inter', sans-serif; }
+  .btn:hover { opacity: 0.9; }
+  .btn-back { flex: 1; border: 1px solid #e8e0d8; background: white; color: #15465b; }
+  .btn-next { flex: 2; background: #d97706; color: white; }
+
+  /* Components */
+  .callout { padding: 18px 22px; border-radius: 0 12px 12px 0; margin-bottom: 28px; }
+  .callout-purple { background: #fef9f0; border-left: 4px solid #081f3f; }
+  .callout-green { background: #f0fdf4; border-left: 4px solid #16a34a; }
+  .callout-blue { background: #f0f5f7; border-left: 4px solid #15465b; }
+  .callout-amber { background: #fef9f0; border-left: 4px solid #d97706; }
+  .callout-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .callout-text { font-size: 13px; color: #15465b; line-height: 1.7; }
+
+  .dark-card { background: #081f3f; border-radius: 16px; padding: 32px; margin-bottom: 32px; text-align: center; }
+  .dark-card h2 { font-family: 'Zilla Slab', serif; font-size: 22px; font-weight: 400; color: #faf5f0; margin-bottom: 8px; }
+  .dark-card p { font-size: 14px; color: #eba714; line-height: 1.7; }
+
+  .section-label { font-size:11px; font-weight:600; color:#15465b; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; text-align:center; font-family:'Inter',sans-serif; }
+
+  .prompt-block { background:#081f3f; color:#faf5f0; border-radius:12px; padding:20px; font-size:14px; line-height:1.7; font-family:monospace; white-space:pre-wrap; margin-bottom:12px; }
+  .copy-btn { width:100%; padding:10px 20px; border-radius:8px; border:none; font-size:14px; font-weight:600; cursor:pointer; background:#d97706; color:white; transition:background 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Inter',sans-serif; }
+  .copy-btn.copied { background:#059669; }
+
+  .action-box { background:linear-gradient(135deg,#fef9f0,#fef3e2); border:2px solid #d97706; border-radius:16px; padding:24px; margin-bottom:32px; }
+  .action-box-label { font-size:11px; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .action-box-step { font-size:14px; color:#081f3f; line-height:1.8; }
+  .action-box-step ol { padding-left:20px; }
+  .action-box-step li { margin-bottom:6px; }
+
+  .expand-card { border: 1px solid #e8e0d8; border-radius: 12px; margin-bottom: 28px; overflow: hidden; background: white; }
+  .expand-header { width:100%; padding:14px 18px; background:none; border:none; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:15px; font-weight:600; color:#081f3f; text-align:left; font-family:inherit; }
+  .expand-arrow { font-size:12px; color:#15465b; transition:transform 0.2s; }
+  .expand-card.open .expand-arrow { transform:rotate(180deg); }
+  .expand-body { padding:0 18px 16px; color:#15465b; font-size:14px; line-height:1.7; display:none; }
+  .expand-card.open .expand-body { display:block; }
+
+  .success-card { background:#f0fdf4; border-radius:12px; padding:24px; border:1px solid #bbf7d0; text-align:center; margin-top:20px; margin-bottom:28px; }
+  .success-icon { font-size:28px; margin-bottom:8px; }
+  .success-title { font-size:16px; font-weight:700; color:#15803d; margin-bottom:8px; }
+  .success-text { font-size:14px; color:#15465b; line-height:1.7; }
+
+  /* Recap list */
+  .recap-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f0ebe4; align-items:flex-start; }
+  .recap-item:last-child { border-bottom:none; }
+  .recap-num { font-size:14px; font-weight:700; color:#d97706; min-width:24px; padding-top:2px; }
+  .recap-text { font-size:14px; color:#15465b; line-height:1.6; }
+
+  /* Next grid */
+  .next-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px; }
+  .next-card { background:white; border-radius:12px; padding:16px; border:1px solid #e8e0d8; text-align:center; }
+  .next-card-icon { font-size:24px; margin-bottom:6px; }
+  .next-card-title { font-size:14px; font-weight:700; color:#081f3f; margin-bottom:4px; }
+  .next-card-desc { font-size:12px; color:#15465b; line-height:1.4; }
+
+  /* Compare split */
+  .compare-split { display:flex; gap:0; margin-bottom:28px; border-radius:16px; overflow:hidden; border:1px solid #e8e0d8; }
+  .compare-side { flex:1; padding:20px; }
+  .compare-old { background:#f7f3ee; }
+  .compare-new { background:#fef9f0; }
+  .compare-badge { font-size:10px; font-weight:700; padding:4px 10px; border-radius:20px; display:inline-block; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px; }
+  .compare-divider { width:2px; background:#e8e0d8; position:relative; display:flex; align-items:center; justify-content:center; }
+  .compare-divider-dot { position:absolute; background:white; border:2px solid #e8e0d8; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:12px; }
+
+  /* Layer diagram */
+  .layer-stack { display:flex; flex-direction:column; gap:0; margin-bottom:32px; border-radius:16px; overflow:hidden; border:1px solid #e8e0d8; }
+  .layer-row { padding:20px 22px; display:flex; align-items:center; gap:16px; }
+  .layer-row:not(:last-child) { border-bottom:1px solid #e8e0d8; }
+  .layer-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .layer-content { flex:1; }
+  .layer-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:2px; }
+  .layer-title { font-size:15px; font-weight:600; color:#081f3f; margin-bottom:2px; }
+  .layer-desc { font-size:13px; color:#15465b; line-height:1.6; }
+  .layer-who { font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; display:inline-block; margin-top:6px; }
+
+  /* Three-layer locator — faded/active states */
+  .layer-locator .layer-row { transition: opacity 0.2s; }
+  .layer-locator .layer-row.faded { opacity: 0.35; }
+  .layer-locator .layer-row.faded .layer-icon { opacity: 0.5; }
+  .layer-locator .layer-row.active-layer { border-left: 4px solid #d97706; }
+  .layer-locator .you-are-here { display:inline-block; font-size:10px; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:1px; background:#fef3e2; padding:2px 8px; border-radius:10px; margin-left:8px; }
+
+  /* Advantage list */
+  .advantage-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:32px; }
+  .advantage-card { background:white; border-radius:12px; padding:16px; border:1px solid #e8e0d8; }
+  .advantage-icon { font-size:20px; margin-bottom:8px; color:#d97706; }
+  .advantage-title { font-size:14px; font-weight:600; color:#081f3f; margin-bottom:4px; }
+  .advantage-desc { font-size:12px; color:#15465b; line-height:1.5; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="section-rail">
+    <div class="section-rail-inner" id="sectionRail"></div>
+  </div>
+
+  <div class="main-col">
+  <div class="nav-header">
+    <div class="nav">
+      <button class="btn btn-back" id="btnBack" onclick="prevStep()" style="display:none">Back</button>
+      <button class="btn btn-next" id="btnNext" onclick="nextStep()">Let's go</button>
+    </div>
+  </div>
+
+  <div class="step-header">
+    <h1 id="stepTitle">Your Hard Drive Is a Database</h1>
+    <p id="stepSubtitle">The data layer isn't abstract. It's a folder on your computer.</p>
+  </div>
+
+  <div class="step-content">
+
+    <!-- ============================================ -->
+    <!-- STEP 0: You're Already Sitting on a Database -->
+    <!-- ============================================ -->
+    <div class="step active" id="step-0">
+      <p>You've been building a database your entire career. Every document you've written, every spreadsheet you've maintained, every brand guide you've saved, every meeting note you've kept — that's data. It's been sitting on your hard drive (or in files on the cloud) this whole time, doing nothing except waiting for you to remember where you put it.</p>
+
+      <div class="section-label" style="margin-top:4px">The three layers of AI-native work</div>
+      <div class="layer-stack layer-locator">
+        <div class="layer-row faded" style="background:#fef9f0">
+          <div class="layer-icon" style="background:#d97706"><span class="icon i-target" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#d97706">Layer 3 — Intent &amp; Verification</div>
+            <div class="layer-desc" style="font-size:12px">What should exist, why, and did it work? <em>This is you.</em></div>
+          </div>
+        </div>
+        <div class="layer-row faded" style="background:#f0f5f7">
+          <div class="layer-icon" style="background:#15465b"><span class="icon i-gear" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#15465b">Layer 2 — Execution</div>
+            <div class="layer-desc" style="font-size:12px">The instructions and processes. <em>Coming in the next tutorial.</em></div>
+          </div>
+        </div>
+        <div class="layer-row active-layer" style="background:white">
+          <div class="layer-icon" style="background:#081f3f"><span class="icon i-layers" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#081f3f">Layer 1 — Data &amp; Context <span class="you-are-here">You are here</span></div>
+            <div class="layer-desc" style="font-size:12px">Everything the system needs to know. Your files, your knowledge, your references.</div>
+          </div>
+        </div>
+      </div>
+
+      <p>That just changed. Claude Cowork and Claude Code can read your files, navigate your folders, and work with your actual documents — PDFs, spreadsheets, images, markdown, whatever you have. Your hard drive isn't a junk drawer anymore. It's a data layer.</p>
+
+      <div class="dark-card">
+        <h2>You've been handing Claude a briefcase. Now you're giving it keys to the workshop.</h2>
+        <p>The briefcase is a Claude Chat project — a few files you upload, isolated in a single conversation. The workshop is a folder on your computer — everything Claude needs, always accessible, and Claude can read it, reference it, and update it directly.</p>
+      </div>
+
+      <div class="compare-split">
+        <div class="compare-side compare-old">
+          <div class="compare-badge" style="background:#f0ebe4;color:#081f3f">Claude Chat project</div>
+          <div style="font-size:13px;color:#15465b;line-height:2">
+            <div>Upload a few files manually</div>
+            <div>Limited file size and types</div>
+            <div>Claude reads but can't edit</div>
+            <div>Each project is an island</div>
+            <div>Locked to one tool</div>
+          </div>
+        </div>
+        <div class="compare-divider"><div class="compare-divider-dot">&#8594;</div></div>
+        <div class="compare-side compare-new">
+          <div class="compare-badge" style="background:#fef3e2;color:#b45309">A folder on your hard drive</div>
+          <div style="font-size:13px;color:#15465b;line-height:2">
+            <div>All your files, already there</div>
+            <div>No size limits, any file type</div>
+            <div>Claude reads <em>and</em> edits</div>
+            <div>Folders connect to each other</div>
+            <div>Works with Cowork, Code, and more</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title" style="color:#b45309">"But all my files are in the cloud"</div>
+        <div class="callout-text">If you're thinking "my stuff lives in Google Workspace" or "everything's in SharePoint" — that's totally normal. Most people work in cloud storage now. For learning the three-layer approach, we're going to start locally on your hard drive. This gives you full control over Claude's context, avoids security and access complications, and lets you practice these skills in the simplest possible environment. Pull some of your key files — brand guides, templates, reference docs — from the cloud onto your hard drive so we can work with them here. Eventually, Claude will connect directly with your cloud storage and you'll be able to do this same work there. But starting local is the best way to learn the principles.</div>
+      </div>
+
+      <p>If you did the <a href="three-layers.html" style="color:#d97706;font-weight:600">Three Layers tutorial</a>, you learned the mental model: all knowledge work decomposes into a data layer, an execution layer, and an intent and verification layer. This tutorial makes that concrete. Your data layer and your execution layer both physically live in folders on your machine. We're going to set them up.</p>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">What you'll need</div>
+        <div class="callout-text">Claude Cowork or Claude Code — either works. Access to your actual files — your Documents folder, a work project folder, wherever your real stuff lives. If your important files live in the cloud, take a few minutes to download the key ones into a local folder first. This tutorial uses your real files, not example files. That's the whole point.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 1: Why This Changes Everything -->
+    <!-- ============================================ -->
+    <div class="step" id="step-1">
+      <p>For decades, "database" meant something intimidating. It meant SQL queries, data engineers, cloud servers, rigid schemas where every piece of information had to be cleaned and structured before it could be useful. Regular people didn't have databases. They had messy folders.</p>
+
+      <p>Here's what changed: Claude doesn't need your data to be structured. It reads PDFs. It reads spreadsheets. It reads markdown files, Word documents, meeting transcripts, even images. It can take a folder full of unstructured, messy, real-world files and work with them <em>as they are</em>.</p>
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2>You don't need to organize everything before Claude can use it. You just need to help Claude navigate it.</h2>
+        <p>Old databases required structure first, then data. Your new database works the other way: data first, then add light structure only where it helps.</p>
+      </div>
+
+      <p>The key is navigation. Not organization — navigation. There's a difference. Organizing is rearranging files into a perfect hierarchy for your human brain. Navigation is creating a map so Claude can find what it needs. A directory map is like a table of contents for your hard drive.</p>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">Why this matters for the three-layer model</div>
+        <div class="callout-text">In the three-layer model, your data layer is everything the system needs to know to do the work. Until now, that was abstract — "domain knowledge, examples, brand guidelines." Now we're making it physical. Your data layer is a folder. Your brand guide is a file in that folder. Your examples are files in that folder. Your execution instructions are files in that folder. Two of the three layers live right there on your hard drive, and Claude can access both of them directly.</div>
+      </div>
+
+      <div class="advantage-grid">
+        <div class="advantage-card">
+          <div class="advantage-icon"><span class="icon i-hdd" style="font-size:20px"></span></div>
+          <div class="advantage-title">Unlimited context</div>
+          <div class="advantage-desc">No upload limits. Your entire project history, every reference doc, all of it accessible.</div>
+        </div>
+        <div class="advantage-card">
+          <div class="advantage-icon"><span class="icon i-gear" style="font-size:20px"></span></div>
+          <div class="advantage-title">Claude edits directly</div>
+          <div class="advantage-desc">Claude can update your context docs, refine execution instructions, and write new files — not just read them.</div>
+        </div>
+        <div class="advantage-card">
+          <div class="advantage-icon"><span class="icon i-compass" style="font-size:20px"></span></div>
+          <div class="advantage-title">Portable across tools</div>
+          <div class="advantage-desc">A folder works with Cowork, Code, and any future tool. Your data layer isn't locked to one product.</div>
+        </div>
+        <div class="advantage-card">
+          <div class="advantage-icon"><span class="icon i-layers" style="font-size:20px"></span></div>
+          <div class="advantage-title">Everything connects</div>
+          <div class="advantage-desc">Folders reference each other. Your data layer for one project can draw on shared reference materials.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title" style="color:#b45309">Before you continue</div>
+        <div class="callout-text">Pick a folder. This should be a real work folder — a project you're actively working on, or your main Documents folder, or wherever you keep the files that matter to your job. Something with at least 10-20 files in it. Not your entire hard drive — we'll scale up later. Start with one meaningful folder.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 2: Take Inventory -->
+    <!-- ============================================ -->
+    <div class="step" id="step-2">
+      <p>You've picked your folder. Now we're going to do something most people have never done: ask Claude to explore it and tell you what's in there. Not just a file list — a map. What each file is, what it's useful for, and how things relate to each other.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #1 — Create a directory map</div>
+        <div class="prompt-block" id="prompt1">I want you to explore this folder and create a directory map — a document that describes what's here and how it all fits together.
+
+For each folder and important file, write a one-line description of what it contains and what it's useful for. Group things by purpose, not by file type. I don't want a list sorted by .pdf vs. .docx — I want to understand what this collection of files actually represents.
+
+As you go, flag anything that looks like it could be valuable context for future work:
+- Reference materials (brand guides, style guides, templates)
+- Examples of past work (deliverables, reports, presentations)
+- Institutional knowledge (process docs, decision logs, meeting notes that capture why things are the way they are)
+- Inputs that get reused (client briefs, data sources, recurring reports)
+
+Also flag anything that looks stale, duplicated, or unclear in purpose.
+
+Save the directory map as _directory-map.md in the root of this folder.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt1', this)">Copy this prompt</button>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-target" style="font-size:14px"></span> How to use this prompt</div>
+        <div class="action-box-step">
+          <ol>
+            <li>Open Claude Cowork or Claude Code and point it at your chosen folder</li>
+            <li>Paste the prompt above</li>
+            <li>Let Claude explore — it will read files, look inside subfolders, and build the map</li>
+            <li>When it's done, you'll have a <code>_directory-map.md</code> file sitting in your folder</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#16a34a">This will feel like cleaning out a garage</div>
+        <div class="callout-text">You'll find files you forgot you had. You'll find duplicates. You'll find things that were important six months ago and are now irrelevant. That's the point. You're not organizing — you're taking inventory. And having a map of what's here is the first step toward making it useful.</div>
+      </div>
+
+      <p>When Claude finishes, read the directory map. You'll probably be surprised by what's actually in your folder versus what you thought was there. That gap — between what you have and what you know you have — is exactly the gap this tutorial closes.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 3: See What You Have -->
+    <!-- ============================================ -->
+    <div class="step" id="step-3">
+      <p>You have a directory map. Now let's make sense of it. Not everything on your hard drive is the same kind of data. Understanding the difference matters because it tells you what role each file plays in the three-layer model.</p>
+
+      <div class="layer-stack">
+        <div class="layer-row" style="background:#fef9f0">
+          <div class="layer-icon" style="background:#d97706"><span class="icon i-file" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#d97706">Reference data</div>
+            <div class="layer-title">How the work gets done</div>
+            <div class="layer-desc">Brand guides, style guides, templates, standard operating procedures, examples of excellent past work. These inform every task. They're the equivalent of training a new employee — "this is how we do things here."</div>
+            <div class="layer-who" style="background:#fef3e2;color:#b45309">Data layer — high reuse</div>
+          </div>
+        </div>
+        <div class="layer-row" style="background:#f0f5f7">
+          <div class="layer-icon" style="background:#15465b"><span class="icon i-gear" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#15465b">Working data</div>
+            <div class="layer-title">Inputs and outputs of actual tasks</div>
+            <div class="layer-desc">Reports, drafts, deliverables, meeting notes, client communications, project files. These are the raw material and the finished product. Each one is typically used once or twice, but together they show patterns.</div>
+            <div class="layer-who" style="background:#e0ecf0;color:#15465b">Data layer — task-specific</div>
+          </div>
+        </div>
+        <div class="layer-row" style="background:white">
+          <div class="layer-icon" style="background:#081f3f"><span class="icon i-layers" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#081f3f">Institutional knowledge</div>
+            <div class="layer-title">Why things are the way they are</div>
+            <div class="layer-desc">Decision logs, strategy documents, notes on why a process exists, context about clients or stakeholders. This is the hardest to replace and the most valuable to capture. It's what a 10-year employee knows that a new hire doesn't.</div>
+            <div class="layer-who" style="background:#f0ebe4;color:#081f3f">Data layer — highest value</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #2 — Categorize your data</div>
+        <div class="prompt-block" id="prompt2">Look at the directory map we just created. Now I want you to categorize everything into three types:
+
+1. **Reference Data** — Materials that inform how work gets done. Brand guides, templates, style guides, SOPs, examples of past work I'd want to replicate.
+
+2. **Working Data** — Inputs and outputs of specific tasks. Reports, drafts, deliverables, meeting notes, client files. Things that were created for a specific purpose.
+
+3. **Institutional Knowledge** — Context about why things are the way they are. Decision logs, strategy docs, process documentation, anything that captures organizational memory.
+
+For each item, also note:
+- Is it **current** or **stale**? (Would I still use this as-is, or is it outdated?)
+- Is it **high reuse** (relevant to many future tasks) or **task-specific** (relevant to one project)?
+
+Update the _directory-map.md with these categories. Don't reorganize the actual files — just add the categorization to the map.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt2', this)">Copy this prompt</button>
+      </div>
+
+      <div class="dark-card">
+        <h2>Most people's hard drives are 70% working data, 20% reference data, and 10% institutional knowledge.</h2>
+        <p>That 10% — the institutional knowledge — is the most valuable and the hardest to replace. It's also what most people never write down. It lives in their heads until they leave the company, and then it's gone.</p>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">You're seeing your data layer for the first time</div>
+        <div class="callout-text">This categorized map isn't just a file list. It's a picture of what your data layer actually looks like — what's rich, what's thin, and what's missing entirely. If you notice you have almost no institutional knowledge captured as files, that's not a failure of your filing system. That knowledge has been locked in your head. The next few steps will start changing that.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 4: Add Light Structure -->
+    <!-- ============================================ -->
+    <div class="step" id="step-4">
+      <p>You now have a categorized map of your folder. The instinct at this point is to reorganize everything — rename files, create a perfect folder hierarchy, color-code everything. Don't. That's the old model. In the old model, you organized for your own brain. In the new model, you create navigation for Claude.</p>
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2>A flat folder with a good index beats a perfectly nested hierarchy with no map.</h2>
+        <p>Organization is expensive and fragile — it takes hours and breaks bookmarks. Navigation is cheap and adaptable — a directory map can be regenerated in seconds.</p>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #3 — Build a context index</div>
+        <div class="prompt-block" id="prompt3">Based on the categorized directory map, I want you to create a _context-index.md file for this folder. This is a navigation document for Claude — a way to quickly understand what's here and where to find it.
+
+The context index should include:
+
+1. **Purpose** — A 2-3 sentence description of what this folder is for and what kind of work it supports.
+
+2. **Key reference materials** — The most valuable files for informing future work. For each one: file name, what it contains, and when Claude should reference it (e.g., "Reference this whenever producing client-facing content").
+
+3. **Folder structure in plain language** — Describe how things are organized in human terms, not just paths. ("The /clients subfolder has a folder for each active client with their briefs and past deliverables.")
+
+4. **Naming conventions and patterns** — Any patterns that already exist in how files are named or organized. These help Claude predict where to find things.
+
+5. **What's missing** — Based on what you've seen, what reference materials, templates, or institutional knowledge *should* exist in this folder but doesn't? What would make this data layer more complete?
+
+Save this as _context-index.md in the root of the folder.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt3', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title" style="color:#b45309">Resist the urge to reorganize</div>
+        <div class="callout-text">The context index makes your existing structure navigable without changing it. If Claude suggests renaming a folder or adding a README to an ambiguous directory — small, surgical improvements — that's fine. But don't spend an afternoon restructuring everything. The index does the work that reorganization used to do, and it takes minutes instead of hours.</div>
+      </div>
+
+      <p>Notice what just happened. You now have two files in your folder — <code>_directory-map.md</code> and <code>_context-index.md</code> — that didn't exist before. These are navigation layers sitting on top of your existing, unstructured files. That's light structure. Your actual files didn't move. But Claude can now find and use them intelligently.</p>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">But shouldn't I organize my files properly?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p>The honest answer: you can if you want to, but you don't need to in order for this to work. A context index makes even a messy folder navigable. And here's the thing most people don't realize — your "messy" folder structure usually has an implicit logic to it. You put files where they made sense to you at the time. The context index makes that implicit logic explicit so Claude can follow it too.</p>
+          <p style="margin-top:10px">If you do want to reorganize, do it <em>after</em> you've used the context index for a few weeks. By then you'll know which organizational changes actually matter (because you'll see where Claude gets confused) versus which ones just feel tidy.</p>
+        </div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">Why the underscore prefix on file names?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p>Files that start with <code>_</code> sort to the top of most file explorers and signal "this is a meta file — it's about the folder, not part of the work." It's a lightweight convention that keeps your navigation files visible without mixing them into your actual deliverables. Think of them as the label on the outside of a filing cabinet — they describe what's inside without being the contents themselves.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 5: Your First Data-Powered Task -->
+    <!-- ============================================ -->
+    <div class="step" id="step-5">
+      <p>You have a navigable data layer. Now let's use it. This is the moment where abstract becomes real — where "your hard drive is a database" stops being a metaphor and becomes something you can feel in the quality of Claude's output.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #4 — Do a task using your data layer</div>
+        <div class="prompt-block" id="prompt4">I have a task I need to do: [DESCRIBE A REAL TASK — e.g., "write a project update for my manager," "draft a proposal for a new client," "create a presentation outline," "summarize this quarter's work"].
+
+Before you start, read the _context-index.md file. Then look through the files it points to — especially any reference materials, past examples, or relevant working documents.
+
+Tell me:
+1. What files from my data layer are relevant to this task?
+2. What context from those files will you draw on?
+3. What's missing — what would make this easier if it existed?
+
+Then do the task, drawing on the actual files in my system — not generic knowledge. I want to see what happens when you work from my data layer instead of from nothing.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt4', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">This is the moment</div>
+        <div class="callout-text">Claude isn't generating from generic training data anymore. It's generating from <em>your</em> data — your brand guide, your past examples, your templates, your client context, your institutional knowledge. The difference in output quality between "Claude with no context" and "Claude with your data layer" is the difference between a temp worker on day one and a colleague who's been at your company for two years.</div>
+      </div>
+
+      <p>Read the output. Notice the specifics. If you have a brand guide in your folder, you should see your brand language reflected. If you have examples of past work, you should see structural patterns that match. If you have client context, you should see references that are relevant and accurate — not generic filler.</p>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#16a34a">Don't skip the "what's missing" part</div>
+        <div class="callout-text">When Claude tells you what reference material would have helped but didn't exist, that's pure gold. It's telling you exactly where your data layer has gaps. Each gap you fill makes every future task better. That's the compounding effect of a well-maintained data layer.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 6: See the Difference -->
+    <!-- ============================================ -->
+    <div class="step" id="step-6">
+      <p>You just saw Claude work with your data layer. Now let's make the value visceral. We're going to run the exact same task again — but this time, without your data layer. Generic Claude, no files, no context. Then you'll see them side by side.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #5 — The no-context comparison</div>
+        <div class="prompt-block" id="prompt5">Now I want you to do the same task again, but this time pretend you have no access to any of my files. No directory map, no context index, no brand guide, no past examples, no client information. Just the task description and your general knowledge.
+
+The task was: [PASTE THE SAME TASK DESCRIPTION FROM PROMPT #4]
+
+Produce the output based on nothing but that description. Don't reference anything from my data layer.
+
+When you're done, write a brief comparison: what's different between this output and the data-powered version? Where specifically did my files make the output better?</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt5', this)">Copy this prompt</button>
+      </div>
+
+      <div class="dark-card">
+        <h2>The gap between those two outputs is the value of your data layer.</h2>
+        <p>Every file on your hard drive that's relevant to your work is making that gap wider — in your favor. Every piece of context you make accessible to Claude improves every future task.</p>
+      </div>
+
+      <p>Look at the two outputs. The data-powered version should feel like it was written by someone who works with you. The generic version should feel like it was written by someone who just heard about your company five minutes ago. That difference is what data layer management looks like in practice.</p>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">This connects directly to the three-layer model</div>
+        <div class="callout-text">In the three-layer model, the data layer is the foundation that everything else sits on. You just proved it to yourself. Same execution request. Same AI. Radically different output — because one had the data layer and the other didn't. The execution layer and the intent layer stayed exactly the same. Only the data changed. That's how much leverage the foundation carries.</div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">What if the outputs weren't that different?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p>Two possible reasons. First: your data layer might be thin. If your folder has mostly working files and few reference materials, Claude didn't have much additional context to draw on. That's a signal to add more reference data — brand guides, style guides, examples of excellent past work.</p>
+          <p style="margin-top:10px">Second: the task might have been too generic. "Write a summary" is less data-dependent than "write a client proposal that matches our pitch style and references this quarter's results." The more specific and context-dependent the task, the bigger the gap between with-data and without-data output. Try a more specific task.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 7: Scale It -->
+    <!-- ============================================ -->
+    <div class="step" id="step-7">
+      <p>You've turned one folder into a navigable, categorized data layer — and you've seen the difference it makes in Claude's output. Now let's think bigger. Your entire digital workspace — every folder, every project, every domain of your work — is potential data layer territory. But you don't need to map everything this weekend. You need a plan for doing it incrementally.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-target" style="font-size:14px"></span> Think through your workspace</div>
+        <div class="action-box-step">
+          <p style="margin-bottom:12px">Before the next prompt, take a minute to think about your full digital workspace. Where does your work actually live?</p>
+          <ol>
+            <li>What other folders have files you reference regularly?</li>
+            <li>What reference materials live in your email, Slack, or other tools that should be files on your hard drive?</li>
+            <li>What institutional knowledge are you carrying in your head that has never been written down?</li>
+            <li>What tasks do you repeat weekly or monthly that could have execution instructions?</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#16a34a">15 minutes at a time</div>
+        <div class="callout-text">You don't build a data layer in an afternoon. You build it in small increments — a directory map here, a context index there, a reference doc saved instead of forgotten. Each one takes 10-15 minutes. Each one compounds. In a month, you'll have a workspace that Claude can navigate as fluently as a long-time colleague.</div>
+      </div>
+
+      <p>The maintenance mindset is simple. Three rules:</p>
+
+      <div style="background:white;border-radius:16px;border:1px solid #e8e0d8;padding:20px;margin-bottom:32px">
+        <div class="recap-item">
+          <div class="recap-num">1</div>
+          <div class="recap-text"><strong>When you create something that captures how something works</strong> — a process, a style decision, a template — save it as reference data in your folder. Don't let it die in a chat thread or email.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">2</div>
+          <div class="recap-text"><strong>When you finish a task that went well</strong> — save the output as an example. Good examples are the highest-leverage reference material you can have. They show Claude what "good" looks like better than any description.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">3</div>
+          <div class="recap-text"><strong>When you discover something about your work that isn't written down</strong> — why a process exists, what a client cares about, what the unwritten rules are — write a quick note and save it. That's institutional knowledge. It's the 10% that matters most.</div>
+        </div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">What about sensitive files?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p>This is a real concern and you should think about it deliberately. Not everything on your hard drive should be accessible to Claude. Personal information, credentials, confidential client data that shouldn't leave your machine — be thoughtful about what's in the folders you point Claude at.</p>
+          <p style="margin-top:10px">Practical approach: keep sensitive files in a separate folder that you don't point Claude at. Or use a <code>.claudeignore</code> file (in Claude Code) to exclude specific files or patterns. The goal is to be intentional — not to expose everything, but to make the right things accessible.</p>
+        </div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">What about files in cloud tools like Google Drive or Notion?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p>For now, your local hard drive is your starting point. If important reference materials live in Google Docs or Notion, consider exporting the key ones as files in your data layer folder. A brand guide that lives in a Google Doc isn't accessible to Claude until it's a file Claude can reach.</p>
+          <p style="margin-top:10px">This is evolving fast — Claude's ability to access cloud tools directly is growing. But today, the practical move is: if it's important enough to be in your data layer, make sure a copy lives somewhere Claude can reach it. Your hard drive is the most reliable place.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 8: What You Built -->
+    <!-- ============================================ -->
+    <div class="step" id="step-8">
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2>Your files aren't a mess anymore. They're a data layer.</h2>
+        <p>And your data layer isn't abstract. It's a folder on your computer with navigation and categorization — all accessible to Claude. This is the foundation that everything else gets built on.</p>
+      </div>
+
+      <div class="section-label">Where you are in the three layers</div>
+      <div class="layer-stack layer-locator">
+        <div class="layer-row faded" style="background:#fef9f0">
+          <div class="layer-icon" style="background:#d97706"><span class="icon i-target" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#d97706">Layer 3 — Intent &amp; Verification</div>
+            <div class="layer-desc" style="font-size:12px">What should exist, why, and did it work? <em>This is always you.</em></div>
+          </div>
+        </div>
+        <div class="layer-row faded" style="background:#f0f5f7">
+          <div class="layer-icon" style="background:#15465b"><span class="icon i-gear" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#15465b">Layer 2 — Execution <span style="display:inline-block;font-size:10px;font-weight:700;color:#15465b;text-transform:uppercase;letter-spacing:1px;background:#e0ecf0;padding:2px 8px;border-radius:10px;margin-left:8px">Up next</span></div>
+            <div class="layer-desc" style="font-size:12px">The instructions and processes. Build on your data layer in the next tutorial.</div>
+          </div>
+        </div>
+        <div class="layer-row active-layer" style="background:white">
+          <div class="layer-icon" style="background:#081f3f"><span class="icon i-layers" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#081f3f">Layer 1 — Data &amp; Context <span class="you-are-here">Complete</span></div>
+            <div class="layer-desc" style="font-size:12px">Directory map, context index, categorized files — your foundation is built.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">What you built in this session</div>
+      <div style="background:white;border-radius:16px;border:1px solid #e8e0d8;padding:20px;margin-bottom:32px">
+        <div class="recap-item">
+          <div class="recap-num">1</div>
+          <div class="recap-text"><strong>A directory map.</strong> A complete inventory of what's in your folder — every file described by purpose, not just by name. Claude's table of contents for your data.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">2</div>
+          <div class="recap-text"><strong>A categorized data layer.</strong> Your files classified as reference data, working data, and institutional knowledge — so you know what you have and what's missing.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">3</div>
+          <div class="recap-text"><strong>A context index.</strong> A navigation document that tells Claude what's important, where to find it, and when to use it. Light structure on top of your existing files.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">4</div>
+          <div class="recap-text"><strong>Proof it works.</strong> A real task done with your data layer versus without it — tangible evidence that context changes everything.</div>
+        </div>
+      </div>
+
+      <div class="section-label">The principles</div>
+      <div style="background:white;border-radius:16px;border:1px solid #e8e0d8;padding:20px;margin-bottom:32px">
+        <div class="recap-item">
+          <div class="recap-num">1</div>
+          <div class="recap-text"><strong>Your hard drive is already a database.</strong> Claude is the query engine. You don't need servers, schemas, or data engineers. You need files and a map.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">2</div>
+          <div class="recap-text"><strong>Navigation beats organization.</strong> A good context index is worth more than a perfect folder hierarchy. Don't reorganize — make things findable.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">3</div>
+          <div class="recap-text"><strong>Unstructured is fine.</strong> Claude reads PDFs, docs, spreadsheets, markdown, images. You don't need to convert everything into a clean format before it's useful.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">4</div>
+          <div class="recap-text"><strong>Light structure, high leverage.</strong> A <code>_context-index.md</code> file takes minutes to create and saves hours downstream. Structure what helps. Leave the rest.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">5</div>
+          <div class="recap-text"><strong>Data compounds.</strong> Every reference doc you save, every example you keep, every piece of institutional knowledge you write down — it makes every future task better. This isn't a one-time project. It's a new habit.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">You've built the foundation. Next comes execution.</div>
+        <div class="callout-text">The data layer is the first of the three layers — and it's the one that makes everything else possible. The next prompt-along builds directly on what you created here: you'll learn to write execution instructions, wire them into your data layer, test them against real tasks, and build the feedback loops that make your system get better over time. The richer your data layer, the better your execution layer performs.</div>
+      </div>
+
+      <div class="section-label">Where this goes next</div>
+      <div class="next-grid">
+        <a href="execution-layer.html" class="next-card" style="border-color:#d97706;background:#fef9f0;text-decoration:none;color:inherit">
+          <div class="next-card-icon"><span class="icon i-gear" style="font-size:24px;color:#d97706"></span></div>
+          <div class="next-card-title">The Execution Layer (next tutorial)</div>
+          <div class="next-card-desc">Write instructions Claude can follow, wire them into your data layer, and build systems that get better with every run. Starts right where this one ends.</div>
+        </a>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-folder" style="font-size:24px"></span></div>
+          <div class="next-card-title">Map another folder</div>
+          <div class="next-card-desc">Pick a second work folder and give it a directory map and context index. Each one takes 15 minutes.</div>
+        </div>
+        <a href="three-layers.html" class="next-card" style="text-decoration:none;color:inherit">
+          <div class="next-card-icon"><span class="icon i-layers" style="font-size:24px"></span></div>
+          <div class="next-card-title">Try the Three Layers tutorial</div>
+          <div class="next-card-desc">Decompose a full task into the three-layer model. Now you know where the layers physically live.</div>
+        </a>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-refresh" style="font-size:24px"></span></div>
+          <div class="next-card-title">Fill the gaps</div>
+          <div class="next-card-desc">Write down one piece of institutional knowledge that lives in your head. Save it as a file. Repeat weekly.</div>
+        </div>
+      </div>
+
+      <div class="success-card">
+        <div class="success-icon"><span class="icon i-star"></span></div>
+        <div class="success-title">You see your hard drive differently now.</div>
+        <div class="success-text">Every file you have is data. Every folder is a potential data layer. Every piece of context you make accessible to Claude is an investment that compounds — better outputs, less rework, more time at the intent and verification layer where your value actually lives. The database was always there. Now you know how to use it.</div>
+      </div>
+    </div>
+
+  </div><!-- step-content -->
+  </div><!-- main-col -->
+</div><!-- container -->
+
+<script>
+const STEPS = [
+  { title: "Your Hard Drive Is a Database", subtitle: "The data layer isn't abstract. It's a folder on your computer." },
+  { title: "Why This Changes Everything", subtitle: "Database used to mean servers and engineers. Now it means your files and a map." },
+  { title: "Take Inventory", subtitle: "Let Claude explore your folder and build a directory map of what's actually there." },
+  { title: "See What You Have", subtitle: "Categorize your files: reference data, working data, and institutional knowledge." },
+  { title: "Add Light Structure", subtitle: "Create a context index — navigation for Claude, not reorganization for you." },
+  { title: "Your First Data-Powered Task", subtitle: "Do a real task with your data layer and see the quality difference." },
+  { title: "See the Difference", subtitle: "Compare data-powered output to generic output. Feel the gap." },
+  { title: "Scale It", subtitle: "Think bigger — your whole workspace is potential data layer territory." },
+  { title: "What You Built", subtitle: "A navigable data layer, proof it works, and the foundation for everything next." },
+];
+
+let currentStep = 0;
+
+const RAIL_THUMBS = [
+  { label: "Start",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-hdd" style="font-size:28px"></span></div>' },
+  { label: "Why",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-sparkle" style="font-size:28px"></span></div>' },
+  { label: "Map",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-search" style="font-size:28px"></span></div>' },
+  { label: "Classify",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-layers" style="font-size:28px"></span></div>' },
+  { label: "Index",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-file" style="font-size:28px"></span></div>' },
+  { label: "Use It",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-zap" style="font-size:28px"></span></div>' },
+  { label: "Compare",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-eye" style="font-size:28px"></span></div>' },
+  { label: "Scale",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-compass" style="font-size:28px"></span></div>' },
+  { label: "Done",
+    visual: '<div style="font-size:30px;line-height:1">&#9733;</div>' },
+];
+
+const railEl = document.getElementById("sectionRail");
+STEPS.forEach((step, i) => {
+  if (i > 0) {
+    const conn = document.createElement("div");
+    conn.className = "rail-connector upcoming";
+    conn.id = "rail-conn-" + i;
+    railEl.appendChild(conn);
+  }
+  const thumb = document.createElement("button");
+  thumb.className = "rail-thumb" + (i === 0 ? " current" : " upcoming");
+  thumb.id = "rail-thumb-" + i;
+  thumb.setAttribute("data-label", step.title);
+  thumb.innerHTML = '<div class="rail-thumb-visual">' + RAIL_THUMBS[i].visual + '</div><div class="rail-thumb-label">' + RAIL_THUMBS[i].label + '</div>';
+  thumb.onclick = () => goToStep(i);
+  railEl.appendChild(thumb);
+});
+
+function goToStep(n) {
+  document.getElementById("step-" + currentStep).classList.remove("active");
+  currentStep = n;
+  document.getElementById("step-" + currentStep).classList.add("active");
+  document.getElementById("stepTitle").textContent = STEPS[n].title;
+  document.getElementById("stepSubtitle").textContent = STEPS[n].subtitle;
+  document.getElementById("btnBack").style.display = n > 0 ? "" : "none";
+  const btnNext = document.getElementById("btnNext");
+  if (n >= STEPS.length - 1) { btnNext.style.display = "none"; }
+  else { btnNext.style.display = ""; btnNext.textContent = n === 0 ? "Let's go" : "Next step"; }
+  STEPS.forEach((_, i) => {
+    const thumb = document.getElementById("rail-thumb-" + i);
+    if (thumb) thumb.className = "rail-thumb " + (i < n ? "completed" : i === n ? "current" : "upcoming");
+    if (i > 0) { const conn = document.getElementById("rail-conn-" + i); if (conn) conn.className = "rail-connector " + (i <= n ? "completed" : "upcoming"); }
+  });
+  window.scrollTo(0, 0);
+}
+
+function nextStep() { if (currentStep < STEPS.length - 1) goToStep(currentStep + 1); }
+function prevStep() { if (currentStep > 0) goToStep(currentStep - 1); }
+
+function toggleExpand(card) { card.classList.toggle("open"); }
+
+function copyPrompt(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add("copied");
+    btn.textContent = "Copied to clipboard!";
+    setTimeout(() => { btn.classList.remove("copied"); btn.textContent = "Copy this prompt"; }, 2000);
+  });
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") nextStep();
+  if (e.key === "ArrowLeft" || e.key === "ArrowUp") prevStep();
+});
+</script>
+</body>
+</html>

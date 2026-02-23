@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Know What Good Looks Like — Prompt Along</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Zilla+Slab&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #faf5f0; color: #081f3f; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .container { display: flex; gap: 24px; max-width: 780px; margin: 0 auto; padding: 20px 16px 20px 4px; min-height: 100vh; }
+  .main-col { flex: 1; min-width: 0; }
+
+  /* Section rail */
+  .section-rail { width: 88px; flex-shrink: 0; padding-top: 8px; }
+  .section-rail-inner { position: sticky; top: 80px; display: flex; flex-direction: column; align-items: center; }
+  .rail-thumb { width: 80px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; transition: all 0.25s ease; padding: 8px 6px 6px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-family: 'Inter', sans-serif; background: #f0ebe4; color: #b8a898; }
+  .rail-thumb-visual { display: flex; align-items: center; justify-content: center; height: 44px; }
+  .rail-thumb-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1; text-align: center; }
+  .rail-thumb.upcoming { background: #f0ebe4; color: #b8a898; border-color: transparent; }
+  .rail-thumb.upcoming .rail-thumb-visual { opacity: 0.45; }
+  .rail-thumb.completed { background: #fef3e2; color: #b45309; border-color: #eba714; }
+  .rail-thumb.current { background: #d97706; color: white; border-color: #b45309; box-shadow: 0 2px 10px rgba(217,119,6,0.4); transform: scale(1.06); }
+  .rail-connector { width: 2px; height: 6px; flex-shrink: 0; }
+  .rail-connector.completed { background: #eba714; }
+  .rail-connector.upcoming { background: #e8e0d8; }
+  .rail-thumb:hover::after { content: attr(data-label); position: absolute; left: 86px; top: 50%; transform: translateY(-50%); background: #081f3f; color: #faf5f0; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; white-space: nowrap; pointer-events: none; z-index: 30; }
+  .rail-thumb:hover::before { content: ''; position: absolute; left: 80px; top: 50%; transform: translateY(-50%); border: 5px solid transparent; border-right-color: #081f3f; pointer-events: none; z-index: 30; }
+
+  /* Icons */
+  .icon { display:inline-block;width:1em;height:1em;background:currentColor;vertical-align:-0.125em;flex-shrink:0;-webkit-mask:no-repeat center/contain;mask:no-repeat center/contain; }
+  .i-layers{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E");}
+  .i-chat{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");}
+  .i-file{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");}
+  .i-zap{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");}
+  .i-target{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");}
+  .i-eye{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");}
+  .i-check{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");}
+  .i-search{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");}
+  .i-gear{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");}
+  .i-sparkle{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");}
+  .i-star{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");}
+  .i-wrench{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");}
+  .i-refresh{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");}
+  .i-compass{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z'/%3E%3C/svg%3E");}
+  .i-folder{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z'/%3E%3C/svg%3E");}
+  .i-terminal{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 17l6-5-6-5'/%3E%3Cpath d='M12 19h8'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 17l6-5-6-5'/%3E%3Cpath d='M12 19h8'/%3E%3C/svg%3E");}
+  .i-layout{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='3' y1='9' x2='21' y2='9'/%3E%3Cline x1='9' y1='21' x2='9' y2='9'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='3' y1='9' x2='21' y2='9'/%3E%3Cline x1='9' y1='21' x2='9' y2='9'/%3E%3C/svg%3E");}
+
+  /* Step header */
+  .step-header { margin-bottom: 24px; }
+  .step-header h1 { font-family: 'Zilla Slab', serif; font-size: 28px; font-weight: 400; color: #081f3f; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .step-header p { font-size: 16px; color: #15465b; }
+
+  /* Content */
+  .step-content { margin-bottom: 32px; }
+  .step { display: none; }
+  .step.active { display: block; min-height: calc(100vh - 240px); }
+  .step > p { font-size: 17px; line-height: 1.8; color: #081f3f; margin-bottom: 28px; }
+
+  /* Nav */
+  .nav-header { position: sticky; top: 0; background: #faf5f0; padding: 8px 0 12px; z-index: 10; }
+  .nav-header::after { content:''; display:block; height:20px; margin:0 -16px; background:linear-gradient(to top,transparent,#faf5f0); pointer-events:none; position:absolute; bottom:-20px; left:0; right:0; }
+  .nav { display: flex; gap: 12px; }
+  .btn { padding: 14px 20px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; font-family: 'Inter', sans-serif; }
+  .btn:hover { opacity: 0.9; }
+  .btn-back { flex: 1; border: 1px solid #e8e0d8; background: white; color: #15465b; }
+  .btn-next { flex: 2; background: #d97706; color: white; }
+
+  /* Components */
+  .callout { padding: 18px 22px; border-radius: 0 12px 12px 0; margin-bottom: 28px; }
+  .callout-purple { background: #fef9f0; border-left: 4px solid #081f3f; }
+  .callout-green { background: #f0fdf4; border-left: 4px solid #16a34a; }
+  .callout-blue { background: #f0f5f7; border-left: 4px solid #15465b; }
+  .callout-amber { background: #fef9f0; border-left: 4px solid #d97706; }
+  .callout-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .callout-text { font-size: 13px; color: #15465b; line-height: 1.7; }
+
+  .dark-card { background: #081f3f; border-radius: 16px; padding: 32px; margin-bottom: 32px; text-align: center; }
+  .dark-card h2 { font-family: 'Zilla Slab', serif; font-size: 22px; font-weight: 400; color: #faf5f0; margin-bottom: 8px; }
+  .dark-card p { font-size: 14px; color: #eba714; line-height: 1.7; }
+
+  .section-label { font-size:11px; font-weight:600; color:#15465b; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; text-align:center; font-family:'Inter',sans-serif; }
+
+  .prompt-block { background:#081f3f; color:#faf5f0; border-radius:12px; padding:20px; font-size:14px; line-height:1.7; font-family:monospace; white-space:pre-wrap; margin-bottom:12px; }
+  .copy-btn { width:100%; padding:10px 20px; border-radius:8px; border:none; font-size:14px; font-weight:600; cursor:pointer; background:#d97706; color:white; transition:background 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Inter',sans-serif; }
+  .copy-btn.copied { background:#059669; }
+
+  .action-box { background:linear-gradient(135deg,#fef9f0,#fef3e2); border:2px solid #d97706; border-radius:16px; padding:24px; margin-bottom:32px; }
+  .action-box-label { font-size:11px; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .action-box-step { font-size:14px; color:#081f3f; line-height:1.8; }
+  .action-box-step ol { padding-left:20px; }
+  .action-box-step li { margin-bottom:6px; }
+
+  .expand-card { border: 1px solid #e8e0d8; border-radius: 12px; margin-bottom: 28px; overflow: hidden; background: white; }
+  .expand-header { width:100%; padding:14px 18px; background:none; border:none; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:15px; font-weight:600; color:#081f3f; text-align:left; font-family:inherit; }
+  .expand-arrow { font-size:12px; color:#15465b; transition:transform 0.2s; }
+  .expand-card.open .expand-arrow { transform:rotate(180deg); }
+  .expand-body { padding:0 18px 16px; color:#15465b; font-size:14px; line-height:1.7; display:none; }
+  .expand-card.open .expand-body { display:block; }
+
+  .success-card { background:#f0fdf4; border-radius:12px; padding:24px; border:1px solid #bbf7d0; text-align:center; margin-top:20px; margin-bottom:28px; }
+  .success-icon { font-size:28px; margin-bottom:8px; }
+  .success-title { font-size:16px; font-weight:700; color:#15803d; margin-bottom:8px; }
+  .success-text { font-size:14px; color:#15465b; line-height:1.7; }
+
+  .recap-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f0ebe4; align-items:flex-start; }
+  .recap-item:last-child { border-bottom:none; }
+  .recap-num { font-size:14px; font-weight:700; color:#d97706; min-width:24px; padding-top:2px; }
+  .recap-text { font-size:14px; color:#15465b; line-height:1.6; }
+
+  .next-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px; }
+  .next-card { background:white; border-radius:12px; padding:16px; border:1px solid #e8e0d8; text-align:center; }
+  .next-card-icon { font-size:24px; margin-bottom:6px; }
+  .next-card-title { font-size:14px; font-weight:700; color:#081f3f; margin-bottom:4px; }
+  .next-card-desc { font-size:12px; color:#15465b; line-height:1.4; }
+
+  /* Layer locator */
+  .layer-stack { display:flex; flex-direction:column; gap:0; margin-bottom:32px; border-radius:16px; overflow:hidden; border:1px solid #e8e0d8; }
+  .layer-row { padding:20px 22px; display:flex; align-items:center; gap:16px; }
+  .layer-row:not(:last-child) { border-bottom:1px solid #e8e0d8; }
+  .layer-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .layer-content { flex:1; }
+  .layer-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:2px; }
+  .layer-desc { font-size:13px; color:#15465b; line-height:1.6; }
+  .layer-locator .layer-row { transition: opacity 0.2s; }
+  .layer-locator .layer-row.faded { opacity: 0.35; }
+  .layer-locator .layer-row.faded .layer-icon { opacity: 0.5; }
+  .layer-locator .layer-row.active-layer { border-left: 4px solid #d97706; }
+  .you-are-here { display:inline-block; font-size:10px; font-weight:700; color:white; text-transform:uppercase; letter-spacing:1px; background:#d97706; padding:2px 8px; border-radius:10px; margin-left:8px; }
+  .layer-badge { display:inline-block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:2px 8px; border-radius:10px; margin-left:8px; }
+
+  /* Compare split */
+  .compare-split { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:32px; }
+  .compare-card { border-radius:12px; padding:20px; }
+  .compare-card h3 { font-family:'Zilla Slab',serif; font-size:18px; font-weight:400; margin-bottom:10px; }
+  .compare-card ul { padding-left:18px; font-size:14px; line-height:1.8; }
+
+  /* Three lenses visual */
+  .lenses-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:32px; }
+  .lens-card { border-radius:12px; padding:18px; text-align:center; }
+  .lens-card-num { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .lens-card-icon { font-size:28px; margin-bottom:8px; }
+  .lens-card-title { font-size:15px; font-weight:600; margin-bottom:6px; }
+  .lens-card-desc { font-size:12px; line-height:1.5; }
+
+  /* Code block inline */
+  code { background:#f0ebe4; padding:2px 6px; border-radius:4px; font-size:13px; font-family:monospace; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="section-rail">
+    <div class="section-rail-inner" id="sectionRail"></div>
+  </div>
+
+  <div class="main-col">
+  <div class="nav-header">
+    <div class="nav">
+      <button class="btn btn-back" id="btnBack" onclick="prevStep()" style="display:none">Back</button>
+      <button class="btn btn-next" id="btnNext" onclick="nextStep()">Let's go</button>
+    </div>
+  </div>
+
+  <div class="step-header">
+    <h1 id="stepTitle">Know What Good Looks Like</h1>
+    <p id="stepSubtitle">Define success before you run anything. Then build the tools to measure it.</p>
+  </div>
+
+  <div class="step-content">
+
+    <!-- ============================================ -->
+    <!-- STEP 0: The Layer Most People Skip -->
+    <!-- ============================================ -->
+    <div class="step active" id="step-0">
+
+      <div class="section-label" style="margin-top:4px">The three layers of AI-native work</div>
+      <div class="layer-stack layer-locator">
+        <div class="layer-row active-layer" style="background:#fef9f0">
+          <div class="layer-icon" style="background:#d97706"><span class="icon i-target" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#d97706">Layer 3 — Intent &amp; Verification <span class="you-are-here">You are here</span></div>
+            <div class="layer-desc" style="font-size:12px">What does "good" mean? How will you know it worked? <em>This is where your value concentrates.</em></div>
+          </div>
+        </div>
+        <div class="layer-row faded" style="background:#f0f5f7">
+          <div class="layer-icon" style="background:#15465b"><span class="icon i-gear" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#15465b">Layer 2 — Execution <span class="layer-badge" style="background:#f0ebe4;color:#15465b">Built</span></div>
+            <div class="layer-desc" style="font-size:12px">Instructions, playbooks, commands, state management. <em>You built this in the previous tutorial.</em></div>
+          </div>
+        </div>
+        <div class="layer-row faded" style="background:white">
+          <div class="layer-icon" style="background:#081f3f"><span class="icon i-layers" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#081f3f">Layer 1 — Data &amp; Context <span class="layer-badge" style="background:#f0ebe4;color:#081f3f">Built</span></div>
+            <div class="layer-desc" style="font-size:12px">Your files, your knowledge, your references. Mapped, categorized, and navigable.</div>
+          </div>
+        </div>
+      </div>
+
+      <p>Most people build first, then evaluate. They look at Claude's output and ask themselves: "Is this good?" That question is too late. By the time you're evaluating, you're comparing against a feeling, not a standard. And feelings shift with every read.</p>
+
+      <p>The best practitioners do the opposite. They define what "good" looks like <em>before</em> they run anything. They write down their success criteria, build concrete test cases, and then measure output against those standards. The evaluation isn't subjective — it's structured.</p>
+
+      <div class="dark-card">
+        <h2>If you can't describe what good looks like, you can't tell Claude what to build.</h2>
+        <p>Intent isn't a prompt. It's the answer to "what is this for?" and "how will I know it worked?" Most prompts skip both questions. This tutorial teaches you to answer them first.</p>
+      </div>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">What you'll need</div>
+        <div class="callout-text">The data layer folder and execution infrastructure you built in the <a href="your-data-layer.html" style="color:#d97706;font-weight:600">data layer</a> and <a href="execution-layer.html" style="color:#d97706;font-weight:600">execution layer</a> tutorials. Claude Code or Claude Cowork pointed at that folder. A task you've run at least once — something with output you can evaluate.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 1: Intent Comes First -->
+    <!-- ============================================ -->
+    <div class="step" id="step-1">
+      <p>Intent is not a prompt. A prompt says "do this thing." Intent answers two deeper questions: <em>What is this for?</em> and <em>How will I know it worked?</em></p>
+
+      <p>Most prompts describe <em>what</em> to build but skip <em>why</em> and <em>what success looks like</em>. The result is output that's technically competent but misses the point. It looks right but doesn't accomplish anything.</p>
+
+      <div class="compare-split">
+        <div class="compare-card" style="background:#fff;border:1px solid #e8e0d8">
+          <h3 style="color:#081f3f">Without intent</h3>
+          <ul style="color:#15465b">
+            <li>"Write a blog post about AI"</li>
+            <li>"Create a weekly report"</li>
+            <li>"Draft an email to the team"</li>
+            <li>"Summarize this document"</li>
+          </ul>
+        </div>
+        <div class="compare-card" style="background:#f0fdf4;border:1px solid #bbf7d0">
+          <h3 style="color:#16a34a">With intent</h3>
+          <ul style="color:#15465b">
+            <li>"Write a post that convinces skeptical managers to try AI tools. Success = they forward it to their team."</li>
+            <li>"Create a report that surfaces the 3 decisions my boss needs to make this week. Success = she acts on at least one."</li>
+            <li>"Draft an email that gets the team aligned on the new timeline. Success = zero follow-up questions."</li>
+            <li>"Summarize so my VP can make a go/no-go decision in 2 minutes."</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">Intent is the difference between "make it good" and "make it persuasive to skeptical readers"</div>
+        <div class="callout-text">When you define intent, you give Claude a target to aim at — not just a task to complete. The output changes because the <em>goal</em> is different. A blog post meant to persuade is written differently than one meant to inform. A summary for a VP is structured differently than one for an engineer. Intent shapes every decision Claude makes during execution.</div>
+      </div>
+
+      <p>This seems simple. It's not. Most of us carry intent in our heads and never write it down. We know what we want — we can feel when the output misses it — but we haven't articulated it in a way that guides execution. That tacit knowledge is the gap this tutorial closes.</p>
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2>The gap between "I'll know it when I see it" and "here's what good looks like" is the entire verification layer.</h2>
+        <p>Crossing that gap is how you stop relying on feel and start building systems that reliably produce what you actually want.</p>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 2: Quality Standards -->
+    <!-- ============================================ -->
+    <div class="step" id="step-2">
+      <p>Before you can write specific test cases, you need to define what quality means for <em>your</em> work. Different domains have different dimensions: a marketing team cares about brand voice and persuasion. An analyst cares about accuracy and completeness. A designer cares about consistency and clarity.</p>
+
+      <p>A quality standard is a document that defines your dimensions of quality — the specific things that matter for the kind of output you produce. It's not generic ("be professional") — it's specific to your work and your standards.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #1 — Define your quality standard</div>
+        <div class="prompt-block" id="prompt1">I want to define a quality standard for a recurring task I do: [DESCRIBE YOUR TASK — e.g., "writing weekly client updates," "creating project proposals," "drafting social media content"].
+
+Help me create a _quality-standard.md file that defines what "good" looks like for this task. For each quality dimension:
+
+1. **Name the dimension** — e.g., Accuracy, Tone, Completeness, Format, Audience Fit, Persuasiveness, Actionability
+2. **Define what it means** — specifically for my work, not generically
+3. **Give a "what good looks like" example** — a concrete description of what quality output does in this dimension
+4. **Give a "what bad looks like" example** — so the boundary is clear
+
+Aim for 5-8 dimensions. Don't include dimensions that don't actually matter for this task — every dimension should be something that, if it failed, would make the output noticeably worse.
+
+Save this as _quality-standard.md in the current folder.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt1', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#16a34a">This document becomes a reusable asset</div>
+        <div class="callout-text">Your quality standard isn't just for this one task. It encodes what you care about — your professional judgment crystallized into a document. As you build more tasks and more execution infrastructure, this standard becomes a shared reference across all of them. Claude reads it and knows what "good" means to you.</div>
+      </div>
+
+      <p>Read the quality standard Claude produces. Edit it. This is <em>your</em> judgment, not Claude's — Claude helped you articulate it, but the standards should reflect what <em>you</em> actually care about. Remove dimensions that don't matter. Add ones Claude missed. Sharpen the examples until they feel right.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 3: Scenarios as Holdout Sets -->
+    <!-- ============================================ -->
+    <div class="step" id="step-3">
+      <p>Quality standards define dimensions. Scenarios define specific test cases — concrete situations with observable outcomes. A scenario says: "Given this input, the output should satisfy these specific criteria." It's not a vibe check. It's a structured evaluation.</p>
+
+      <p>The key principle: scenarios must be <strong>separate from the instructions</strong>. If Claude reads the test cases before generating the output, it optimizes for passing the tests rather than doing good work. It's the same logic as holdout data in machine learning — if the model trains on the test set, the test is meaningless.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #2 — Write verification scenarios</div>
+        <div class="prompt-block" id="prompt2">I need verification scenarios for this task: [SAME TASK FROM PROMPT #1].
+
+Create a _scenarios-[task-name].md file with 3-5 scenarios. Each scenario should have:
+
+1. **Scenario name** — a short descriptive title
+2. **Input conditions** — what specific situation or input triggers this scenario
+3. **Expected behavior** — what the output should do in this situation
+4. **Observable criteria** — specific, checkable things I can verify (not "it should be good" but "it should include X, Y, and Z")
+
+Include 1-2 **negative scenarios** — things the output should NOT do. These catch common failure modes: being too generic, hallucinating details, wrong tone, missing key information.
+
+IMPORTANT: Save this file separately from any instructions or specs. When I run the task, Claude should NOT read the scenarios file. Scenarios are for evaluation only — they're the holdout set.
+
+Format each scenario clearly so another person (or Claude in a different session) could use them to evaluate output without needing additional context.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt2', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">Keep them separate. Always.</div>
+        <div class="callout-text">If Claude sees the scenarios before generating output, the evaluation becomes meaningless. Claude will pattern-match to the test cases instead of doing genuine work. The discipline is simple: scenarios live in a separate file. The session that generates output never reads that file. A <em>different</em> session evaluates the output against the scenarios.</div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">Where this comes from<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p>StrongDM's Software Factory uses this exact pattern at scale. They call it "satisfaction testing" — scenarios stored separately from the spec, evaluated by an independent judge. The principle comes from machine learning: a model evaluated on its training data tells you nothing about real performance. The same applies to AI output. If the system that generates the output also designed the test, the test is compromised.</p>
+          <p style="margin-top:10px">You can explore the full system: <a href="../research/strongdm-system-map.html" style="color:#d97706;font-weight:600">StrongDM Software Factory system map</a>.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 4: The Three Lenses -->
+    <!-- ============================================ -->
+    <div class="step" id="step-4">
+      <p>When you evaluate AI output, most people only look at one thing: is the output itself good? But that's only one of three lenses you should be using. The other two are where the real improvement lives.</p>
+
+      <div class="lenses-grid">
+        <div class="lens-card" style="background:white;border:1px solid #e8e0d8">
+          <div class="lens-card-num" style="color:#d97706">Lens 1</div>
+          <div class="lens-card-icon"><span class="icon i-eye" style="font-size:28px;color:#d97706"></span></div>
+          <div class="lens-card-title" style="color:#081f3f">Output Quality</div>
+          <div class="lens-card-desc" style="color:#15465b">Does the artifact itself meet quality standards? Grammar, format, completeness, correctness.</div>
+        </div>
+        <div class="lens-card" style="background:white;border:1px solid #e8e0d8">
+          <div class="lens-card-num" style="color:#15465b">Lens 2</div>
+          <div class="lens-card-icon"><span class="icon i-target" style="font-size:28px;color:#15465b"></span></div>
+          <div class="lens-card-title" style="color:#081f3f">Goal Achievement</div>
+          <div class="lens-card-desc" style="color:#15465b">Does it accomplish the intent? Persuasion, accuracy, actionability — whatever the work was <em>for</em>.</div>
+        </div>
+        <div class="lens-card" style="background:white;border:1px solid #e8e0d8">
+          <div class="lens-card-num" style="color:#16a34a">Lens 3</div>
+          <div class="lens-card-icon"><span class="icon i-search" style="font-size:28px;color:#16a34a"></span></div>
+          <div class="lens-card-title" style="color:#081f3f">System Diagnosis</div>
+          <div class="lens-card-desc" style="color:#15465b">If it fails, <em>where</em> in the system did it break? Data gap? Instruction gap? Wrong model?</div>
+        </div>
+      </div>
+
+      <p>Most people only use Lens 1. They read the output, decide if it's "good enough," and either use it or regenerate. That's a coin flip, not a system.</p>
+
+      <p>Lens 2 asks the intent question: did this output actually accomplish what I needed it to? A perfectly formatted report that surfaces the wrong insights fails Lens 2. A well-written email that doesn't get the team aligned fails Lens 2. Quality and achievement are different things.</p>
+
+      <p>Lens 3 is where improvement lives. When output fails — and it will — the question isn't "how do I fix this output?" It's "where in my system did this break?" Was the data layer missing critical context? Were the instructions ambiguous? Was the quality standard incomplete? Lens 3 turns failures into system improvements.</p>
+
+      <div class="dark-card">
+        <h2>Bad output isn't a failure. Bad output you can't diagnose is a failure.</h2>
+        <p>When you can trace a problem to its source — "this failed because the instructions didn't specify audience" or "this failed because the data layer is missing Q4 numbers" — the system gets better. When you just say "this isn't good, try again," nothing improves.</p>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title" style="color:#b45309">You already know Lens 3</div>
+        <div class="callout-text">In the <a href="execution-layer.html" style="color:#d97706;font-weight:600">execution layer tutorial</a>, you asked Claude "where did you have to guess?" That diagnostic question is Lens 3 applied during execution. Now you're applying it after execution — using structured scenarios and a separate evaluator instead of relying on in-session self-reporting.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 5: Run and Evaluate -->
+    <!-- ============================================ -->
+    <div class="step" id="step-5">
+      <p>Time to put it all together. You're going to run a real task, then evaluate the output against your scenarios in a completely separate session. This separation is the core discipline of verification.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #3 — Execute the task</div>
+        <div class="prompt-block" id="prompt3">Run [YOUR TASK] using the instructions in [YOUR PLAYBOOK/SKILL/INSTRUCTIONS FILE].
+
+Use the data layer via _context-index.md. Follow the instructions exactly — don't ask me clarifying questions, just work from what you have.
+
+Save the output as _output-[task-name].md when you're done.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt3', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">Don't evaluate in the same session</div>
+        <div class="callout-text">Once Claude generates the output, close this session or start a new one. The session that builds should never judge. If the same session evaluates its own work, it's grading its own homework — it will be biased toward justifying its choices rather than objectively evaluating the result.</div>
+      </div>
+
+      <p>Now, in a <strong>fresh session</strong>, run the evaluation.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #4 — Evaluate against scenarios</div>
+        <div class="prompt-block" id="prompt4">I need you to evaluate an output against a set of verification scenarios.
+
+Read these two files:
+1. The output: _output-[task-name].md
+2. The scenarios: _scenarios-[task-name].md
+
+For each scenario:
+1. **Scenario name** — which scenario you're evaluating
+2. **Verdict: YES or NO** — does the output satisfy this scenario?
+3. **Evidence** — quote or reference the specific part of the output that passes or fails. Be concrete.
+
+After evaluating all scenarios, give an overall verdict:
+- **PASS** — all scenarios satisfied
+- **PARTIAL** — some scenarios satisfied, some failed
+- **FAIL** — most scenarios failed
+
+End with a **diagnostic summary**: For any failed scenarios, identify the most likely root cause. Was it a data gap (missing information), an instruction gap (unclear or incomplete instructions), a quality gap (the work was done but not well enough), or a scenario gap (the scenario itself was unrealistic or poorly defined)?
+
+Save this evaluation as _eval-[task-name].md.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt4', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#16a34a">This is the LLM-as-judge pattern</div>
+        <div class="callout-text">You're using one Claude session to evaluate another's work. This isn't perfect — AI judges have biases too — but it's dramatically better than self-evaluation. The separation of concerns (builder vs. judge) combined with concrete scenarios produces evaluations you can actually act on. Over time, you calibrate the scenarios based on whether the evaluations match your own judgment.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 6: Fix the System, Not the Output -->
+    <!-- ============================================ -->
+    <div class="step" id="step-6">
+      <p>You have an evaluation. Some scenarios passed. Some probably didn't. The instinct is to fix the output — tweak the wording, add the missing section, adjust the format. That instinct is wrong.</p>
+
+      <p>Fixing the output is a one-time patch. It makes <em>this</em> output better but leaves the system unchanged. The next time you run the task, the same failures will recur. The high-leverage move is to trace each failure back to its source and fix the system instead.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #5 — Diagnose and fix the system</div>
+        <div class="prompt-block" id="prompt5">I ran a task and evaluated it against my scenarios. Some scenarios failed. I want to fix the system — not just the output.
+
+Read the evaluation: _eval-[task-name].md
+
+For each failed scenario:
+
+1. **Which lens failed?**
+   - Lens 1 (Output Quality) — the artifact itself has quality issues
+   - Lens 2 (Goal Achievement) — the output doesn't accomplish the intent
+   - Lens 3 (System Diagnosis) — trace to root cause
+
+2. **Root cause diagnosis:**
+   - **Data gap** — Was critical information missing from the data layer? What file or knowledge should be added?
+   - **Instruction gap** — Were the instructions ambiguous or incomplete? What specific instruction should be added or changed?
+   - **Quality standard gap** — Is there a quality dimension not captured in _quality-standard.md?
+   - **Scenario gap** — Is the scenario itself poorly defined or unrealistic? Should it be rewritten or removed?
+
+3. **Proposed fix** — The specific change to make. Not "improve the instructions" but exactly what to add, edit, or create in which file.
+
+Organize the fixes by layer:
+- **Data layer fixes** — files to add or update
+- **Execution layer fixes** — instruction changes
+- **Verification layer fixes** — scenario or quality standard updates
+
+Don't propose changes to the output itself. Only propose changes to the system that produces the output.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt5', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#16a34a">You're not fixing outputs. You're improving the machine that makes outputs.</div>
+        <div class="callout-text">Every fix you apply to the system improves every future run — not just this one. Data layer fixes mean richer context for all tasks. Instruction fixes mean fewer guesses across all executions. Quality standard fixes mean better evaluations everywhere. The system compounds.</div>
+      </div>
+
+      <p>Review Claude's proposed fixes. Apply the ones that make sense. Some fixes will be to the data layer (add a file, enrich an existing one). Some will be to the execution layer (clarify an instruction, add a guardrail). Some will be to the verification layer itself (sharpen a scenario, add a new one you hadn't thought of).</p>
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2>The failures are the most valuable part.</h2>
+        <p>A task that passes all scenarios tells you the system works. A task that fails tells you exactly where to improve it. Failed runs produce system improvements. Successful runs just confirm what you already built. Welcome the failures.</p>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 7: Build Your Verification Practice -->
+    <!-- ============================================ -->
+    <div class="step" id="step-7">
+      <p>Verification isn't a one-time exercise. It's a practice — a habit you build into how you work with Claude. The question is how deep to go for different kinds of work.</p>
+
+      <!-- Three levels visual -->
+      <div style="background:linear-gradient(135deg,#081f3f,#15465b);border-radius:16px;padding:24px;margin-bottom:32px">
+        <div class="section-label" style="color:#eba714;margin-bottom:16px">Three levels of verification practice</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px;display:flex;gap:16px;align-items:center">
+            <div style="font-size:20px;flex-shrink:0"><span class="icon i-eye" style="font-size:20px;color:#eba714"></span></div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#faf5f0;margin-bottom:2px">Spot check</div>
+              <div style="font-size:12px;color:#faf5f0;opacity:0.7;line-height:1.4">Run scenarios manually after important outputs. Quick sanity check. 5 minutes.</div>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px;display:flex;gap:16px;align-items:center">
+            <div style="font-size:20px;flex-shrink:0"><span class="icon i-target" style="font-size:20px;color:#eba714"></span></div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#faf5f0;margin-bottom:2px">Pre-flight</div>
+              <div style="font-size:12px;color:#faf5f0;opacity:0.7;line-height:1.4">Write scenarios before every significant task. Define success first, then execute. 15 minutes.</div>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px;display:flex;gap:16px;align-items:center">
+            <div style="font-size:20px;flex-shrink:0"><span class="icon i-layers" style="font-size:20px;color:#eba714"></span></div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#faf5f0;margin-bottom:2px">Systematic</div>
+              <div style="font-size:12px;color:#faf5f0;opacity:0.7;line-height:1.4">Build scenario libraries by domain. Reuse across tasks. Every run gets evaluated. The full system.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p>Start at level 1. Spot-check your most important outputs against the scenarios you just wrote. As the habit builds, move to pre-flight: writing scenarios before every significant task. Over time, you'll build scenario libraries that you reuse across similar tasks.</p>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">When is verification overkill?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p>One-off creative tasks don't need formal scenarios. If you're brainstorming ideas, drafting a one-time message, or exploring a new concept, verification adds friction without value. The question to ask is: <strong>will I do this again?</strong></p>
+          <p style="margin-top:10px">If the answer is yes — if this is a recurring task that produces work others rely on — then verification is an investment that pays off every future run. If it's truly one-time, your own judgment is sufficient.</p>
+        </div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">How many scenarios do I need?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p>Start with 3-5 scenarios per task. That's enough to catch the most common failure modes without making evaluation burdensome. As you discover new ways the output can fail — and you will — add scenarios for those specific failures.</p>
+          <p style="margin-top:10px">A mature task might have 10-15 scenarios, but you build up to that. Each scenario should earn its place by catching a failure that actually matters. If a scenario has never failed and never would, remove it — it's adding noise, not signal.</p>
+        </div>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title" style="color:#b45309">Calibrate your scenarios against your own judgment</div>
+        <div class="callout-text">After the evaluator (Claude in a fresh session) grades the output, check whether you agree. If the evaluator passes something you'd fail, the scenario is too loose. If it fails something you'd pass, the scenario is too strict or poorly defined. The scenarios should converge with your judgment over time — they're encoding your taste into a repeatable process.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 8: What You Built -->
+    <!-- ============================================ -->
+    <div class="step" id="step-8">
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2>You know what good looks like. And you can prove it.</h2>
+        <p>Quality standards. Verification scenarios. Three-lens evaluation. System diagnosis over output fixing. That's the intent and verification layer — and it changes everything about how you work with AI.</p>
+      </div>
+
+      <div class="section-label">Where you are in the three layers</div>
+      <div class="layer-stack layer-locator">
+        <div class="layer-row active-layer" style="background:#fef9f0;border-left-color:#16a34a">
+          <div class="layer-icon" style="background:#d97706"><span class="icon i-target" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#d97706">Layer 3 — Intent &amp; Verification <span class="layer-badge" style="background:#16a34a;color:white">Complete</span></div>
+            <div class="layer-desc" style="font-size:12px">Quality standards, verification scenarios, three-lens evaluation. You define success and measure it.</div>
+          </div>
+        </div>
+        <div class="layer-row faded" style="background:#f0f5f7">
+          <div class="layer-icon" style="background:#15465b"><span class="icon i-gear" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#15465b">Layer 2 — Execution <span class="layer-badge" style="background:#f0ebe4;color:#15465b">Built</span></div>
+            <div class="layer-desc" style="font-size:12px">Instructions, playbooks, commands, state management — your system runs.</div>
+          </div>
+        </div>
+        <div class="layer-row faded" style="background:white">
+          <div class="layer-icon" style="background:#081f3f"><span class="icon i-layers" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#081f3f">Layer 1 — Data &amp; Context <span class="layer-badge" style="background:#f0ebe4;color:#081f3f">Built</span></div>
+            <div class="layer-desc" style="font-size:12px">Your files, your knowledge, your references — mapped, categorized, and navigable.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">What you built in this session</div>
+      <div style="background:white;border-radius:16px;border:1px solid #e8e0d8;padding:20px;margin-bottom:32px">
+        <div class="recap-item">
+          <div class="recap-num">1</div>
+          <div class="recap-text"><strong>A quality standard.</strong> Your professional judgment crystallized into a document — the specific dimensions of quality that matter for your work, with concrete examples of good and bad.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">2</div>
+          <div class="recap-text"><strong>Verification scenarios.</strong> Concrete test cases with observable criteria, stored separately from your instructions. The holdout set that keeps evaluation honest.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">3</div>
+          <div class="recap-text"><strong>A three-lens evaluation framework.</strong> Output quality, goal achievement, and system diagnosis. Three ways to look at every piece of output, with the third lens driving improvement.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">4</div>
+          <div class="recap-text"><strong>The system-first mindset.</strong> When output fails, trace the failure to data, instructions, or scenarios — then fix the system, not the output. Every failure improves every future run.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">5</div>
+          <div class="recap-text"><strong>A verification practice.</strong> Three levels — spot check, pre-flight, systematic — so you can match the depth of evaluation to the importance of the work.</div>
+        </div>
+      </div>
+
+      <div class="section-label">The principles</div>
+      <div style="background:white;border-radius:16px;border:1px solid #e8e0d8;padding:20px;margin-bottom:32px">
+        <div class="recap-item">
+          <div class="recap-num">1</div>
+          <div class="recap-text"><strong>Define success before you build.</strong> Intent isn't a prompt — it's the answer to "what is this for?" and "how will I know it worked?" Write it down before you run anything.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">2</div>
+          <div class="recap-text"><strong>Scenarios are holdout data — keep them separate.</strong> The session that builds must never see the scenarios. The session that evaluates must not have built. Separation keeps evaluation honest.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">3</div>
+          <div class="recap-text"><strong>Evaluate in a fresh session.</strong> Self-evaluation is self-justification. Use a separate Claude session as an independent judge, armed with your scenarios and quality standards.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">4</div>
+          <div class="recap-text"><strong>Use three lenses: quality, goals, diagnosis.</strong> Output quality is table stakes. Goal achievement is what matters. System diagnosis is how you improve. Most people stop at Lens 1.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">5</div>
+          <div class="recap-text"><strong>Fix the system, not the output.</strong> Every output fix is a one-time patch. Every system fix improves every future run. The leverage is in the system.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">All three layers built. Now wire them together.</div>
+        <div class="callout-text">You've built the data layer (your files, mapped and navigable), the execution layer (instructions, commands, state management), and the intent and verification layer (quality standards, scenarios, evaluation). The next tutorial takes all three and wires them into an automated pipeline — specifications, non-interactive runs, automated validation, and feedback loops that improve the system without you in the middle.</div>
+      </div>
+
+      <div class="section-label">Where this goes next</div>
+      <div class="next-grid">
+        <a href="from-workshop-to-factory.html" class="next-card" style="border-color:#d97706;background:#fef9f0;text-decoration:none;color:inherit">
+          <div class="next-card-icon"><span class="icon i-refresh" style="font-size:24px;color:#d97706"></span></div>
+          <div class="next-card-title">From Workshop to Factory</div>
+          <div class="next-card-desc">Wire your three layers into an automated pipeline. Specs, non-interactive runs, automated validation, and feedback loops.</div>
+        </a>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-star" style="font-size:24px"></span></div>
+          <div class="next-card-title">Improve your scenarios</div>
+          <div class="next-card-desc">Run 3-5 more evaluations. Add scenarios for failure modes you discover. Calibrate against your own judgment.</div>
+        </div>
+        <a href="your-data-layer.html" class="next-card" style="text-decoration:none;color:inherit">
+          <div class="next-card-icon"><span class="icon i-folder" style="font-size:24px"></span></div>
+          <div class="next-card-title">Expand your data layer</div>
+          <div class="next-card-desc">Map another folder. Add reference materials. The richer the data layer, the better everything else works.</div>
+        </a>
+        <a href="three-layers.html" class="next-card" style="text-decoration:none;color:inherit">
+          <div class="next-card-icon"><span class="icon i-compass" style="font-size:24px"></span></div>
+          <div class="next-card-title">Three-layer overview</div>
+          <div class="next-card-desc">Revisit the mental model that ties everything together. See how data, execution, and intent interact.</div>
+        </a>
+      </div>
+
+      <div class="success-card">
+        <div class="success-icon"><span class="icon i-star"></span></div>
+        <div class="success-title">You know what good looks like. And you can prove it.</div>
+        <div class="success-text">Not hoping for good output. Not guessing whether it's right. You've defined your quality standards, written verification scenarios, and built a three-lens evaluation framework that turns every failure into a system improvement. The intent and verification layer is where your professional judgment lives — encoded, reusable, and compounding with every run.</div>
+      </div>
+    </div>
+
+  </div><!-- step-content -->
+  </div><!-- main-col -->
+</div><!-- container -->
+
+<script>
+const STEPS = [
+  { title: "Know What Good Looks Like", subtitle: "Define success before you run anything. Then build the tools to measure it." },
+  { title: "Intent Comes First", subtitle: "The difference between a prompt and a purpose." },
+  { title: "Quality Standards", subtitle: "Define what quality means for your work. Not generically \u2014 specifically." },
+  { title: "Scenarios as Holdout Sets", subtitle: "Write concrete test cases. Keep them separate from execution." },
+  { title: "The Three Lenses", subtitle: "Output quality. Goal achievement. System diagnosis." },
+  { title: "Run and Evaluate", subtitle: "Execute a task, then judge it in a fresh session." },
+  { title: "Fix the System, Not the Output", subtitle: "Trace failures to their source. Improve the machine, not the product." },
+  { title: "Build Your Verification Practice", subtitle: "Three levels of verification \u2014 match the depth to the stakes." },
+  { title: "What You Built", subtitle: "Quality standards, scenarios, three-lens evaluation, and a system-first mindset." },
+];
+
+let currentStep = 0;
+
+const RAIL_THUMBS = [
+  { label: "Start",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-target" style="font-size:28px"></span></div>' },
+  { label: "Intent",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-eye" style="font-size:28px"></span></div>' },
+  { label: "Quality",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-star" style="font-size:28px"></span></div>' },
+  { label: "Scenarios",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-file" style="font-size:28px"></span></div>' },
+  { label: "Lenses",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-search" style="font-size:28px"></span></div>' },
+  { label: "Evaluate",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-check" style="font-size:28px"></span></div>' },
+  { label: "Fix",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-wrench" style="font-size:28px"></span></div>' },
+  { label: "Practice",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-compass" style="font-size:28px"></span></div>' },
+  { label: "Done",
+    visual: '<div style="font-size:30px;line-height:1">&#9733;</div>' },
+];
+
+const railEl = document.getElementById("sectionRail");
+STEPS.forEach((step, i) => {
+  if (i > 0) {
+    const conn = document.createElement("div");
+    conn.className = "rail-connector upcoming";
+    conn.id = "rail-conn-" + i;
+    railEl.appendChild(conn);
+  }
+  const thumb = document.createElement("button");
+  thumb.className = "rail-thumb" + (i === 0 ? " current" : " upcoming");
+  thumb.id = "rail-thumb-" + i;
+  thumb.setAttribute("data-label", step.title);
+  thumb.innerHTML = '<div class="rail-thumb-visual">' + RAIL_THUMBS[i].visual + '</div><div class="rail-thumb-label">' + RAIL_THUMBS[i].label + '</div>';
+  thumb.onclick = () => goToStep(i);
+  railEl.appendChild(thumb);
+});
+
+function goToStep(n) {
+  document.getElementById("step-" + currentStep).classList.remove("active");
+  currentStep = n;
+  document.getElementById("step-" + currentStep).classList.add("active");
+  document.getElementById("stepTitle").textContent = STEPS[n].title;
+  document.getElementById("stepSubtitle").textContent = STEPS[n].subtitle;
+  document.getElementById("btnBack").style.display = n > 0 ? "" : "none";
+  const btnNext = document.getElementById("btnNext");
+  if (n >= STEPS.length - 1) { btnNext.style.display = "none"; }
+  else { btnNext.style.display = ""; btnNext.textContent = n === 0 ? "Let's go" : "Next step"; }
+  STEPS.forEach((_, i) => {
+    const thumb = document.getElementById("rail-thumb-" + i);
+    if (thumb) thumb.className = "rail-thumb " + (i < n ? "completed" : i === n ? "current" : "upcoming");
+    if (i > 0) { const conn = document.getElementById("rail-conn-" + i); if (conn) conn.className = "rail-connector " + (i <= n ? "completed" : "upcoming"); }
+  });
+  window.scrollTo(0, 0);
+}
+
+function nextStep() { if (currentStep < STEPS.length - 1) goToStep(currentStep + 1); }
+function prevStep() { if (currentStep > 0) goToStep(currentStep - 1); }
+
+function toggleExpand(card) { card.classList.toggle("open"); }
+
+function copyPrompt(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add("copied");
+    btn.textContent = "Copied to clipboard!";
+    setTimeout(() => { btn.classList.remove("copied"); btn.textContent = "Copy this prompt"; }, 2000);
+  });
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") nextStep();
+  if (e.key === "ArrowLeft" || e.key === "ArrowUp") prevStep();
+});
+</script>
+</body>
+</html>

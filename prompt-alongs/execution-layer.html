@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Execution Layer — Prompt Along</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Zilla+Slab&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #faf5f0; color: #081f3f; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .container { display: flex; gap: 24px; max-width: 780px; margin: 0 auto; padding: 20px 16px 20px 4px; min-height: 100vh; }
+  .main-col { flex: 1; min-width: 0; }
+
+  /* Section rail */
+  .section-rail { width: 88px; flex-shrink: 0; padding-top: 8px; }
+  .section-rail-inner { position: sticky; top: 80px; display: flex; flex-direction: column; align-items: center; }
+  .rail-thumb { width: 80px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; transition: all 0.25s ease; padding: 8px 6px 6px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-family: 'Inter', sans-serif; background: #f0ebe4; color: #b8a898; }
+  .rail-thumb-visual { display: flex; align-items: center; justify-content: center; height: 44px; }
+  .rail-thumb-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1; text-align: center; }
+  .rail-thumb.upcoming { background: #f0ebe4; color: #b8a898; border-color: transparent; }
+  .rail-thumb.upcoming .rail-thumb-visual { opacity: 0.45; }
+  .rail-thumb.completed { background: #fef3e2; color: #b45309; border-color: #eba714; }
+  .rail-thumb.current { background: #d97706; color: white; border-color: #b45309; box-shadow: 0 2px 10px rgba(217,119,6,0.4); transform: scale(1.06); }
+  .rail-connector { width: 2px; height: 6px; flex-shrink: 0; }
+  .rail-connector.completed { background: #eba714; }
+  .rail-connector.upcoming { background: #e8e0d8; }
+  .rail-thumb:hover::after { content: attr(data-label); position: absolute; left: 86px; top: 50%; transform: translateY(-50%); background: #081f3f; color: #faf5f0; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; white-space: nowrap; pointer-events: none; z-index: 30; }
+  .rail-thumb:hover::before { content: ''; position: absolute; left: 80px; top: 50%; transform: translateY(-50%); border: 5px solid transparent; border-right-color: #081f3f; pointer-events: none; z-index: 30; }
+
+  /* Icons */
+  .icon { display:inline-block;width:1em;height:1em;background:currentColor;vertical-align:-0.125em;flex-shrink:0;-webkit-mask:no-repeat center/contain;mask:no-repeat center/contain; }
+  .i-layers{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E");}
+  .i-chat{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");}
+  .i-file{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");}
+  .i-zap{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");}
+  .i-target{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");}
+  .i-eye{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");}
+  .i-check{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");}
+  .i-search{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");}
+  .i-gear{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");}
+  .i-sparkle{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");}
+  .i-star{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");}
+  .i-wrench{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");}
+  .i-refresh{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");}
+  .i-compass{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z'/%3E%3C/svg%3E");}
+  .i-folder{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z'/%3E%3C/svg%3E");}
+  .i-terminal{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 17l6-5-6-5'/%3E%3Cpath d='M12 19h8'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 17l6-5-6-5'/%3E%3Cpath d='M12 19h8'/%3E%3C/svg%3E");}
+  .i-layout{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='3' y1='9' x2='21' y2='9'/%3E%3Cline x1='9' y1='21' x2='9' y2='9'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='3' y1='9' x2='21' y2='9'/%3E%3Cline x1='9' y1='21' x2='9' y2='9'/%3E%3C/svg%3E");}
+
+  /* Step header */
+  .step-header { margin-bottom: 24px; }
+  .step-header h1 { font-family: 'Zilla Slab', serif; font-size: 28px; font-weight: 400; color: #081f3f; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .step-header p { font-size: 16px; color: #15465b; }
+
+  /* Content */
+  .step-content { margin-bottom: 32px; }
+  .step { display: none; }
+  .step.active { display: block; min-height: calc(100vh - 240px); }
+  .step > p { font-size: 17px; line-height: 1.8; color: #081f3f; margin-bottom: 28px; }
+
+  /* Nav */
+  .nav-header { position: sticky; top: 0; background: #faf5f0; padding: 8px 0 12px; z-index: 10; }
+  .nav-header::after { content:''; display:block; height:20px; margin:0 -16px; background:linear-gradient(to top,transparent,#faf5f0); pointer-events:none; position:absolute; bottom:-20px; left:0; right:0; }
+  .nav { display: flex; gap: 12px; }
+  .btn { padding: 14px 20px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; font-family: 'Inter', sans-serif; }
+  .btn:hover { opacity: 0.9; }
+  .btn-back { flex: 1; border: 1px solid #e8e0d8; background: white; color: #15465b; }
+  .btn-next { flex: 2; background: #d97706; color: white; }
+
+  /* Components */
+  .callout { padding: 18px 22px; border-radius: 0 12px 12px 0; margin-bottom: 28px; }
+  .callout-purple { background: #fef9f0; border-left: 4px solid #081f3f; }
+  .callout-green { background: #f0fdf4; border-left: 4px solid #16a34a; }
+  .callout-blue { background: #f0f5f7; border-left: 4px solid #15465b; }
+  .callout-amber { background: #fef9f0; border-left: 4px solid #d97706; }
+  .callout-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .callout-text { font-size: 13px; color: #15465b; line-height: 1.7; }
+
+  .dark-card { background: #081f3f; border-radius: 16px; padding: 32px; margin-bottom: 32px; text-align: center; }
+  .dark-card h2 { font-family: 'Zilla Slab', serif; font-size: 22px; font-weight: 400; color: #faf5f0; margin-bottom: 8px; }
+  .dark-card p { font-size: 14px; color: #eba714; line-height: 1.7; }
+
+  .section-label { font-size:11px; font-weight:600; color:#15465b; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; text-align:center; font-family:'Inter',sans-serif; }
+
+  .prompt-block { background:#081f3f; color:#faf5f0; border-radius:12px; padding:20px; font-size:14px; line-height:1.7; font-family:monospace; white-space:pre-wrap; margin-bottom:12px; }
+  .copy-btn { width:100%; padding:10px 20px; border-radius:8px; border:none; font-size:14px; font-weight:600; cursor:pointer; background:#d97706; color:white; transition:background 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Inter',sans-serif; }
+  .copy-btn.copied { background:#059669; }
+
+  .action-box { background:linear-gradient(135deg,#fef9f0,#fef3e2); border:2px solid #d97706; border-radius:16px; padding:24px; margin-bottom:32px; }
+  .action-box-label { font-size:11px; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .action-box-step { font-size:14px; color:#081f3f; line-height:1.8; }
+  .action-box-step ol { padding-left:20px; }
+  .action-box-step li { margin-bottom:6px; }
+
+  .expand-card { border: 1px solid #e8e0d8; border-radius: 12px; margin-bottom: 28px; overflow: hidden; background: white; }
+  .expand-header { width:100%; padding:14px 18px; background:none; border:none; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:15px; font-weight:600; color:#081f3f; text-align:left; font-family:inherit; }
+  .expand-arrow { font-size:12px; color:#15465b; transition:transform 0.2s; }
+  .expand-card.open .expand-arrow { transform:rotate(180deg); }
+  .expand-body { padding:0 18px 16px; color:#15465b; font-size:14px; line-height:1.7; display:none; }
+  .expand-card.open .expand-body { display:block; }
+
+  .success-card { background:#f0fdf4; border-radius:12px; padding:24px; border:1px solid #bbf7d0; text-align:center; margin-top:20px; margin-bottom:28px; }
+  .success-icon { font-size:28px; margin-bottom:8px; }
+  .success-title { font-size:16px; font-weight:700; color:#15803d; margin-bottom:8px; }
+  .success-text { font-size:14px; color:#15465b; line-height:1.7; }
+
+  .recap-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f0ebe4; align-items:flex-start; }
+  .recap-item:last-child { border-bottom:none; }
+  .recap-num { font-size:14px; font-weight:700; color:#d97706; min-width:24px; padding-top:2px; }
+  .recap-text { font-size:14px; color:#15465b; line-height:1.6; }
+
+  .next-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px; }
+  .next-card { background:white; border-radius:12px; padding:16px; border:1px solid #e8e0d8; text-align:center; }
+  .next-card-icon { font-size:24px; margin-bottom:6px; }
+  .next-card-title { font-size:14px; font-weight:700; color:#081f3f; margin-bottom:4px; }
+  .next-card-desc { font-size:12px; color:#15465b; line-height:1.4; }
+
+  /* Layer locator */
+  .layer-stack { display:flex; flex-direction:column; gap:0; margin-bottom:32px; border-radius:16px; overflow:hidden; border:1px solid #e8e0d8; }
+  .layer-row { padding:20px 22px; display:flex; align-items:center; gap:16px; }
+  .layer-row:not(:last-child) { border-bottom:1px solid #e8e0d8; }
+  .layer-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .layer-content { flex:1; }
+  .layer-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:2px; }
+  .layer-desc { font-size:13px; color:#15465b; line-height:1.6; }
+  .layer-locator .layer-row { transition: opacity 0.2s; }
+  .layer-locator .layer-row.faded { opacity: 0.35; }
+  .layer-locator .layer-row.faded .layer-icon { opacity: 0.5; }
+  .layer-locator .layer-row.active-layer { border-left: 4px solid #15465b; }
+  .you-are-here { display:inline-block; font-size:10px; font-weight:700; color:white; text-transform:uppercase; letter-spacing:1px; background:#15465b; padding:2px 8px; border-radius:10px; margin-left:8px; }
+  .layer-badge { display:inline-block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:2px 8px; border-radius:10px; margin-left:8px; }
+
+  /* Path selector */
+  .path-selector { display:flex; gap:12px; margin-bottom:28px; }
+  .path-btn { flex:1; padding:20px; border-radius:16px; border:2px solid #e8e0d8; background:white; cursor:pointer; text-align:center; transition:all 0.2s; font-family:'Inter',sans-serif; }
+  .path-btn:hover { border-color:#d97706; }
+  .path-btn.selected { border-color:#15465b; background:#f0f5f7; }
+  .path-btn-icon { font-size:28px; margin-bottom:8px; color:#15465b; }
+  .path-btn-title { font-size:15px; font-weight:600; color:#081f3f; margin-bottom:4px; }
+  .path-btn-desc { font-size:12px; color:#15465b; line-height:1.4; }
+  .path-content { display:none; }
+  .path-content.active { display:block; }
+
+  /* Code block inline */
+  code { background:#f0ebe4; padding:2px 6px; border-radius:4px; font-size:13px; font-family:monospace; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="section-rail">
+    <div class="section-rail-inner" id="sectionRail"></div>
+  </div>
+
+  <div class="main-col">
+  <div class="nav-header">
+    <div class="nav">
+      <button class="btn btn-back" id="btnBack" onclick="prevStep()" style="display:none">Back</button>
+      <button class="btn btn-next" id="btnNext" onclick="nextStep()">Let's go</button>
+    </div>
+  </div>
+
+  <div class="step-header">
+    <h1 id="stepTitle">The Execution Layer</h1>
+    <p id="stepSubtitle">Turn your data layer into a system that runs — reliably, repeatedly, and better every time.</p>
+  </div>
+
+  <div class="step-content">
+
+    <!-- ============================================ -->
+    <!-- STEP 0: From Data to Execution -->
+    <!-- ============================================ -->
+    <div class="step active" id="step-0">
+
+      <div class="section-label" style="margin-top:4px">The three layers of AI-native work</div>
+      <div class="layer-stack layer-locator">
+        <div class="layer-row faded" style="background:#fef9f0">
+          <div class="layer-icon" style="background:#d97706"><span class="icon i-target" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#d97706">Layer 3 — Intent &amp; Verification</div>
+            <div class="layer-desc" style="font-size:12px">What should exist, why, and did it work? <em>This is you.</em></div>
+          </div>
+        </div>
+        <div class="layer-row active-layer" style="background:#f0f5f7">
+          <div class="layer-icon" style="background:#15465b"><span class="icon i-gear" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#15465b">Layer 2 — Execution <span class="you-are-here">You are here</span></div>
+            <div class="layer-desc" style="font-size:12px">The instructions, processes, and orchestration that turn data into output.</div>
+          </div>
+        </div>
+        <div class="layer-row faded" style="background:white">
+          <div class="layer-icon" style="background:#081f3f"><span class="icon i-layers" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#081f3f">Layer 1 — Data &amp; Context <span class="layer-badge" style="background:#f0ebe4;color:#081f3f">Built</span></div>
+            <div class="layer-desc" style="font-size:12px">Your files, your knowledge, your references. <em>You built this in the previous tutorial.</em></div>
+          </div>
+        </div>
+      </div>
+
+      <p>You have a data layer. Your files are mapped, categorized, and navigable. Claude can find what it needs. That's the foundation — and it's necessary, but it's not sufficient. A database without instructions is just a library with no librarian.</p>
+
+      <p>The execution layer is where you tell Claude <em>what to do</em> with all that data. It's the instructions, the processes, the playbooks, the scripts. It's also where Claude starts managing its own state — creating files for itself to track progress, remember decisions, and improve over time.</p>
+
+      <div class="dark-card">
+        <h2>Writing instructions for a human and writing instructions for Claude are fundamentally different skills.</h2>
+        <p>When you brief a colleague, they fill in gaps with judgment and a Slack message. Claude follows what you wrote literally. Every ambiguity becomes a guess. Learning to see your own ambiguity is the skill this tutorial teaches.</p>
+      </div>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">What you'll need</div>
+        <div class="callout-text">The data layer folder you built in the <a href="your-data-layer.html" style="color:#d97706;font-weight:600">previous tutorial</a> — with your directory map and context index. Claude Code or Claude Cowork pointed at that folder. A recurring task you want to systematize — something you do weekly or monthly that would benefit from consistent execution.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 1: The Naive Run -->
+    <!-- ============================================ -->
+    <div class="step" id="step-1">
+      <p>We're going to start by doing something deliberately imperfect. You're going to write instructions for a task — in your own words, the way you'd explain it to a colleague — and then hand it to Claude with your data layer. We want to see what happens when the instructions are natural language, not engineered.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #1 — The naive run</div>
+        <div class="prompt-block" id="prompt1">I want you to do a task for me. Here are my instructions:
+
+[WRITE YOUR INSTRUCTIONS IN PLAIN LANGUAGE — describe the task the way you'd explain it to a colleague over coffee. Don't overthink it. Just tell Claude what you need done, what the output should look like, and any important details.]
+
+Use the files in this folder as your reference — check the _context-index.md to understand what's available. Work from my actual data, not generic knowledge.
+
+When you're done, add a section at the end called "Where I had to guess." List every place where my instructions were unclear, ambiguous, or missing information — and tell me what you decided to do instead. Be honest and specific.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt1', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">The "where I had to guess" section is the whole point</div>
+        <div class="callout-text">The output matters less than the diagnostic. Every place Claude had to guess is a place where your instructions were ambiguous. Those guesses are where output quality degrades — where you get generic filler instead of precisely what you wanted. The list of guesses is your improvement roadmap.</div>
+      </div>
+
+      <p>Read the output. Then read the "where I had to guess" section carefully. You'll probably be surprised by how many assumptions Claude had to make. Things that felt obvious to you — because you carry context in your head — weren't in the instructions at all.</p>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#16a34a">This isn't a failure — it's a baseline</div>
+        <div class="callout-text">The naive run is supposed to be imperfect. It shows you exactly where the gap is between "how you think about the task" and "what you actually wrote down." That gap is the execution layer work. Closing it is the skill you're building.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 2: Diagnose With Claude -->
+    <!-- ============================================ -->
+    <div class="step" id="step-2">
+      <p>You have a list of places Claude had to guess. Now let's turn Claude into your collaborator for improving the instructions. This is a conversation — you're working <em>with</em> Claude to make the execution layer stronger.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #2 — The diagnostic conversation</div>
+        <div class="prompt-block" id="prompt2">Let's improve those instructions together. For each place you had to guess:
+
+1. **What was ambiguous?** Quote the specific part of my instructions that was unclear.
+2. **What did you assume?** Tell me what you decided and why.
+3. **What would have helped?** What could I have written instead that would have removed the ambiguity?
+
+Then look at the instructions as a whole and tell me:
+- What's missing entirely? What did I forget to mention that you needed to know?
+- What's overspecified? Where did I give you detail that didn't matter?
+- Where did you lean on the data layer vs. the instructions? Which parts of the task were driven by the reference files, and which by my written instructions?
+
+Finally: rewrite the instructions for me. Take everything we just discussed and produce a version that's precise enough you wouldn't need to guess at all. Keep it concise — remove anything that doesn't reduce ambiguity.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt2', this)">Copy this prompt</button>
+      </div>
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2>The best way to improve your instructions is to ask the system that follows them.</h2>
+        <p>Claude knows exactly where it struggled. It knows what was clear, what was vague, and what was missing entirely. Use that knowledge. This is a collaborative relationship — you manage the instructions, Claude helps you refine them.</p>
+      </div>
+
+      <p>Read the rewritten instructions Claude produced. Compare them to your original. Notice what changed. The differences are a map of your implicit assumptions — the things you knew but didn't say, because they felt obvious. In the execution layer, nothing is obvious. Everything has to be explicit.</p>
+
+      <div class="callout callout-amber">
+        <div class="callout-title" style="color:#b45309">Check the data layer too</div>
+        <div class="callout-text">Some of the gaps won't be instruction problems — they'll be data layer problems. If Claude couldn't find a brand guide, that's not an instruction issue. That's a missing file. If Claude didn't know your client's preferences, that's institutional knowledge that needs to be written down. When Claude flags something as missing, ask yourself: is this an instruction I need to write, or context I need to add to my data layer?</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 3: Run It Again -->
+    <!-- ============================================ -->
+    <div class="step" id="step-3">
+      <p>You have improved instructions. Let's see if they actually work better. Same task, same data layer, new instructions.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #3 — The improved run</div>
+        <div class="prompt-block" id="prompt3">Let's run the task again. Use the improved instructions we just created — not my original ones.
+
+Same rules as before: use the data layer files via the _context-index.md. Don't ask me clarifying questions — work from the instructions and the data.
+
+When you're done, add the "Where I had to guess" section again. I want to see if the list got shorter. Also add a section called "What worked well" — tell me which parts of the improved instructions made the biggest difference in output quality.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt3', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">The "guesses" list should be shorter</div>
+        <div class="callout-text">If it's not — if Claude is still guessing in the same places — that's a signal that the instructions need a different approach, not just more detail. Maybe the task needs to be broken into smaller steps. Maybe the data layer is missing something fundamental. Either way, the diagnostic tells you where to look.</div>
+      </div>
+
+      <p>Compare the two outputs side by side. First run vs. second run. You should see the improved instructions producing output that's closer to what you actually wanted — less generic, fewer wrong assumptions, more aligned with how you'd have done it yourself.</p>
+
+      <p>This is the iteration loop that makes the execution layer better over time: run, diagnose, improve, run again. Every cycle tightens the instructions. Every cycle surfaces assumptions you didn't know you were making.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 4: What Good Execution Infrastructure Looks Like -->
+    <!-- ============================================ -->
+    <div class="step" id="step-4">
+      <p>You've seen the iteration loop work. Now let's zoom out. You've been writing instructions in a single conversation. But the execution layer isn't a conversation — it's infrastructure. It's persistent files, reusable commands, and state management that lives in your folder and survives between sessions.</p>
+
+      <p>Both Claude Code and Claude Cowork have built-in structures designed exactly for this. Most people don't know they exist — or treat them as one-time setup instead of living documents they iterate on. These structures are the scaffolding of your execution layer.</p>
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2>The execution layer has four components.</h2>
+        <p>Persistent instructions. Task-specific playbooks. Reusable commands. State management. Together, they turn a folder of data into a system that runs.</p>
+      </div>
+
+      <!-- Four components visual -->
+      <div style="background:linear-gradient(135deg,#081f3f,#15465b);border-radius:16px;padding:24px;margin-bottom:32px">
+        <div class="section-label" style="color:#eba714;margin-bottom:16px">Execution layer components</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px">
+            <div style="font-size:20px;margin-bottom:8px"><span class="icon i-file" style="font-size:20px;color:#eba714"></span></div>
+            <div style="font-size:12px;font-weight:700;color:#faf5f0;margin-bottom:4px">Persistent instructions</div>
+            <div style="font-size:11px;color:#faf5f0;opacity:0.7;line-height:1.4">General rules Claude follows every time. Style, tone, conventions, how you work together.</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px">
+            <div style="font-size:20px;margin-bottom:8px"><span class="icon i-folder" style="font-size:20px;color:#eba714"></span></div>
+            <div style="font-size:12px;font-weight:700;color:#faf5f0;margin-bottom:4px">Task playbooks</div>
+            <div style="font-size:11px;color:#faf5f0;opacity:0.7;line-height:1.4">Step-by-step instructions for specific recurring tasks, wired into your data layer.</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px">
+            <div style="font-size:20px;margin-bottom:8px"><span class="icon i-zap" style="font-size:20px;color:#eba714"></span></div>
+            <div style="font-size:12px;font-weight:700;color:#faf5f0;margin-bottom:4px">Reusable commands</div>
+            <div style="font-size:11px;color:#faf5f0;opacity:0.7;line-height:1.4">Named actions you can invoke with a slash. Define once, run anytime.</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px">
+            <div style="font-size:20px;margin-bottom:8px"><span class="icon i-refresh" style="font-size:20px;color:#eba714"></span></div>
+            <div style="font-size:12px;font-weight:700;color:#faf5f0;margin-bottom:4px">State management</div>
+            <div style="font-size:11px;color:#faf5f0;opacity:0.7;line-height:1.4">Files Claude creates for itself — progress logs, decision records, checklists — to manage work over time.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">Your folder is becoming a workspace, not just storage</div>
+        <div class="callout-text">Notice what's happening to your directory. It started as files you created for your own work. Then you added navigation (directory map, context index) so Claude could find things. Now you're adding instructions and state management — files that Claude both reads <em>and</em> writes. The folder is evolving from a filing cabinet into a collaborative workspace where you and Claude both operate.</div>
+      </div>
+
+      <p>In the next step, you'll set up these components in whichever tool you're using. The concepts are identical — the interface is different.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 5: Choose Your Path -->
+    <!-- ============================================ -->
+    <div class="step" id="step-5">
+      <p>Time to set up your execution infrastructure. The concepts are the same regardless of which tool you use — persistent instructions, task playbooks, reusable commands, state management. The implementation is different. Pick your path.</p>
+
+      <div class="path-selector">
+        <button class="path-btn selected" id="pathBtnCode" onclick="selectPath('code')">
+          <div class="path-btn-icon"><span class="icon i-terminal" style="font-size:28px"></span></div>
+          <div class="path-btn-title">Claude Code</div>
+          <div class="path-btn-desc">Terminal-based. File-system native. CLAUDE.md, skills, agents.</div>
+        </button>
+        <button class="path-btn" id="pathBtnCowork" onclick="selectPath('cowork')">
+          <div class="path-btn-icon"><span class="icon i-layout" style="font-size:28px"></span></div>
+          <div class="path-btn-title">Claude Cowork</div>
+          <div class="path-btn-desc">Desktop app. GUI-based. Folder instructions, plugins, commands.</div>
+        </button>
+      </div>
+
+      <!-- CLAUDE CODE PATH -->
+      <div class="path-content active" id="path-code">
+        <div class="section-label">1. Persistent instructions — CLAUDE.md</div>
+        <p style="font-size:15px;line-height:1.7;margin-bottom:20px">CLAUDE.md is a file that Claude reads automatically every time it starts a session in your project. It's where your general operating instructions live — how you want Claude to work, what conventions to follow, what to always do and never do.</p>
+
+        <div class="action-box">
+          <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #4a — Set up CLAUDE.md</div>
+          <div class="prompt-block" id="prompt4a">Based on everything we've learned working together — the task we ran, the instructions we refined, the data layer in this folder — I want you to help me create a CLAUDE.md file for this project.
+
+It should include:
+
+1. **Project context** — What this folder is for, what kind of work it supports. Reference the _context-index.md.
+2. **Working conventions** — How I want you to approach tasks. Tone, format, level of detail. Pull this from what we've discovered works well.
+3. **Key reference files** — Which files in the data layer to always check before starting a task. Use @imports to point to them (e.g., @reference/brand-guide.md).
+4. **Guardrails** — What you should never do. Common mistakes to avoid. Things that are important to me that might not be obvious.
+5. **State management rules** — When you create or update files to track progress, where should they go? What format?
+
+Keep it concise — aim for 50-100 lines. Every line should reduce ambiguity or prevent a mistake. If removing a line wouldn't change your behavior, cut it.</div>
+          <button class="copy-btn" onclick="copyPrompt('prompt4a', this)">Copy this prompt</button>
+        </div>
+
+        <div class="callout callout-blue">
+          <div class="callout-title" style="color:#15465b">Where CLAUDE.md lives</div>
+          <div class="callout-text">Put it in the root of your project folder — that's the default location Claude Code reads from. You can also use <code>.claude/CLAUDE.md</code> if you prefer. For personal preferences that apply across all your projects, use <code>~/.claude/CLAUDE.md</code>. For modular rules, use <code>.claude/rules/*.md</code> — each file is auto-loaded.</div>
+        </div>
+
+        <div class="section-label" style="margin-top:32px">2. Task playbooks — Skills</div>
+        <p style="font-size:15px;line-height:1.7;margin-bottom:20px">Skills are reusable instruction sets that live in your project. They can be invoked with a slash command (like <code>/weekly-report</code>) or Claude can activate them automatically when it detects a relevant task.</p>
+
+        <div class="action-box">
+          <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #5a — Create your first skill</div>
+          <div class="prompt-block" id="prompt5a">Take the refined instructions we created for [YOUR TASK] and turn them into a Claude Code skill.
+
+Create a skill directory at .claude/skills/[task-name]/ with a SKILL.md file that includes:
+
+1. YAML frontmatter with: name, description (when Claude should use this), and argument-hint if the task takes input.
+2. The full execution instructions we refined — step-by-step, with references to data layer files.
+3. Quality standards and guardrails.
+
+Also ask me: are there any other recurring tasks I do that should become skills? List 3-4 candidates based on what you've seen in my data layer.</div>
+          <button class="copy-btn" onclick="copyPrompt('prompt5a', this)">Copy this prompt</button>
+        </div>
+
+        <div class="callout callout-green">
+          <div class="callout-title" style="color:#16a34a">Skills compound</div>
+          <div class="callout-text">Every skill you create is a task you never have to explain again. Instead of pasting instructions each time, you type <code>/weekly-report</code> and Claude has the full playbook — wired into your data layer, with quality standards and guardrails built in. Over time, your <code>.claude/skills/</code> folder becomes a library of everything you know how to do, encoded as instructions Claude can follow.</div>
+        </div>
+
+        <div class="section-label" style="margin-top:32px">3. State management</div>
+        <p style="font-size:15px;line-height:1.7;margin-bottom:20px">Claude Code has built-in memory that persists across sessions — auto-memory files in <code>~/.claude/projects/</code>. But you can also have Claude create project-specific state files in your folder: progress logs, decision records, checklists, run histories. These let Claude manage work over time, not just execute in the moment.</p>
+
+        <div class="callout callout-amber">
+          <div class="callout-title" style="color:#b45309">Ask Claude to help you improve</div>
+          <div class="callout-text">This is a habit, not a one-time setup. After every task run, ask Claude: "How can we improve the instructions? Where did you have to guess? What would make the next run more reliable?" Claude will suggest updates to your CLAUDE.md, your skills, and your data layer. Your execution layer gets better every time you use it.</div>
+        </div>
+      </div>
+
+      <!-- COWORK PATH -->
+      <div class="path-content" id="path-cowork">
+        <div class="section-label">1. Persistent instructions — Folder instructions</div>
+        <p style="font-size:15px;line-height:1.7;margin-bottom:20px">Cowork lets you set persistent instructions for each folder you connect. These instructions apply to every session in that folder — like CLAUDE.md in Claude Code, but configured through the GUI. You can also set global instructions in Settings > Cowork that apply everywhere.</p>
+
+        <div class="action-box">
+          <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #4b — Set up folder instructions</div>
+          <div class="prompt-block" id="prompt4b">Based on everything we've learned working together — the task we ran, the instructions we refined, the data layer in this folder — I want you to help me write the folder instructions for this Cowork project.
+
+Write instructions I can paste into the Cowork folder settings that include:
+
+1. **Project context** — What this folder is for, what kind of work it supports. Tell Claude to always check _context-index.md first.
+2. **Working conventions** — How I want you to approach tasks. Tone, format, level of detail.
+3. **Key reference files** — Which files to always read before starting any task in this folder.
+4. **Guardrails** — What to never do. Common mistakes to avoid.
+5. **State management rules** — When you create files to track progress or decisions, where should they go? What format?
+
+Keep it concise. Every line should reduce ambiguity or prevent a mistake.</div>
+          <button class="copy-btn" onclick="copyPrompt('prompt4b', this)">Copy this prompt</button>
+        </div>
+
+        <div class="callout callout-blue">
+          <div class="callout-title" style="color:#15465b">Where to set folder instructions</div>
+          <div class="callout-text">In Claude Cowork, click the folder name in the sidebar, then look for the instructions text area. Paste your instructions there. They'll persist across every session that uses this folder. For instructions that apply to all your Cowork sessions regardless of folder, go to Settings > Cowork.</div>
+        </div>
+
+        <div class="section-label" style="margin-top:32px">2. Task playbooks — Plugins &amp; commands</div>
+        <p style="font-size:15px;line-height:1.7;margin-bottom:20px">Cowork uses plugins to package reusable workflows. Plugins contain skills (domain knowledge Claude activates automatically), commands (slash-invocable actions), and connectors (integrations with external tools). You can use <a href="https://github.com/anthropics/knowledge-work-plugins" style="color:#d97706;font-weight:600">Anthropic's official plugins</a> or build your own.</p>
+
+        <div class="action-box">
+          <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #5b — Create a task playbook</div>
+          <div class="prompt-block" id="prompt5b">Take the refined instructions we created for [YOUR TASK] and help me turn them into a reusable playbook.
+
+Create a file called _playbook-[task-name].md in this folder that includes:
+
+1. **Task overview** — What this produces and who it's for.
+2. **Step-by-step execution instructions** — The refined version we built, with explicit references to data layer files.
+3. **Quality standards** — What good output looks like.
+4. **Guardrails** — What to avoid.
+
+Then help me write a Cowork plugin command for this task. Create the directory structure:
+- .claude-plugin/plugin.json (the manifest)
+- commands/[task-name].md (the slash command)
+- skills/[task-name]-knowledge.md (domain knowledge Claude should activate automatically)
+
+Also ask me: what other recurring tasks should become commands? List 3-4 candidates based on what you've seen in my data layer.</div>
+          <button class="copy-btn" onclick="copyPrompt('prompt5b', this)">Copy this prompt</button>
+        </div>
+
+        <div class="callout callout-green">
+          <div class="callout-title" style="color:#16a34a">Commands compound</div>
+          <div class="callout-text">Every command you create is a task you never have to explain again. Instead of describing what you need each time, you type <code>/weekly-report</code> and Claude has the full playbook — wired into your data layer, with quality standards built in. Over time, your commands become a library of everything you know how to do, encoded as instructions Claude can follow.</div>
+        </div>
+
+        <div class="section-label" style="margin-top:32px">3. State management</div>
+        <p style="font-size:15px;line-height:1.7;margin-bottom:20px">Cowork starts fresh each session — it doesn't have Claude Code's automatic cross-session memory. But you can work around this by having Claude create state files in your folder: progress logs, decision records, session summaries. At the start of each session, tell Claude to read those files to pick up where you left off.</p>
+
+        <div class="callout callout-amber">
+          <div class="callout-title" style="color:#b45309">Ask Claude to help you improve</div>
+          <div class="callout-text">This is a habit, not a one-time setup. After every task run, ask Claude: "How can we improve the instructions? Where did you have to guess? What would make the next run more reliable?" Claude will suggest updates to your folder instructions, your playbooks, and your data layer. Your execution layer gets better every time you use it.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 6: The Improvement Conversation -->
+    <!-- ============================================ -->
+    <div class="step" id="step-6">
+      <p>You have persistent instructions, a task playbook or skill, and a sense of how state management works. Now let's cement the most important habit: the improvement conversation. This is the ongoing practice that turns a static set of instructions into a system that gets better with every run.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-zap" style="font-size:14px"></span> Prompt #6 — The improvement conversation</div>
+        <div class="prompt-block" id="prompt6">I want to make our working system better. Look at everything we've built — the data layer, the instructions, the task we've run — and help me improve.
+
+Answer these questions:
+
+1. **Ambiguity audit.** Where in our instructions could two different AI sessions interpret things differently? Where is there room for inconsistent output?
+2. **Data layer gaps.** What reference material, examples, or institutional knowledge is still missing from the data layer that would improve execution quality?
+3. **Reliability check.** If I ran this task 10 times in a row, what would vary between runs? What would I need to add to make the output more consistent?
+4. **State and memory.** What should Claude be tracking across runs to get smarter over time? What decisions, outcomes, or feedback should be recorded?
+5. **New capabilities.** What scripts, tools, or integrations would make this system more powerful? What's a manual step that could be automated?
+
+For each answer, give me the specific change — not just "improve the instructions" but exactly what to add, edit, or create.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt6', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">This conversation is the highest-leverage thing you can do</div>
+        <div class="callout-text">One improvement conversation — 10 minutes — can save hours of rework across future runs. Every ambiguity you eliminate, every gap you fill, every inconsistency you fix compounds. The system doesn't just get better at this task. The skills you build — seeing ambiguity, thinking about reliability, structuring instructions — transfer to every task you systematize.</div>
+      </div>
+
+      <p>Implement the changes Claude suggests. Update your CLAUDE.md or folder instructions. Refine the skill or playbook. Add missing files to the data layer. Then run the task again and see the difference.</p>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">How often should I do this?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p>After every run, at least briefly. A quick "Where did you have to guess?" after each task takes 30 seconds and catches problems early. A full improvement conversation — like the prompt above — is worth doing after every 3-5 runs, or whenever you notice output quality slipping.</p>
+          <p style="margin-top:10px">Over time, the frequency drops. The first few runs of any task surface the biggest gaps. After 5-10 iterations, the instructions stabilize and you'll spend less time improving and more time just running.</p>
+        </div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">What if the output is fine but I know it could be better?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p>"Fine" is the enemy of great in execution layer work. If the output is acceptable but not quite what you'd produce yourself, there's a gap in the instructions. The question to ask is: "What do I know about what 'great' looks like that isn't in the instructions yet?" Often the answer is a quality standard that's implicit — you know it when you see it but haven't written it down. Writing it down is the work.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 7: Scale and Systematize -->
+    <!-- ============================================ -->
+    <div class="step" id="step-7">
+      <p>You've built the execution layer for one task. Now let's think about your work as a whole. Every recurring task you do is a candidate for this same treatment: naive run, diagnostic conversation, iteration, persistent instructions, reusable command.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-target" style="font-size:14px"></span> Map your recurring tasks</div>
+        <div class="action-box-step">
+          <p style="margin-bottom:12px">Think about your typical work week. Which tasks repeat?</p>
+          <ol>
+            <li>What do you do every week that follows roughly the same pattern?</li>
+            <li>What do you do every month that requires gathering information and producing an output?</li>
+            <li>What tasks do you dread because they're tedious but important?</li>
+            <li>What tasks take you disproportionately long because you're always starting from scratch?</li>
+          </ol>
+          <p style="margin-top:12px">Each of these is a candidate for the execution layer. Start with the one that's most painful or most frequent.</p>
+        </div>
+      </div>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#16a34a">One task at a time</div>
+        <div class="callout-text">Don't try to systematize everything at once. Pick the next most painful recurring task, run it through the same process (naive run → diagnostic → iterate → persist), and add it to your skills or commands. Each one takes less time than the last because you're getting better at the core skill: writing precise instructions and seeing your own ambiguity.</div>
+      </div>
+
+      <p>As your execution layer grows, your folder starts to look different. It's not just data anymore — it's a system. Data files, navigation files, instruction files, state files, skills, commands. Two of the three layers, living side by side, with Claude operating on both.</p>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">Ask Claude: how can we make this system better?</div>
+        <div class="callout-text">Make this a regular practice. Not just "how do we improve this task" but "how do we improve the system?" Are there patterns across your skills that should be pulled into CLAUDE.md? Are there data layer files that multiple tasks reference that should be richer? Is there state that would be useful across tasks, not just within one? Claude can see your whole folder. Use that perspective.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 8: What You Built -->
+    <!-- ============================================ -->
+    <div class="step" id="step-8">
+
+      <div class="dark-card" style="background:linear-gradient(135deg,#081f3f,#15465b)">
+        <h2>You're not writing prompts anymore. You're managing a system.</h2>
+        <p>Persistent instructions. Task playbooks. Reusable commands. State management. An improvement loop that makes everything better with every run. That's the execution layer.</p>
+      </div>
+
+      <div class="section-label">Where you are in the three layers</div>
+      <div class="layer-stack layer-locator">
+        <div class="layer-row faded" style="background:#fef9f0">
+          <div class="layer-icon" style="background:#d97706"><span class="icon i-target" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#d97706">Layer 3 — Intent &amp; Verification <span class="layer-badge" style="background:#fef3e2;color:#b45309"><a href="intent-verification.html" style="color:inherit;text-decoration:none">Up next</a></span></div>
+            <div class="layer-desc" style="font-size:12px">Did the output actually achieve what you intended? <a href="intent-verification.html" style="color:#d97706;font-weight:600">The next tutorial.</a></div>
+          </div>
+        </div>
+        <div class="layer-row active-layer" style="background:#f0f5f7">
+          <div class="layer-icon" style="background:#15465b"><span class="icon i-gear" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#15465b">Layer 2 — Execution <span class="layer-badge" style="background:#15465b;color:white">Complete</span></div>
+            <div class="layer-desc" style="font-size:12px">Instructions, playbooks, commands, state management — your system runs.</div>
+          </div>
+        </div>
+        <div class="layer-row faded" style="background:white">
+          <div class="layer-icon" style="background:#081f3f"><span class="icon i-layers" style="font-size:20px;color:white"></span></div>
+          <div class="layer-content">
+            <div class="layer-label" style="color:#081f3f">Layer 1 — Data &amp; Context <span class="layer-badge" style="background:#f0ebe4;color:#081f3f">Built</span></div>
+            <div class="layer-desc" style="font-size:12px">Your files, your knowledge, your references — mapped, categorized, and navigable.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">What you built in this session</div>
+      <div style="background:white;border-radius:16px;border:1px solid #e8e0d8;padding:20px;margin-bottom:32px">
+        <div class="recap-item">
+          <div class="recap-num">1</div>
+          <div class="recap-text"><strong>A diagnostic baseline.</strong> A naive run that revealed exactly where your instructions were ambiguous — the gap between what you know and what you wrote down.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">2</div>
+          <div class="recap-text"><strong>Refined execution instructions.</strong> Precise enough that Claude doesn't have to guess. Iterated through the run-diagnose-improve cycle.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">3</div>
+          <div class="recap-text"><strong>Persistent instructions.</strong> CLAUDE.md or folder instructions that Claude reads every session — your general operating playbook.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">4</div>
+          <div class="recap-text"><strong>A reusable skill or command.</strong> A task you never have to explain again. Invoke it by name and Claude has the full playbook.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">5</div>
+          <div class="recap-text"><strong>The improvement habit.</strong> "Where did you have to guess? How do we make this more reliable?" A practice that compounds with every run.</div>
+        </div>
+      </div>
+
+      <div class="section-label">The principles</div>
+      <div style="background:white;border-radius:16px;border:1px solid #e8e0d8;padding:20px;margin-bottom:32px">
+        <div class="recap-item">
+          <div class="recap-num">1</div>
+          <div class="recap-text"><strong>Every ambiguity is a guess.</strong> If Claude has to guess, the output quality drops. The execution layer's job is to eliminate guesses — one at a time, run after run.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">2</div>
+          <div class="recap-text"><strong>Claude is your best collaborator for improving instructions.</strong> It knows exactly where it struggled. Ask it. Use its feedback to tighten the instructions.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">3</div>
+          <div class="recap-text"><strong>Instructions are living documents.</strong> Not one-time setup. Every task run is an opportunity to improve. The execution layer is never finished — it's always getting better.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">4</div>
+          <div class="recap-text"><strong>Your folder is a collaborative workspace.</strong> Claude doesn't just read your files — it creates files for itself, manages state, tracks progress. The folder is where both of you work.</div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">5</div>
+          <div class="recap-text"><strong>Skills compound.</strong> Every task you systematize is a task you never explain again. Every instruction you refine improves every future run. The system gets better the more you use it.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">Two layers built. One to go.</div>
+        <div class="callout-text">You've built the data layer (your files, mapped and navigable) and the execution layer (instructions, commands, state management). The <a href="intent-verification.html" style="color:#d97706;font-weight:600">next tutorial</a> completes the picture: intent and verification. How do you evaluate whether the output actually achieved what you intended? How do you build feedback loops that connect outcomes back to the system? That's the human layer — and it's where your value concentrates.</div>
+      </div>
+
+      <div class="section-label">Where this goes next</div>
+      <div class="next-grid">
+        <a href="intent-verification.html" class="next-card" style="border-color:#d97706;background:#fef9f0;text-decoration:none;color:inherit">
+          <div class="next-card-icon"><span class="icon i-target" style="font-size:24px;color:#d97706"></span></div>
+          <div class="next-card-title">Know What Good Looks Like</div>
+          <div class="next-card-desc">Define success before you run anything. Build quality standards, verification scenarios, and three-lens evaluation.</div>
+        </a>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-wrench" style="font-size:24px"></span></div>
+          <div class="next-card-title">Systematize another task</div>
+          <div class="next-card-desc">Pick your next most painful recurring task. Run it through the same process: naive run, diagnose, iterate, persist.</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-folder" style="font-size:24px"></span></div>
+          <div class="next-card-title">Expand your data layer</div>
+          <div class="next-card-desc">Map another folder. Add reference materials. Write down institutional knowledge. A richer data layer means better execution.</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-refresh" style="font-size:24px"></span></div>
+          <div class="next-card-title">Run the improvement loop</div>
+          <div class="next-card-desc">After 3-5 task runs, do a full improvement conversation. Audit for ambiguity, gaps, and reliability.</div>
+        </div>
+      </div>
+
+      <div class="success-card">
+        <div class="success-icon"><span class="icon i-star"></span></div>
+        <div class="success-title">You're managing a system now.</div>
+        <div class="success-text">Not writing one-off prompts. Not hoping for good output. You've built persistent instructions, reusable commands, and an improvement loop — a system that gets better every time you use it. The execution layer isn't something you set up once. It's a practice you get better at. And the better you get, the more of your work you can systematize, the more time you spend at the intent and verification layer — where your value actually lives.</div>
+      </div>
+    </div>
+
+  </div><!-- step-content -->
+  </div><!-- main-col -->
+</div><!-- container -->
+
+<script>
+const STEPS = [
+  { title: "The Execution Layer", subtitle: "Turn your data layer into a system that runs — reliably, repeatedly, and better every time." },
+  { title: "The Naive Run", subtitle: "Write instructions your way. See where Claude has to guess." },
+  { title: "Diagnose With Claude", subtitle: "Work with Claude to find and fix every ambiguity in your instructions." },
+  { title: "Run It Again", subtitle: "Test the improved instructions. See the gap close." },
+  { title: "Execution Infrastructure", subtitle: "Four components that turn instructions into a persistent, reusable system." },
+  { title: "Set Up Your Tools", subtitle: "Configure persistent instructions, skills, commands, and state management." },
+  { title: "The Improvement Conversation", subtitle: "The ongoing practice that makes your system better with every run." },
+  { title: "Scale and Systematize", subtitle: "Every recurring task is a candidate. One at a time, build your system." },
+  { title: "What You Built", subtitle: "Persistent instructions, reusable commands, and a system that compounds." },
+];
+
+let currentStep = 0;
+
+const RAIL_THUMBS = [
+  { label: "Start",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-gear" style="font-size:28px"></span></div>' },
+  { label: "Naive",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-chat" style="font-size:28px"></span></div>' },
+  { label: "Diagnose",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-search" style="font-size:28px"></span></div>' },
+  { label: "Iterate",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-refresh" style="font-size:28px"></span></div>' },
+  { label: "Infra",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-layers" style="font-size:28px"></span></div>' },
+  { label: "Setup",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-wrench" style="font-size:28px"></span></div>' },
+  { label: "Improve",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-sparkle" style="font-size:28px"></span></div>' },
+  { label: "Scale",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-compass" style="font-size:28px"></span></div>' },
+  { label: "Done",
+    visual: '<div style="font-size:30px;line-height:1">&#9733;</div>' },
+];
+
+const railEl = document.getElementById("sectionRail");
+STEPS.forEach((step, i) => {
+  if (i > 0) {
+    const conn = document.createElement("div");
+    conn.className = "rail-connector upcoming";
+    conn.id = "rail-conn-" + i;
+    railEl.appendChild(conn);
+  }
+  const thumb = document.createElement("button");
+  thumb.className = "rail-thumb" + (i === 0 ? " current" : " upcoming");
+  thumb.id = "rail-thumb-" + i;
+  thumb.setAttribute("data-label", step.title);
+  thumb.innerHTML = '<div class="rail-thumb-visual">' + RAIL_THUMBS[i].visual + '</div><div class="rail-thumb-label">' + RAIL_THUMBS[i].label + '</div>';
+  thumb.onclick = () => goToStep(i);
+  railEl.appendChild(thumb);
+});
+
+function goToStep(n) {
+  document.getElementById("step-" + currentStep).classList.remove("active");
+  currentStep = n;
+  document.getElementById("step-" + currentStep).classList.add("active");
+  document.getElementById("stepTitle").textContent = STEPS[n].title;
+  document.getElementById("stepSubtitle").textContent = STEPS[n].subtitle;
+  document.getElementById("btnBack").style.display = n > 0 ? "" : "none";
+  const btnNext = document.getElementById("btnNext");
+  if (n >= STEPS.length - 1) { btnNext.style.display = "none"; }
+  else { btnNext.style.display = ""; btnNext.textContent = n === 0 ? "Let's go" : "Next step"; }
+  STEPS.forEach((_, i) => {
+    const thumb = document.getElementById("rail-thumb-" + i);
+    if (thumb) thumb.className = "rail-thumb " + (i < n ? "completed" : i === n ? "current" : "upcoming");
+    if (i > 0) { const conn = document.getElementById("rail-conn-" + i); if (conn) conn.className = "rail-connector " + (i <= n ? "completed" : "upcoming"); }
+  });
+  window.scrollTo(0, 0);
+}
+
+function nextStep() { if (currentStep < STEPS.length - 1) goToStep(currentStep + 1); }
+function prevStep() { if (currentStep > 0) goToStep(currentStep - 1); }
+
+function toggleExpand(card) { card.classList.toggle("open"); }
+
+function copyPrompt(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add("copied");
+    btn.textContent = "Copied to clipboard!";
+    setTimeout(() => { btn.classList.remove("copied"); btn.textContent = "Copy this prompt"; }, 2000);
+  });
+}
+
+function selectPath(path) {
+  document.querySelectorAll('.path-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.path-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('pathBtn' + path.charAt(0).toUpperCase() + path.slice(1)).classList.add('selected');
+  document.getElementById('path-' + path).classList.add('active');
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") nextStep();
+  if (e.key === "ArrowLeft" || e.key === "ArrowUp") prevStep();
+});
+</script>
+</body>
+</html>

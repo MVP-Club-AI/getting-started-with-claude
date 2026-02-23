@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Workshop to Factory — Prompt Along</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Zilla+Slab&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #faf5f0; color: #081f3f; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .container { display: flex; gap: 24px; max-width: 780px; margin: 0 auto; padding: 20px 16px 20px 4px; min-height: 100vh; }
+  .main-col { flex: 1; min-width: 0; }
+
+  /* Section rail */
+  .section-rail { width: 88px; flex-shrink: 0; padding-top: 8px; }
+  .section-rail-inner { position: sticky; top: 80px; display: flex; flex-direction: column; align-items: center; }
+  .rail-thumb { width: 80px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; transition: all 0.25s ease; padding: 8px 6px 6px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-family: 'Inter', sans-serif; background: #f0ebe4; color: #b8a898; }
+  .rail-thumb-visual { display: flex; align-items: center; justify-content: center; height: 44px; }
+  .rail-thumb-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1; text-align: center; }
+  .rail-thumb.upcoming { background: #f0ebe4; color: #b8a898; border-color: transparent; }
+  .rail-thumb.upcoming .rail-thumb-visual { opacity: 0.45; }
+  .rail-thumb.completed { background: #fef3e2; color: #b45309; border-color: #eba714; }
+  .rail-thumb.current { background: #d97706; color: white; border-color: #b45309; box-shadow: 0 2px 10px rgba(217,119,6,0.4); transform: scale(1.06); }
+  .rail-connector { width: 2px; height: 6px; flex-shrink: 0; }
+  .rail-connector.completed { background: #eba714; }
+  .rail-connector.upcoming { background: #e8e0d8; }
+  .rail-thumb:hover::after { content: attr(data-label); position: absolute; left: 86px; top: 50%; transform: translateY(-50%); background: #081f3f; color: #faf5f0; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; white-space: nowrap; pointer-events: none; z-index: 30; }
+  .rail-thumb:hover::before { content: ''; position: absolute; left: 80px; top: 50%; transform: translateY(-50%); border: 5px solid transparent; border-right-color: #081f3f; pointer-events: none; z-index: 30; }
+
+  /* Icons */
+  .icon { display:inline-block;width:1em;height:1em;background:currentColor;vertical-align:-0.125em;flex-shrink:0;-webkit-mask:no-repeat center/contain;mask:no-repeat center/contain; }
+  .i-layers{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5'/%3E%3Cpath d='M2 12l10 5 10-5'/%3E%3C/svg%3E");}
+  .i-chat{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");}
+  .i-file{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z'/%3E%3Cpath d='M14 2v6h6'/%3E%3C/svg%3E");}
+  .i-zap{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");}
+  .i-target{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");}
+  .i-eye{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");}
+  .i-check{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");}
+  .i-search{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");}
+  .i-gear{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v4m0 14v4M1 12h4m14 0h4M4.2 4.2l2.9 2.9m9.8 9.8l2.9 2.9M4.2 19.8l2.9-2.9m9.8-9.8l2.9-2.9'/%3E%3C/svg%3E");}
+  .i-sparkle{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");}
+  .i-star{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");}
+  .i-wrench{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");}
+  .i-refresh{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");}
+  .i-compass{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z'/%3E%3C/svg%3E");}
+  .i-folder{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z'/%3E%3C/svg%3E");}
+  .i-terminal{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 17l6-5-6-5'/%3E%3Cpath d='M12 19h8'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 17l6-5-6-5'/%3E%3Cpath d='M12 19h8'/%3E%3C/svg%3E");}
+  .i-layout{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='3' y1='9' x2='21' y2='9'/%3E%3Cline x1='9' y1='21' x2='9' y2='9'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='3' y1='9' x2='21' y2='9'/%3E%3Cline x1='9' y1='21' x2='9' y2='9'/%3E%3C/svg%3E");}
+
+  /* Step header */
+  .step-header { margin-bottom: 24px; }
+  .step-header h1 { font-family: 'Zilla Slab', serif; font-size: 28px; font-weight: 400; color: #081f3f; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .step-header p { font-size: 16px; color: #15465b; }
+
+  /* Content */
+  .step-content { margin-bottom: 32px; }
+  .step { display: none; }
+  .step.active { display: block; min-height: calc(100vh - 240px); }
+  .step > p { font-size: 17px; line-height: 1.8; color: #081f3f; margin-bottom: 28px; }
+
+  /* Nav */
+  .nav-header { position: sticky; top: 0; background: #faf5f0; padding: 8px 0 12px; z-index: 10; }
+  .nav-header::after { content:''; display:block; height:20px; margin:0 -16px; background:linear-gradient(to top,transparent,#faf5f0); pointer-events:none; position:absolute; bottom:-20px; left:0; right:0; }
+  .nav { display: flex; gap: 12px; }
+  .btn { padding: 14px 20px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; font-family: 'Inter', sans-serif; }
+  .btn:hover { opacity: 0.9; }
+  .btn-back { flex: 1; border: 1px solid #e8e0d8; background: white; color: #15465b; }
+  .btn-next { flex: 2; background: #d97706; color: white; }
+
+  /* Components */
+  .callout { padding: 18px 22px; border-radius: 0 12px 12px 0; margin-bottom: 28px; }
+  .callout-purple { background: #fef9f0; border-left: 4px solid #081f3f; }
+  .callout-green { background: #f0fdf4; border-left: 4px solid #16a34a; }
+  .callout-blue { background: #f0f5f7; border-left: 4px solid #15465b; }
+  .callout-amber { background: #fef9f0; border-left: 4px solid #d97706; }
+  .callout-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .callout-text { font-size: 13px; color: #15465b; line-height: 1.7; }
+
+  .dark-card { background: #081f3f; border-radius: 16px; padding: 32px; margin-bottom: 32px; text-align: center; }
+  .dark-card h2 { font-family: 'Zilla Slab', serif; font-size: 22px; font-weight: 400; color: #faf5f0; margin-bottom: 8px; }
+  .dark-card p { font-size: 14px; color: #eba714; line-height: 1.7; }
+
+  .section-label { font-size:11px; font-weight:600; color:#15465b; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; text-align:center; font-family:'Inter',sans-serif; }
+
+  .prompt-block { background:#081f3f; color:#faf5f0; border-radius:12px; padding:20px; font-size:14px; line-height:1.7; font-family:monospace; white-space:pre-wrap; margin-bottom:12px; }
+  .copy-btn { width:100%; padding:10px 20px; border-radius:8px; border:none; font-size:14px; font-weight:600; cursor:pointer; background:#d97706; color:white; transition:background 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Inter',sans-serif; }
+  .copy-btn.copied { background:#059669; }
+
+  .action-box { background:linear-gradient(135deg,#fef9f0,#fef3e2); border:2px solid #d97706; border-radius:16px; padding:24px; margin-bottom:32px; }
+  .action-box-label { font-size:11px; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .action-box-step { font-size:14px; color:#081f3f; line-height:1.8; }
+  .action-box-step ol { padding-left:20px; }
+  .action-box-step li { margin-bottom:6px; }
+
+  .expand-card { border: 1px solid #e8e0d8; border-radius: 12px; margin-bottom: 28px; overflow: hidden; background: white; }
+  .expand-header { width:100%; padding:14px 18px; background:none; border:none; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:15px; font-weight:600; color:#081f3f; text-align:left; font-family:inherit; }
+  .expand-arrow { font-size:12px; color:#15465b; transition:transform 0.2s; }
+  .expand-card.open .expand-arrow { transform:rotate(180deg); }
+  .expand-body { padding:0 18px 16px; color:#15465b; font-size:14px; line-height:1.7; display:none; }
+  .expand-card.open .expand-body { display:block; }
+
+  .success-card { background:#f0fdf4; border-radius:12px; padding:24px; border:1px solid #bbf7d0; text-align:center; margin-top:20px; margin-bottom:28px; }
+  .success-icon { font-size:28px; margin-bottom:8px; }
+  .success-title { font-size:16px; font-weight:700; color:#15803d; margin-bottom:8px; }
+  .success-text { font-size:14px; color:#15465b; line-height:1.7; }
+
+  .recap-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #f0ebe4; align-items:flex-start; }
+  .recap-item:last-child { border-bottom:none; }
+  .recap-num { font-size:14px; font-weight:700; color:#d97706; min-width:24px; padding-top:2px; }
+  .recap-text { font-size:14px; color:#15465b; line-height:1.6; }
+
+  .next-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:28px; }
+  .next-card { background:white; border-radius:12px; padding:16px; border:1px solid #e8e0d8; text-align:center; }
+  .next-card-icon { font-size:24px; margin-bottom:6px; }
+  .next-card-title { font-size:14px; font-weight:700; color:#081f3f; margin-bottom:4px; }
+  .next-card-desc { font-size:12px; color:#15465b; line-height:1.4; }
+
+  /* Wiring diagram */
+  .wiring-diagram { margin-bottom:32px; border-radius:16px; overflow:hidden; border:1px solid #e8e0d8; }
+  .wiring-row { padding:18px 22px; display:flex; align-items:center; gap:16px; background:white; }
+  .wiring-row:not(:last-child) { border-bottom:1px solid #e8e0d8; }
+  .wiring-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .wiring-content { flex:1; }
+  .wiring-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:2px; }
+  .wiring-desc { font-size:13px; color:#15465b; line-height:1.6; }
+  .wiring-badge { display:inline-block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:2px 8px; border-radius:10px; margin-left:8px; background:#f0fdf4; color:#16a34a; }
+  .wiring-arrow { display:flex; align-items:center; justify-content:center; padding:6px 0; background:#fef9f0; }
+  .wiring-arrow-inner { display:flex; align-items:center; gap:8px; color:#d97706; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; }
+  .wiring-arrow svg { width:16px; height:16px; }
+  .wiring-annotation { text-align:center; padding:14px; font-size:13px; font-weight:600; color:#15465b; background:#faf5f0; border-top:1px solid #e8e0d8; }
+
+  /* Compare split */
+  .compare-split { display:flex; gap:0; border-radius:16px; overflow:hidden; border:1px solid #e8e0d8; margin-bottom:28px; }
+  .compare-side { flex:1; padding:20px; }
+  .compare-naive { background:#f7f3ee; }
+  .compare-ctx { background:#fef9f0; }
+  .compare-divider { width:2px; background:#e8e0d8; position:relative; display:flex; align-items:center; justify-content:center; }
+  .compare-divider-dot { position:absolute; background:white; border:2px solid #e8e0d8; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:12px; }
+  .compare-side-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:10px; }
+  .compare-item { font-size:13px; color:#15465b; line-height:1.6; padding:4px 0; display:flex; align-items:flex-start; gap:8px; }
+  .compare-item::before { content:''; display:inline-block; width:5px; height:5px; border-radius:50%; margin-top:7px; flex-shrink:0; }
+  .compare-naive .compare-item::before { background:#b8a898; }
+  .compare-ctx .compare-item::before { background:#d97706; }
+
+  /* Path selector */
+  .path-selector { display:flex; gap:12px; margin-bottom:28px; }
+  .path-btn { flex:1; padding:20px; border-radius:16px; border:2px solid #e8e0d8; background:white; cursor:pointer; text-align:center; transition:all 0.2s; font-family:'Inter',sans-serif; }
+  .path-btn:hover { border-color:#d97706; }
+  .path-btn.selected { border-color:#15465b; background:#f0f5f7; }
+  .path-btn-icon { font-size:28px; margin-bottom:8px; color:#15465b; }
+  .path-btn-title { font-size:15px; font-weight:600; color:#081f3f; margin-bottom:4px; }
+  .path-btn-desc { font-size:12px; color:#15465b; line-height:1.4; }
+  .path-content { display:none; }
+  .path-content.active { display:block; }
+
+  /* Pipeline grid */
+  .pipeline-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:28px; }
+  .pipeline-card { background:#081f3f; border-radius:12px; padding:16px; text-align:center; }
+  .pipeline-card-num { font-size:10px; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .pipeline-card-title { font-family:'Zilla Slab',serif; font-size:16px; font-weight:400; color:#faf5f0; margin-bottom:4px; }
+  .pipeline-card-desc { font-size:11px; color:#eba714; line-height:1.4; }
+
+  /* Code block inline */
+  code { background:#f0ebe4; padding:2px 6px; border-radius:4px; font-size:13px; font-family:monospace; }
+
+  /* Code example block */
+  .code-example { background:#1a1a2e; border-radius:12px; padding:20px; font-family:monospace; font-size:13px; line-height:1.7; color:#a8b2d1; margin-bottom:28px; white-space:pre-wrap; overflow-x:auto; }
+  .code-example .code-comment { color:#6272a4; }
+  .code-example .code-string { color:#f1fa8c; }
+  .code-example .code-var { color:#8be9fd; }
+  .code-example .code-cmd { color:#50fa7b; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="section-rail">
+    <div class="section-rail-inner" id="sectionRail"></div>
+  </div>
+
+  <div class="main-col">
+  <div class="nav-header">
+    <div class="nav">
+      <button class="btn btn-back" id="btnBack" onclick="prevStep()" style="display:none">Back</button>
+      <button class="btn btn-next" id="btnNext" onclick="nextStep()">Let's go</button>
+    </div>
+  </div>
+
+  <div class="step-header">
+    <h1 id="stepTitle">From Workshop to Factory</h1>
+    <p id="stepSubtitle">Wire your three layers into a system that runs without you as bottleneck.</p>
+  </div>
+
+  <div class="step-content">
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- STEP 0: From Workshop to Factory      -->
+    <!-- ══════════════════════════════════════ -->
+    <div class="step active" id="step-0">
+
+      <p>You built a data layer. You built an execution layer. You learned to verify output. Three layers, all working. There is one problem: <strong>you are the glue between them.</strong></p>
+
+      <p>Every time you run a task, you open a session, type the instructions, watch the output, judge the result, decide what to fix, and try again. You are the specification writer, the launch button, the quality control inspector, and the feedback loop — all at once, all in the same conversation.</p>
+
+      <p>That is a workshop. One person, doing every job, one thing at a time. Workshops produce excellent work. They do not scale.</p>
+
+      <div class="dark-card">
+        <h2>A factory is a workshop with the wires connected.</h2>
+        <p>Same layers. Same principles. But specification, execution, and validation run as separate stages — and the feedback loop closes automatically.</p>
+      </div>
+
+      <!-- Wiring diagram -->
+      <div class="section-label">Your three layers</div>
+      <div class="wiring-diagram">
+        <div class="wiring-row">
+          <div class="wiring-icon" style="background:#d97706"><span class="icon i-target" style="font-size:20px;color:white"></span></div>
+          <div class="wiring-content">
+            <div class="wiring-label" style="color:#d97706">Layer 3 — Intent &amp; Verification <span class="wiring-badge">Built</span></div>
+            <div class="wiring-desc">What should exist, why, and did it work? <em>This is you.</em></div>
+          </div>
+        </div>
+        <div class="wiring-arrow">
+          <div class="wiring-arrow-inner">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v12M4 10l4 4 4-4"/></svg>
+            spec
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 14V2M4 6l4-4 4 4"/></svg>
+            verdict
+          </div>
+        </div>
+        <div class="wiring-row">
+          <div class="wiring-icon" style="background:#15465b"><span class="icon i-gear" style="font-size:20px;color:white"></span></div>
+          <div class="wiring-content">
+            <div class="wiring-label" style="color:#15465b">Layer 2 — Execution <span class="wiring-badge">Built</span></div>
+            <div class="wiring-desc">The instructions, processes, and orchestration that turn data into output.</div>
+          </div>
+        </div>
+        <div class="wiring-arrow">
+          <div class="wiring-arrow-inner">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v12M4 10l4 4 4-4"/></svg>
+            reads
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 14V2M4 6l4-4 4 4"/></svg>
+            writes
+          </div>
+        </div>
+        <div class="wiring-row">
+          <div class="wiring-icon" style="background:#081f3f"><span class="icon i-layers" style="font-size:20px;color:white"></span></div>
+          <div class="wiring-content">
+            <div class="wiring-label" style="color:#081f3f">Layer 1 — Data &amp; Context <span class="wiring-badge">Built</span></div>
+            <div class="wiring-desc">Your files, your knowledge, your references — the foundation.</div>
+          </div>
+        </div>
+        <div class="wiring-annotation">You built the layers. This tutorial wires the connections.</div>
+      </div>
+
+      <!-- Compare split: workshop vs factory -->
+      <div class="section-label">What changes</div>
+      <div class="compare-split">
+        <div class="compare-side compare-naive">
+          <div class="compare-side-title" style="color:#b8a898">Workshop</div>
+          <div class="compare-item">Specify and execute in the same session</div>
+          <div class="compare-item">Review output manually</div>
+          <div class="compare-item">Fix issues by re-prompting</div>
+          <div class="compare-item">Each run starts from scratch</div>
+          <div class="compare-item">Your attention is the throughput limit</div>
+        </div>
+        <div class="compare-divider"><div class="compare-divider-dot">&#10132;</div></div>
+        <div class="compare-side compare-ctx">
+          <div class="compare-side-title" style="color:#d97706">Factory</div>
+          <div class="compare-item">Specification and execution are separate stages</div>
+          <div class="compare-item">Validation runs automatically</div>
+          <div class="compare-item">Failed runs feed diagnostics back</div>
+          <div class="compare-item">Each run builds on the last</div>
+          <div class="compare-item">Throughput scales beyond your attention</div>
+        </div>
+      </div>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">What you need</div>
+        <div class="callout-text">Your three layers built: a data layer folder with a context index (<a href="your-data-layer.html" style="color:#d97706;font-weight:600">Tutorial 5</a>), execution infrastructure like CLAUDE.md or folder instructions (<a href="execution-layer.html" style="color:#d97706;font-weight:600">Tutorial 6</a>), and familiarity with scenarios and evaluation (<a href="intent-verification.html" style="color:#d97706;font-weight:600">Tutorial 7</a>). You also need Claude Code or Claude Cowork pointed at the folder where these layers live.</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- STEP 1: Shift Work                    -->
+    <!-- ══════════════════════════════════════ -->
+    <div class="step" id="step-1">
+
+      <p>The first wire to connect: <strong>separate specification from execution.</strong> When you spec and execute in the same session, you unconsciously weaken your instructions — because you can see where Claude is heading and adjust in real time. That feels efficient. It is the opposite.</p>
+
+      <p>Every real-time correction you make is a patch that disappears when the session ends. The next time you run the same task, those corrections are gone. The output will be worse, and you will not understand why — because the spec looked the same.</p>
+
+      <p>The most productive AI teams in the world have converged on the same principle: write the complete specification first, then hand it off to execute without intervention. They call it <strong>shift work</strong> — specification and execution are different shifts, handled separately.</p>
+
+      <div class="dark-card">
+        <h2>If your system only produces good output when you are sitting in front of it, it is not a system. It is you, using a tool.</h2>
+      </div>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-file" style="font-size:14px"></span> Prompt #1 — Write a standalone specification</div>
+        <div class="prompt-block" id="prompt1">I want to practice writing a complete specification for a task — one that another Claude session could execute without any real-time guidance from me.
+
+Pick the task we've been working on in this project [or: use this task: DESCRIBE YOUR RECURRING TASK]. Write a specification document that includes:
+
+1. **Objective** — What the output should be, in one sentence.
+2. **Inputs** — What files/data to read and where to find them (reference the data layer).
+3. **Process** — Step-by-step instructions (reference the execution layer playbooks/skills).
+4. **Output format** — Exactly what the deliverable looks like (format, length, tone, structure).
+5. **Quality criteria** — What "good" looks like. How would someone judge this without knowing the task history?
+6. **Known pitfalls** — Things to avoid, common failure modes, past mistakes to not repeat.
+
+Save this as _spec-[task-name].md in the project folder.
+
+Important: this spec needs to work WITHOUT me being in the conversation. Write it as if you are handing it to a stranger who has access to my data layer but has never talked to me.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt1', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title">The test of a good spec</div>
+        <div class="callout-text">Read the spec you just created. Imagine handing it to a brand-new Claude session that has never seen your project. Would it know exactly what to do? Every place where the answer is "no" is an ambiguity that needs to be resolved. The spec is the product. The output is just the compilation artifact.</div>
+      </div>
+
+      <div class="callout callout-green">
+        <div class="callout-text">This is not a new skill. In <a href="execution-layer.html" style="color:#16a34a;font-weight:600">Tutorial 6</a> you learned to eliminate ambiguity from instructions. In <a href="intent-verification.html" style="color:#16a34a;font-weight:600">Tutorial 7</a> you learned to define what "good" looks like. This spec combines both into a single automation-ready document. Everything you need for a factory run, in one file.</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- STEP 2: The Holdout Set               -->
+    <!-- ══════════════════════════════════════ -->
+    <div class="step" id="step-2">
+
+      <p>In <a href="intent-verification.html" style="color:#d97706;font-weight:600">Tutorial 7</a> you learned to define success criteria — what the output needs to satisfy. Now formalize those criteria into a <strong>holdout set</strong>: a collection of specific scenarios stored <em>separately from the spec</em>.</p>
+
+      <p>Why separate? Same reason machine learning keeps test data away from training data. If the agent can see the test while executing, it will optimize for passing the test rather than doing the task well. You have probably seen this yourself — an output that technically checks every box but somehow misses the point. That happens when the executor and the evaluator share the same context.</p>
+
+      <p>Your scenarios are your independent evaluation criteria. Claude does not read them during execution. You use them to judge the output after the fact.</p>
+
+      <div class="action-box">
+        <div class="action-box-label"><span class="icon i-check" style="font-size:14px"></span> Prompt #2 — Write your holdout scenarios</div>
+        <div class="prompt-block" id="prompt2">Now I want to write scenarios — specific test cases that the output from our spec must satisfy. These are my acceptance criteria.
+
+For the spec we just wrote, create 3-5 scenarios. Each scenario should be:
+
+1. **A specific situation** — e.g., "When the source data includes [X], the output should [Y]."
+2. **Observable** — Something I can check by looking at the output, not something subjective.
+3. **Independent** — Each scenario tests one thing. Passing one doesn't guarantee passing another.
+
+Also include 1-2 "negative scenarios" — things the output should NOT do (common failure modes from past runs).
+
+Save these as _scenarios-[task-name].md in the project folder.
+
+Important: These scenarios are my holdout set. When we run the spec, you should NOT read this file. I'll use them to evaluate your output after the fact.</div>
+        <button class="copy-btn" onclick="copyPrompt('prompt2', this)">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-amber">
+        <div class="callout-title" style="color:#d97706">Keep scenarios separate from the spec</div>
+        <div class="callout-text">When Claude executes the spec, it should NOT have access to the scenarios file. This is the same principle as a holdout set in machine learning: if the model trains on the test data, the test is meaningless. Your scenarios are your independent evaluation criteria.</div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">Where this pattern comes from <span class="expand-arrow">&#9662;</span></button>
+        <div class="expand-body">
+          <p>The spec-separate-from-scenarios pattern comes from the most advanced AI development teams. StrongDM's "Software Factory" — a 3-person team that ships production software with zero human code authorship and zero human code review — runs this exact pipeline: humans write specifications and scenarios; agents execute non-interactively; an LLM-as-judge evaluates satisfaction; failed runs loop back automatically.</p>
+          <p style="margin-top:10px">The difference between their factory and yours is scale, not structure. Your three layers are the same factory floor. The same principles apply whether you are shipping enterprise software or producing a weekly report.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- STEP 3: Let It Run                    -->
+    <!-- ══════════════════════════════════════ -->
+    <div class="step" id="step-3">
+
+      <p>You have a standalone spec and a holdout scenario set. Now comes the hardest part: <strong>let it run without intervening.</strong></p>
+
+      <p>Open a fresh session — not the one where you wrote the spec. Give it the spec. Do not add clarifications, corrections, or "one more thing." Do not jump in when you see something going wrong. Let the run finish.</p>
+
+      <p>This is discipline, not passivity. When you intervene during a run, you inject context that is not in the spec. The output improves — but only because <em>you</em> were there. Next time you run the same spec without watching, the output will be worse. You will have no idea why. The gap between "supervised run" and "unsupervised run" is the gap in your spec.</p>
+
+      <div class="dark-card">
+        <h2>Every time you intervene during a run, you are patching the spec at runtime. Those patches disappear after the session.</h2>
+        <p>The only durable improvement is updating the spec itself.</p>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title">This is hard</div>
+        <div class="callout-text">Your instinct will be to jump in when you see something going sideways. Resist. Let the run finish. Diagnose after. That is how you find the real gaps — the ones in the spec, not the ones you paper over with real-time corrections. A failed unsupervised run teaches you more than a successful supervised one.</div>
+      </div>
+
+      <p>The next step forks based on your tooling. Claude Code users will script the non-interactive run. Cowork users will build a systematic process that achieves the same discipline.</p>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- STEP 4: Wire the Run (FORKED)         -->
+    <!-- ══════════════════════════════════════ -->
+    <div class="step" id="step-4">
+
+      <p>Time to set up the machinery. The goal: a repeatable process for launching a spec, capturing the output, and logging the run — without you typing instructions into a conversation.</p>
+
+      <div class="path-selector">
+        <button class="path-btn selected" id="pathBtnCode" onclick="selectPath('code')">
+          <div class="path-btn-icon"><span class="icon i-terminal" style="font-size:28px"></span></div>
+          <div class="path-btn-title">Claude Code</div>
+          <div class="path-btn-desc">Script it with headless mode and bash</div>
+        </button>
+        <button class="path-btn" id="pathBtnCowork" onclick="selectPath('cowork')">
+          <div class="path-btn-icon"><span class="icon i-layout" style="font-size:28px"></span></div>
+          <div class="path-btn-title">Claude Cowork</div>
+          <div class="path-btn-desc">Systematize it with checklists and discipline</div>
+        </button>
+      </div>
+
+      <!-- Claude Code path -->
+      <div class="path-content active" id="path-code">
+        <p>Claude Code has a headless mode: <code>claude -p</code>. It sends a prompt to Claude without starting an interactive session. Claude runs, produces output, and exits. This is the foundation of scripted automation — you can chain these calls in bash, run them from CI, or schedule them with cron.</p>
+
+        <div class="action-box">
+          <div class="action-box-label"><span class="icon i-terminal" style="font-size:14px"></span> Prompt #3a — Build the run script</div>
+          <div class="prompt-block" id="prompt3a">I want to set up a non-interactive run for our task. Help me create a bash script called run-[task-name].sh that:
+
+1. Uses `claude -p` to send the spec to a fresh Claude Code session
+2. Points Claude at our project folder so it has access to the data layer
+3. Captures the full output to a file (outputs/[task-name]-[timestamp].md)
+4. Does NOT include the scenarios file in the context (that's our holdout set)
+
+The script should:
+- Print a clear start/end message
+- Timestamp the output file
+- Exit cleanly whether the run succeeds or fails
+
+Also create a _run-log.md file that the script appends to after each run — date, spec version, output file path, and a placeholder for the evaluation result.
+
+Save the script and make it executable.</div>
+          <button class="copy-btn" onclick="copyPrompt('prompt3a', this)">Copy this prompt</button>
+        </div>
+
+        <div class="code-example"><span class="code-comment">#!/bin/bash
+# Example: what your run script looks like</span>
+<span class="code-var">TIMESTAMP</span>=<span class="code-cmd">$(date +%Y%m%d-%H%M%S)</span>
+<span class="code-var">OUTPUT</span>=<span class="code-string">"outputs/weekly-report-${TIMESTAMP}.md"</span>
+
+<span class="code-cmd">echo</span> <span class="code-string">"Starting non-interactive run..."</span>
+<span class="code-cmd">claude -p</span> <span class="code-string">"$(cat _spec-weekly-report.md)"</span> > <span class="code-string">"$OUTPUT"</span>
+<span class="code-cmd">echo</span> <span class="code-string">"Output saved to $OUTPUT"</span>
+<span class="code-cmd">echo</span> <span class="code-string">"| $TIMESTAMP | v1 | $OUTPUT | PENDING |"</span> >> _run-log.md</div>
+
+        <div class="callout callout-green">
+          <div class="callout-text">You just built the equivalent of a CI pipeline for your task. The script reads the spec, executes without human intervention, and logs the result. Every improvement you make to the spec improves every future run — automatically.</div>
+        </div>
+      </div>
+
+      <!-- Cowork path -->
+      <div class="path-content" id="path-cowork">
+        <p>Cowork does not have a headless mode — you cannot script it from a terminal. But you can achieve the same separation through discipline. The pattern: open a new Cowork session, paste the spec verbatim, and do not add any clarifications or corrections during the run. The checklist is the automation.</p>
+
+        <div class="action-box">
+          <div class="action-box-label"><span class="icon i-layout" style="font-size:14px"></span> Prompt #3b — Build the run checklist</div>
+          <div class="prompt-block" id="prompt3b">I want to practice running our task non-interactively in Cowork. Help me create a _run-checklist.md that I can follow each time:
+
+**Pre-run**
+- [ ] Verify the spec file (_spec-[task-name].md) is current
+- [ ] Verify the data layer files are up to date
+
+**Run**
+- [ ] Open a FRESH Cowork session (not this one)
+- [ ] Paste the spec as the first and only message
+- [ ] Do NOT add clarifications, corrections, or "one more thing" during the run
+- [ ] Let Claude finish completely
+
+**Post-run**
+- [ ] Save the output to outputs/[task-name]-[today's date].md
+- [ ] Log the run in _run-log.md (date, spec version, output file, "PENDING EVALUATION")
+- [ ] Open a SEPARATE session for evaluation (next step)
+
+Also create the _run-log.md file with column headers: Date | Spec Version | Output File | Verdict</div>
+          <button class="copy-btn" onclick="copyPrompt('prompt3b', this)">Copy this prompt</button>
+        </div>
+
+        <div class="callout callout-amber">
+          <div class="callout-title" style="color:#d97706">The checklist is the discipline</div>
+          <div class="callout-text">Without headless mode, your checklist is what prevents you from intervening. Treat the fresh session as a machine: spec goes in, output comes out. If you need to add context during a run, that context belongs in the spec or the data layer — not in a mid-run correction.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- STEP 5: The Judge (FORKED)            -->
+    <!-- ══════════════════════════════════════ -->
+    <div class="step" id="step-5">
+
+      <p>The output exists. Now evaluate it — but not by reading it yourself. <strong>Let Claude judge Claude.</strong> A separate evaluation pass reads the output and measures it against your holdout scenarios. This is the second wire: automated validation.</p>
+
+      <div class="path-selector">
+        <button class="path-btn selected" id="pathBtnCode2" onclick="selectPath2('code')">
+          <div class="path-btn-icon"><span class="icon i-terminal" style="font-size:28px"></span></div>
+          <div class="path-btn-title">Claude Code</div>
+          <div class="path-btn-desc">Script the judge as a second call</div>
+        </button>
+        <button class="path-btn" id="pathBtnCowork2" onclick="selectPath2('cowork')">
+          <div class="path-btn-icon"><span class="icon i-layout" style="font-size:28px"></span></div>
+          <div class="path-btn-title">Claude Cowork</div>
+          <div class="path-btn-desc">Run evaluation in a separate session</div>
+        </button>
+      </div>
+
+      <!-- Claude Code path -->
+      <div class="path-content active" id="path2-code">
+        <p>Pipe the output from the run script into a second <code>claude -p</code> call. The judge reads the output plus the scenarios and produces a verdict. Then chain both scripts together.</p>
+
+        <div class="action-box">
+          <div class="action-box-label"><span class="icon i-eye" style="font-size:14px"></span> Prompt #4a — Build the judge script</div>
+          <div class="prompt-block" id="prompt4a">Now I want to automate the evaluation step. Help me create a judge script called judge-[task-name].sh that:
+
+1. Takes the output file path as an argument
+2. Uses `claude -p` to send the output PLUS the scenarios file to a fresh Claude session
+3. Asks Claude to evaluate: "For each scenario, does this output satisfy it? Give a YES/NO with a one-line explanation."
+4. Produces a verdict: PASS (all scenarios satisfied), PARTIAL (some satisfied), or FAIL (critical scenarios not satisfied)
+5. Appends the verdict and reasoning to _run-log.md
+6. If FAIL or PARTIAL, saves the full evaluation as _diagnostic-[timestamp].md
+
+Then create a combined run-and-judge.sh that chains both scripts:
+- Run the spec non-interactively
+- Pipe the output to the judge
+- Log the full result
+- Print a summary: which scenarios passed, which failed, and the verdict</div>
+          <button class="copy-btn" onclick="copyPrompt('prompt4a', this)">Copy this prompt</button>
+        </div>
+
+        <div class="code-example"><span class="code-comment">#!/bin/bash
+# Example: the chained pipeline</span>
+
+<span class="code-comment"># Stage 1: Run</span>
+<span class="code-var">TIMESTAMP</span>=<span class="code-cmd">$(date +%Y%m%d-%H%M%S)</span>
+<span class="code-var">OUTPUT</span>=<span class="code-string">"outputs/report-${TIMESTAMP}.md"</span>
+<span class="code-cmd">claude -p</span> <span class="code-string">"$(cat _spec-weekly-report.md)"</span> > <span class="code-string">"$OUTPUT"</span>
+
+<span class="code-comment"># Stage 2: Judge</span>
+<span class="code-var">EVAL</span>=<span class="code-cmd">$(claude -p "Evaluate this output against the scenarios.
+OUTPUT: $(cat $OUTPUT)
+SCENARIOS: $(cat _scenarios-weekly-report.md)
+For each scenario: YES/NO with one-line explanation.
+Final verdict: PASS / PARTIAL / FAIL.")</span>
+
+<span class="code-cmd">echo</span> <span class="code-string">"$EVAL"</span> > <span class="code-string">"evals/eval-${TIMESTAMP}.md"</span></div>
+
+        <div class="dark-card">
+          <h2>You just built a pipeline.</h2>
+          <p>Spec goes in one end. Evaluated, logged output comes out the other. The human touches nothing in the middle.</p>
+        </div>
+      </div>
+
+      <!-- Cowork path -->
+      <div class="path-content" id="path2-cowork">
+        <p>The judge must be a <strong>separate session</strong> from the run. Three sessions, three roles: one for specification, one for execution, one for evaluation. They never share context — that is what keeps the evaluation honest.</p>
+
+        <div class="action-box">
+          <div class="action-box-label"><span class="icon i-eye" style="font-size:14px"></span> Prompt #4b — Run the evaluation</div>
+          <div class="prompt-block" id="prompt4b">I just ran our task spec in a separate session. Here's what I need you to do:
+
+Read the output file at outputs/[task-name]-[today's date].md
+Read the scenarios file at _scenarios-[task-name].md
+
+Now evaluate the output against each scenario:
+- For each scenario: does the output satisfy it? YES or NO, with a one-line explanation.
+- Overall verdict: PASS (all satisfied), PARTIAL (some satisfied), FAIL (critical scenarios not satisfied)
+- For any NO verdicts: what specifically would need to change in the output to satisfy the scenario?
+
+Save this evaluation as evals/eval-[today's date].md and update _run-log.md with the verdict.
+
+Important: you are acting as a judge, not as the executor. You did not produce this output. Evaluate it objectively.</div>
+          <button class="copy-btn" onclick="copyPrompt('prompt4b', this)">Copy this prompt</button>
+        </div>
+
+        <div class="callout callout-purple">
+          <div class="callout-title">Three sessions, three roles</div>
+          <div class="callout-text">One session for spec writing. One for execution. One for evaluation. They never share context. This separation is the discipline that makes the system honest — the judge has no allegiance to the executor, no memory of what was intended beyond what the scenarios say.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- STEP 6: The Feedback Loop (FORKED)    -->
+    <!-- ══════════════════════════════════════ -->
+    <div class="step" id="step-6">
+
+      <p>The judge returned a verdict. If it is PASS — you are done. The system works. If it is PARTIAL or FAIL — that is not a setback. That is <strong>the most valuable thing the system produces.</strong></p>
+
+      <p>A failed run with a diagnostic is worth more than a successful run, because the diagnostic tells you exactly where the spec falls short. The feedback loop takes the diagnostic, traces it back to the spec, and produces a proposed improvement. This is the third and final wire: the loop that makes the system better with every run.</p>
+
+      <div class="path-selector">
+        <button class="path-btn selected" id="pathBtnCode3" onclick="selectPath3('code')">
+          <div class="path-btn-icon"><span class="icon i-terminal" style="font-size:28px"></span></div>
+          <div class="path-btn-title">Claude Code</div>
+          <div class="path-btn-desc">Script the spec improvement</div>
+        </button>
+        <button class="path-btn" id="pathBtnCowork3" onclick="selectPath3('cowork')">
+          <div class="path-btn-icon"><span class="icon i-layout" style="font-size:28px"></span></div>
+          <div class="path-btn-title">Claude Cowork</div>
+          <div class="path-btn-desc">Structured iteration process</div>
+        </button>
+      </div>
+
+      <!-- Claude Code path -->
+      <div class="path-content active" id="path3-code">
+        <div class="action-box">
+          <div class="action-box-label"><span class="icon i-refresh" style="font-size:14px"></span> Prompt #5a — The automated feedback loop</div>
+          <div class="prompt-block" id="prompt5a">Our last run got a PARTIAL verdict. The judge produced a diagnostic.
+
+I want to automate the feedback loop. Help me create an improve-spec.sh script that:
+
+1. Reads the current spec (_spec-[task-name].md)
+2. Reads the latest diagnostic from evals/
+3. Uses `claude -p` to ask: "Given this diagnostic, what specific changes to the spec would fix the failed scenarios? Show me the full updated spec."
+4. Saves the proposed updated spec as _spec-[task-name]-proposed.md
+5. Prints a diff summary so I can review the changes before accepting
+
+Then update run-and-judge.sh to call improve-spec.sh automatically when the verdict is FAIL or PARTIAL.
+
+The human stays in the loop at one point: reviewing proposed spec changes. Everything else runs automatically.</div>
+          <button class="copy-btn" onclick="copyPrompt('prompt5a', this)">Copy this prompt</button>
+        </div>
+
+        <div class="callout callout-green">
+          <div class="callout-title" style="color:#16a34a">Your attention has shifted</div>
+          <div class="callout-text">You are no longer reviewing outputs. You are reviewing proposed improvements to the system. Every cycle makes the spec better. Every spec improvement makes every future run better. This is where compounding happens.</div>
+        </div>
+      </div>
+
+      <!-- Cowork path -->
+      <div class="path-content" id="path3-cowork">
+        <div class="action-box">
+          <div class="action-box-label"><span class="icon i-refresh" style="font-size:14px"></span> Prompt #5b — The manual feedback loop</div>
+          <div class="prompt-block" id="prompt5b">Our evaluation found some scenarios that weren't satisfied. I want to use those failures to improve the spec.
+
+Read the evaluation at evals/eval-[today's date].md. For each failed scenario:
+
+1. What specifically was wrong in the output?
+2. What part of the spec allowed this to happen? (Quote the relevant section.)
+3. How should the spec be changed to prevent this next time?
+
+Then produce an updated _spec-[task-name].md that incorporates all the improvements.
+
+Also update our _run-checklist.md to include a "post-eval spec review" step — so after every evaluation, I automatically check whether the spec needs updating before the next run.</div>
+          <button class="copy-btn" onclick="copyPrompt('prompt5b', this)">Copy this prompt</button>
+        </div>
+
+        <div class="callout callout-amber">
+          <div class="callout-title" style="color:#d97706">Update the checklist</div>
+          <div class="callout-text">Add the feedback step to your run checklist: after evaluation, if any scenario failed, trace the failure back to the spec, make the change, and log what you changed and why. The checklist grows into a complete factory process — one step at a time.</div>
+        </div>
+      </div>
+
+      <div class="dark-card">
+        <h2>The loop is the product.</h2>
+        <p>Not the output. Not the spec. Not even the evaluation. The loop — spec, run, judge, improve, repeat — is what turns a one-off task into a system that gets better every time.</p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- STEP 7: Scale the Pattern             -->
+    <!-- ══════════════════════════════════════ -->
+    <div class="step" id="step-7">
+
+      <p>You just wired a factory for one task. Now look at all your tasks.</p>
+
+      <p>Every recurring task in your work is a candidate for this same pipeline. The ones where execution dominates — where most of your time goes to doing the work rather than deciding what to do — are the highest payoff targets. Start there.</p>
+
+      <div class="section-label">The factory pipeline</div>
+      <div class="pipeline-grid">
+        <div class="pipeline-card">
+          <div class="pipeline-card-num">Stage 1</div>
+          <div class="pipeline-card-title">Specification</div>
+          <div class="pipeline-card-desc">Write a standalone spec precise enough for unsupervised execution</div>
+        </div>
+        <div class="pipeline-card">
+          <div class="pipeline-card-num">Stage 2</div>
+          <div class="pipeline-card-title">Non-Interactive Run</div>
+          <div class="pipeline-card-desc">Execute the spec without human intervention or correction</div>
+        </div>
+        <div class="pipeline-card">
+          <div class="pipeline-card-num">Stage 3</div>
+          <div class="pipeline-card-title">Automated Validation</div>
+          <div class="pipeline-card-desc">Judge the output against holdout scenarios independently</div>
+        </div>
+        <div class="pipeline-card">
+          <div class="pipeline-card-num">Stage 4</div>
+          <div class="pipeline-card-title">Feedback Loop</div>
+          <div class="pipeline-card-desc">Failed runs improve the spec. The system compounds.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title">Start with the task you dread most</div>
+        <div class="callout-text">The one that is tedious, time-consuming, and follows a pattern. That is the task with the highest payoff from automation. Run it through the same process: spec, scenarios, non-interactive run, judge, iterate. Each task you wire up frees attention for the work that actually requires your judgment.</div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">What about tasks that need judgment? <span class="expand-arrow">&#9662;</span></button>
+        <div class="expand-body">
+          <p>Not every task can be fully automated. Some require human judgment at specific points — creative direction, stakeholder sensitivity, political nuance. The pattern still helps: automate the mechanical parts and insert human review points only where judgment is genuinely required. A factory does not mean zero humans. It means humans only where humans matter.</p>
+        </div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">How many iterations until the spec stabilizes? <span class="expand-arrow">&#9662;</span></button>
+        <div class="expand-body">
+          <p>Typically 3-5 full loops. The first run surfaces the biggest gaps. By the third run, most critical scenarios pass. By the fifth, the spec is usually stable enough that runs pass validation without changes. After that, you are mostly maintaining the data layer and occasionally updating the spec when requirements change.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════ -->
+    <!-- STEP 8: What You Built                -->
+    <!-- ══════════════════════════════════════ -->
+    <div class="step" id="step-8">
+
+      <!-- Wiring diagram reprise — solid state -->
+      <div class="section-label">Your system, wired</div>
+      <div class="wiring-diagram">
+        <div class="wiring-row">
+          <div class="wiring-icon" style="background:#d97706"><span class="icon i-target" style="font-size:20px;color:white"></span></div>
+          <div class="wiring-content">
+            <div class="wiring-label" style="color:#d97706">Layer 3 — Intent &amp; Verification <span class="wiring-badge">Built</span></div>
+            <div class="wiring-desc">Your scenarios. Your judgment. Your spec improvements.</div>
+          </div>
+        </div>
+        <div class="wiring-arrow">
+          <div class="wiring-arrow-inner">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v12M4 10l4 4 4-4"/></svg>
+            spec
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 14V2M4 6l4-4 4 4"/></svg>
+            diagnostic
+          </div>
+        </div>
+        <div class="wiring-row">
+          <div class="wiring-icon" style="background:#15465b"><span class="icon i-gear" style="font-size:20px;color:white"></span></div>
+          <div class="wiring-content">
+            <div class="wiring-label" style="color:#15465b">Layer 2 — Execution <span class="wiring-badge">Wired</span></div>
+            <div class="wiring-desc">Non-interactive runs. Scripts or checklists. No human in the middle.</div>
+          </div>
+        </div>
+        <div class="wiring-arrow">
+          <div class="wiring-arrow-inner">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v12M4 10l4 4 4-4"/></svg>
+            reads
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 14V2M4 6l4-4 4 4"/></svg>
+            writes
+          </div>
+        </div>
+        <div class="wiring-row">
+          <div class="wiring-icon" style="background:#081f3f"><span class="icon i-layers" style="font-size:20px;color:white"></span></div>
+          <div class="wiring-content">
+            <div class="wiring-label" style="color:#081f3f">Layer 1 — Data &amp; Context <span class="wiring-badge">Built</span></div>
+            <div class="wiring-desc">Your files, your knowledge, your references — growing with every run.</div>
+          </div>
+        </div>
+        <div class="wiring-annotation" style="color:#16a34a; font-weight:700;">All layers built. All wires connected.</div>
+      </div>
+
+      <div class="section-label">What you built in this session</div>
+      <div style="background:white;border-radius:12px;border:1px solid #e8e0d8;padding:20px;margin-bottom:28px;">
+        <div class="recap-item"><div class="recap-num">1</div><div class="recap-text"><strong>A standalone specification.</strong> Instructions precise enough for a fresh Claude session to execute without guidance.</div></div>
+        <div class="recap-item"><div class="recap-num">2</div><div class="recap-text"><strong>A holdout scenario set.</strong> Independent evaluation criteria that prevent the system from gaming its own tests.</div></div>
+        <div class="recap-item"><div class="recap-num">3</div><div class="recap-text"><strong>Non-interactive execution.</strong> A run process that produces output without human intervention.</div></div>
+        <div class="recap-item"><div class="recap-num">4</div><div class="recap-text"><strong>Automated validation.</strong> A judge that evaluates output against scenarios and produces a verdict.</div></div>
+        <div class="recap-item"><div class="recap-num">5</div><div class="recap-text"><strong>A feedback loop.</strong> Failed runs produce diagnostics that improve the spec for the next cycle.</div></div>
+      </div>
+
+      <div class="section-label">The principles</div>
+      <div style="background:white;border-radius:12px;border:1px solid #e8e0d8;padding:20px;margin-bottom:28px;">
+        <div class="recap-item"><div class="recap-num">1</div><div class="recap-text">Separate specification from execution. They are different cognitive modes. Interleaving them weakens both.</div></div>
+        <div class="recap-item"><div class="recap-num">2</div><div class="recap-text">Non-interactive execution is the test of spec quality. If the output is bad without your real-time guidance, the spec needs work.</div></div>
+        <div class="recap-item"><div class="recap-num">3</div><div class="recap-text">The judge must be independent. Separate context, separate session, holdout scenarios. Same principle as ML evaluation.</div></div>
+        <div class="recap-item"><div class="recap-num">4</div><div class="recap-text">Failed runs are the most valuable runs. The diagnostics tell you exactly what to improve. The system gets better fastest when things go wrong.</div></div>
+        <div class="recap-item"><div class="recap-num">5</div><div class="recap-text">Your job is improving the factory, not doing the work. Review spec changes, not outputs. Design better scenarios, not better prompts.</div></div>
+      </div>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">All three layers, wired together</div>
+        <div class="callout-text">Data (Tutorial 5) gives the system knowledge. Execution (Tutorial 6) gives it instructions. Verification (Tutorial 7) gives it standards. This tutorial wired them together. The architecture is complete. From here, it is about expansion: more tasks, richer data layers, tighter specs, better scenarios. The system just keeps getting better.</div>
+      </div>
+
+      <div class="section-label">Where this goes next</div>
+      <div class="next-grid">
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-refresh" style="font-size:24px;color:#d97706"></span></div>
+          <div class="next-card-title">Automate another task</div>
+          <div class="next-card-desc">Pick the next recurring task and run it through the factory pipeline. Same process, new domain.</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-check" style="font-size:24px"></span></div>
+          <div class="next-card-title">Improve your scenarios</div>
+          <div class="next-card-desc">Add edge cases, negative scenarios, and nuance to your holdout sets. Better scenarios = better output.</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-layers" style="font-size:24px"></span></div>
+          <div class="next-card-title">Expand the data layer</div>
+          <div class="next-card-desc">Every reference file you add improves every run. Keep building the foundation.</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-folder" style="font-size:24px"></span></div>
+          <div class="next-card-title">Share your factory</div>
+          <div class="next-card-desc">The spec + scenarios + data layer is a complete portable system. Hand it to a colleague.</div>
+        </div>
+      </div>
+
+      <div class="success-card">
+        <div class="success-icon"><span class="icon i-star"></span></div>
+        <div class="success-title">You are not prompting. You are engineering systems.</div>
+        <div class="success-text">Three layers wired together. Specification separated from execution. Automated validation. A feedback loop that makes everything better with every run. You went from workshop to factory — and your job now is to make the design better.</div>
+      </div>
+    </div>
+
+  </div><!-- step-content -->
+  </div><!-- main-col -->
+</div><!-- container -->
+
+<script>
+const STEPS = [
+  { title: "From Workshop to Factory", subtitle: "Wire your three layers into a system that runs without you as bottleneck." },
+  { title: "Shift Work", subtitle: "Separate specification from execution completely. They are different cognitive modes." },
+  { title: "The Holdout Set", subtitle: "Define what success looks like before you run anything. Scenarios are your acceptance criteria." },
+  { title: "Let It Run", subtitle: "Hand the spec to Claude in a fresh session. Do not intervene." },
+  { title: "Wire the Run", subtitle: "Set up the machinery for non-interactive execution." },
+  { title: "The Judge", subtitle: "Pipe the output to a separate evaluation pass. Let Claude grade Claude." },
+  { title: "The Feedback Loop", subtitle: "Failed runs produce diagnostics. Diagnostics improve the spec. The system gets better." },
+  { title: "Scale the Pattern", subtitle: "Every recurring task is a candidate. One at a time, wire your system." },
+  { title: "What You Built", subtitle: "A factory. Three layers wired together, running without you as bottleneck." },
+];
+
+let currentStep = 0;
+
+const RAIL_THUMBS = [
+  { label: "Start",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-refresh" style="font-size:28px"></span></div>' },
+  { label: "Specify",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-file" style="font-size:28px"></span></div>' },
+  { label: "Scenarios",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-check" style="font-size:28px"></span></div>' },
+  { label: "Run",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-zap" style="font-size:28px"></span></div>' },
+  { label: "Wire",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-terminal" style="font-size:28px"></span></div>' },
+  { label: "Judge",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-eye" style="font-size:28px"></span></div>' },
+  { label: "Loop",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-sparkle" style="font-size:28px"></span></div>' },
+  { label: "Scale",
+    visual: '<div style="font-size:28px;line-height:1"><span class="icon i-compass" style="font-size:28px"></span></div>' },
+  { label: "Done",
+    visual: '<div style="font-size:30px;line-height:1">&#9733;</div>' },
+];
+
+const railEl = document.getElementById("sectionRail");
+STEPS.forEach((step, i) => {
+  if (i > 0) {
+    const conn = document.createElement("div");
+    conn.className = "rail-connector upcoming";
+    conn.id = "rail-conn-" + i;
+    railEl.appendChild(conn);
+  }
+  const thumb = document.createElement("button");
+  thumb.className = "rail-thumb" + (i === 0 ? " current" : " upcoming");
+  thumb.id = "rail-thumb-" + i;
+  thumb.setAttribute("data-label", step.title);
+  thumb.innerHTML = '<div class="rail-thumb-visual">' + RAIL_THUMBS[i].visual + '</div><div class="rail-thumb-label">' + RAIL_THUMBS[i].label + '</div>';
+  thumb.onclick = () => goToStep(i);
+  railEl.appendChild(thumb);
+});
+
+function goToStep(n) {
+  document.getElementById("step-" + currentStep).classList.remove("active");
+  currentStep = n;
+  document.getElementById("step-" + currentStep).classList.add("active");
+  document.getElementById("stepTitle").textContent = STEPS[n].title;
+  document.getElementById("stepSubtitle").textContent = STEPS[n].subtitle;
+  document.getElementById("btnBack").style.display = n > 0 ? "" : "none";
+  const btnNext = document.getElementById("btnNext");
+  if (n >= STEPS.length - 1) { btnNext.style.display = "none"; }
+  else { btnNext.style.display = ""; btnNext.textContent = n === 0 ? "Let's go" : "Next step"; }
+  STEPS.forEach((_, i) => {
+    const thumb = document.getElementById("rail-thumb-" + i);
+    if (thumb) thumb.className = "rail-thumb " + (i < n ? "completed" : i === n ? "current" : "upcoming");
+    if (i > 0) { const conn = document.getElementById("rail-conn-" + i); if (conn) conn.className = "rail-connector " + (i <= n ? "completed" : "upcoming"); }
+  });
+  window.scrollTo(0, 0);
+}
+
+function nextStep() { if (currentStep < STEPS.length - 1) goToStep(currentStep + 1); }
+function prevStep() { if (currentStep > 0) goToStep(currentStep - 1); }
+
+function toggleExpand(card) { card.classList.toggle("open"); }
+
+function copyPrompt(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add("copied");
+    btn.textContent = "Copied to clipboard!";
+    setTimeout(() => { btn.classList.remove("copied"); btn.textContent = "Copy this prompt"; }, 2000);
+  });
+}
+
+function selectPath(path) {
+  document.querySelectorAll('#step-4 .path-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#step-4 .path-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('pathBtn' + path.charAt(0).toUpperCase() + path.slice(1)).classList.add('selected');
+  document.getElementById('path-' + path).classList.add('active');
+}
+
+function selectPath2(path) {
+  document.querySelectorAll('#step-5 .path-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#step-5 .path-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('pathBtn' + path.charAt(0).toUpperCase() + path.slice(1) + '2').classList.add('selected');
+  document.getElementById('path2-' + path).classList.add('active');
+}
+
+function selectPath3(path) {
+  document.querySelectorAll('#step-6 .path-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#step-6 .path-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('pathBtn' + path.charAt(0).toUpperCase() + path.slice(1) + '3').classList.add('selected');
+  document.getElementById('path3-' + path).classList.add('active');
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") nextStep();
+  if (e.key === "ArrowLeft" || e.key === "ArrowUp") prevStep();
+});
+</script>
+</body>
+</html>

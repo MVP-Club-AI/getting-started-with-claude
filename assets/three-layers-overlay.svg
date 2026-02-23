@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" width="640" height="480">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#081f3f" flood-opacity="0.2"/>
+    </filter>
+    <style>
+      text { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+      .mono { font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace; }
+    </style>
+  </defs>
+
+  <!-- ================================================ -->
+  <!-- LAYER 3 — INTENT & VERIFICATION                  -->
+  <!-- ================================================ -->
+  <g filter="url(#shadow)">
+    <rect x="16" y="12" width="608" height="116" rx="14" fill="#fef9f0" stroke="#d97706" stroke-width="2.5"/>
+
+    <!-- Layer label -->
+    <text x="36" y="38" fill="#d97706" font-size="15" font-weight="700" letter-spacing="1">LAYER 3</text>
+    <text x="130" y="38" fill="#b45309" font-size="15" font-weight="600">INTENT &amp; VERIFICATION</text>
+
+    <!-- You box -->
+    <rect x="36" y="52" width="130" height="64" rx="10" fill="#d97706"/>
+    <text x="101" y="78" fill="white" font-size="18" font-weight="700" text-anchor="middle">You</text>
+    <text x="101" y="98" fill="#fef3e2" font-size="11" text-anchor="middle">Set intent &amp; verify</text>
+
+    <!-- Arrow You → Claude Code -->
+    <line x1="172" y1="74" x2="234" y2="74" stroke="#b45309" stroke-width="2"/>
+    <polygon points="231,69 240,74 231,79" fill="#b45309"/>
+    <text x="206" y="68" fill="#b45309" font-size="10" font-weight="700" text-anchor="middle">prompt</text>
+
+    <!-- Arrow Claude Code → You -->
+    <line x1="234" y1="98" x2="172" y2="98" stroke="#b45309" stroke-width="2"/>
+    <polygon points="175,93 166,98 175,103" fill="#b45309"/>
+    <text x="206" y="114" fill="#b45309" font-size="10" font-weight="700" text-anchor="middle">output</text>
+
+    <!-- Claude Code box -->
+    <rect x="244" y="52" width="170" height="64" rx="10" fill="#081f3f"/>
+    <text x="329" y="78" fill="white" font-size="17" font-weight="700" text-anchor="middle">Claude Code</text>
+    <text x="329" y="98" fill="#eba714" font-size="11" text-anchor="middle">Executes &amp; improves</text>
+
+    <!-- Loop icon -->
+    <g transform="translate(510, 84)">
+      <path d="M14,0 A14,14 0 1,1 0,-14" fill="none" stroke="#d97706" stroke-width="2"/>
+      <polygon points="-5,-17 0,-12 3,-19" fill="#d97706"/>
+      <path d="M-14,0 A14,14 0 1,1 0,14" fill="none" stroke="#d97706" stroke-width="2"/>
+      <polygon points="5,17 0,12 -3,19" fill="#d97706"/>
+    </g>
+    <text x="545" y="88" fill="#b45309" font-size="11" font-weight="700" text-anchor="middle">LOOP</text>
+  </g>
+
+  <!-- Connector: Layer 3 → Layer 2 -->
+  <line x1="320" y1="128" x2="320" y2="150" stroke="#d97706" stroke-width="2.5" stroke-dasharray="5,4"/>
+  <polygon points="314,148 320,158 326,148" fill="#d97706"/>
+
+
+  <!-- ================================================ -->
+  <!-- DIRECTORY PANEL (Layers 2 & 1)                    -->
+  <!-- ================================================ -->
+  <g filter="url(#shadow)">
+    <rect x="16" y="162" width="608" height="306" rx="14" fill="#1e1e1e" stroke="#444" stroke-width="1.5"/>
+
+    <!-- Title bar -->
+    <rect x="16" y="162" width="608" height="30" rx="14" fill="#2d2d2d"/>
+    <rect x="16" y="178" width="608" height="14" fill="#2d2d2d"/>
+    <text x="36" y="182" fill="#999" font-size="12" font-weight="600" letter-spacing="0.5">EXPLORER</text>
+    <text x="588" y="182" fill="#666" font-size="12" text-anchor="end">job-search-app/</text>
+
+
+    <!-- ================================================ -->
+    <!-- LAYER 2 — EXECUTION                              -->
+    <!-- ================================================ -->
+    <rect x="30" y="202" width="580" height="106" rx="10" fill="rgba(21,70,91,0.15)" stroke="#15465b" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <rect x="38" y="194" width="230" height="18" rx="4" fill="#1e1e1e"/>
+    <text x="44" y="208" fill="#4db8db" font-size="13" font-weight="700" letter-spacing="1.2">LAYER 2 — EXECUTION</text>
+
+    <!-- File rows — execution (3 key files, bigger text, no descriptions) -->
+    <g transform="translate(52, 224)">
+      <rect width="16" height="14" rx="2" fill="#d97706" opacity="0.9"/>
+      <text x="24" y="12" fill="#e0e0e0" font-size="15" font-weight="600" class="mono">CLAUDE.md</text>
+    </g>
+    <g transform="translate(230, 224)">
+      <polygon points="0,2 4,2 6,0 16,0 16,12 0,12" fill="#d97706" opacity="0.9"/>
+      <text x="24" y="12" fill="#e0e0e0" font-size="15" font-weight="600" class="mono">prompts/</text>
+    </g>
+    <g transform="translate(400, 224)">
+      <rect width="16" height="14" rx="2" fill="#15465b" opacity="0.8"/>
+      <text x="24" y="12" fill="#e0e0e0" font-size="15" font-weight="600" class="mono">workflow.md</text>
+    </g>
+
+    <!-- Execution badge -->
+    <rect x="440" y="260" width="160" height="24" rx="12" fill="rgba(21,70,91,0.3)"/>
+    <text x="520" y="277" fill="#4db8db" font-size="11" font-weight="700" text-anchor="middle">AI EXECUTES TASKS</text>
+
+    <!-- Separator -->
+    <line x1="44" y1="320" x2="596" y2="320" stroke="#444" stroke-width="1" stroke-dasharray="2,4"/>
+
+
+    <!-- ================================================ -->
+    <!-- LAYER 1 — DATA & CONTEXT                         -->
+    <!-- ================================================ -->
+    <rect x="30" y="332" width="580" height="122" rx="10" fill="rgba(8,31,63,0.15)" stroke="#4a7a9b" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <rect x="38" y="324" width="250" height="18" rx="4" fill="#1e1e1e"/>
+    <text x="44" y="338" fill="#7ab8d4" font-size="13" font-weight="700" letter-spacing="1.2">LAYER 1 — DATA &amp; CONTEXT</text>
+
+    <!-- File rows — data (key files, horizontal layout, no descriptions) -->
+    <g transform="translate(52, 356)">
+      <polygon points="0,2 4,2 6,0 16,0 16,12 0,12" fill="#4a9eda" opacity="0.8"/>
+      <text x="24" y="12" fill="#e0e0e0" font-size="15" font-weight="600" class="mono">linkedin-data/</text>
+    </g>
+    <g transform="translate(280, 356)">
+      <polygon points="0,2 4,2 6,0 16,0 16,12 0,12" fill="#4a9eda" opacity="0.8"/>
+      <text x="24" y="12" fill="#e0e0e0" font-size="15" font-weight="600" class="mono">resume/</text>
+    </g>
+    <g transform="translate(440, 356)">
+      <polygon points="0,2 4,2 6,0 16,0 16,12 0,12" fill="#4a9eda" opacity="0.8"/>
+      <text x="24" y="12" fill="#e0e0e0" font-size="15" font-weight="600" class="mono">career-history/</text>
+    </g>
+
+    <g transform="translate(52, 388)">
+      <rect width="16" height="14" rx="2" fill="#081f3f" opacity="0.6"/>
+      <text x="24" y="12" fill="#e0e0e0" font-size="15" font-weight="600" class="mono">source-of-truth.md</text>
+    </g>
+    <g transform="translate(340, 388)">
+      <polygon points="0,2 4,2 6,0 16,0 16,12 0,12" fill="#4a9eda" opacity="0.8"/>
+      <text x="24" y="12" fill="#e0e0e0" font-size="15" font-weight="600" class="mono">target-roles/</text>
+    </g>
+
+    <!-- Data badge -->
+    <rect x="440" y="418" width="160" height="24" rx="12" fill="rgba(8,31,63,0.3)"/>
+    <text x="520" y="435" fill="#7ab8d4" font-size="11" font-weight="700" text-anchor="middle">FOUNDATION LAYER</text>
+  </g>
+</svg>

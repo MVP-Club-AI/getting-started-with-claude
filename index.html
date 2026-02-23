@@ -29,8 +29,22 @@
   h1 { font-family: 'Zilla Slab', serif; font-size: 40px; font-weight: 400; color: #081f3f; line-height: 1.2; margin-bottom: 16px; }
   .intro { font-size: 17px; color: #3a3a3a; max-width: 600px; line-height: 1.7; margin-bottom: 48px; }
 
+  /* Tier headers */
+  .tier { margin-bottom: 48px; }
+  .tier-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  .tier-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+    padding: 4px 12px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+  }
+  .tier-line { flex: 1; height: 1px; background: #e8e0d8; }
+  .tier-desc { font-size: 14px; color: #5a5a5a; line-height: 1.6; margin-bottom: 16px; margin-left: 2px; }
+
+  .tier-start .tier-label { background: #f0fdf4; color: #16a34a; }
+  .tier-model .tier-label { background: #f0f5f7; color: #15465b; }
+  .tier-advanced .tier-label { background: #fef9f0; color: #d97706; }
+
   /* Tutorial cards */
-  .tutorials { display: flex; flex-direction: column; gap: 20px; }
+  .tutorials { display: flex; flex-direction: column; gap: 16px; }
 
   .tutorial-card {
     display: flex;
@@ -82,72 +96,212 @@
 <div class="page">
   <div class="brand">MVP Club</div>
   <h1>Getting Started with Claude Code</h1>
-  <p class="intro">Hands-on tutorials to get you started with vibe coding using Claude Code. Pick a project, follow along step by step, and build something real.</p>
+  <p class="intro">Hands-on tutorials that take you from your first conversation with Claude to building automated systems that run without you. Start anywhere — but the journey builds on itself.</p>
 
-  <div class="tutorials">
+  <!-- ═══════════════════════════════ -->
+  <!-- TIER 1: Getting Started        -->
+  <!-- ═══════════════════════════════ -->
+  <div class="tier tier-start">
+    <div class="tier-header">
+      <span class="tier-label">Getting Started</span>
+      <div class="tier-line"></div>
+    </div>
+    <p class="tier-desc">Your first conversations with Claude. No experience needed — just pick a project and follow along.</p>
 
-    <a href="vibe-coding.html" class="tutorial-card">
-      <div class="card-thumb">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-          <path d="M2 17l10 5 10-5"/>
-          <path d="M2 12l10 5 10-5"/>
-        </svg>
-      </div>
-      <div class="card-body">
-        <div class="card-label">Tutorial 1</div>
-        <div class="card-title">Your First Vibe-Coded Website</div>
-        <div class="card-desc">Start from zero and build a personal website using nothing but conversation. No coding experience needed — just describe what you want and watch Claude build it.</div>
-      </div>
-      <div class="card-arrow">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
-        </svg>
-      </div>
-    </a>
+    <div class="tutorials">
 
-    <a href="context-engineering.html" class="tutorial-card">
-      <div class="card-thumb" style="background: #15465b;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-          <path d="M14 2v6h6"/>
-          <path d="M8 13h8"/>
-          <path d="M8 17h8"/>
-          <path d="M8 9h2"/>
-        </svg>
-      </div>
-      <div class="card-body">
-        <div class="card-label">Tutorial 2</div>
-        <div class="card-title">Context Engineering</div>
-        <div class="card-desc">Learn to onboard Claude like a new team member. Build layered documentation — from chat messages to brand guides to page specs — and watch how each layer transforms the output.</div>
-      </div>
-      <div class="card-arrow">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
-        </svg>
-      </div>
-    </a>
+      <a href="prompt-alongs/vibe-coding.html" class="tutorial-card">
+        <div class="card-thumb">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Tutorial 1</div>
+          <div class="card-title">Your First Vibe-Coded Website</div>
+          <div class="card-desc">Start from zero and build a personal website using nothing but conversation. No coding experience needed — just describe what you want and watch Claude build it.</div>
+        </div>
+        <div class="card-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </a>
 
-    <a href="cowork-workflow.html" class="tutorial-card">
-      <div class="card-thumb" style="background: #d97706;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M2 6a2 2 0 012-2h4l3 3h9a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2z"/>
-          <path d="M12 11v6"/>
-          <path d="M9 14h6"/>
-        </svg>
-      </div>
-      <div class="card-body">
-        <div class="card-label">Tutorial 3</div>
-        <div class="card-title">Building Your First AI Workflow</div>
-        <div class="card-desc">Graduate from Claude Chat to Claude Cowork. Build a content repurposing system with a structured folder, steering documents, and a feedback loop that compounds over time.</div>
-      </div>
-      <div class="card-arrow">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
-        </svg>
-      </div>
-    </a>
+      <a href="prompt-alongs/context-engineering.html" class="tutorial-card">
+        <div class="card-thumb" style="background: #15465b;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <path d="M14 2v6h6"/>
+            <path d="M8 13h8"/>
+            <path d="M8 17h8"/>
+            <path d="M8 9h2"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Tutorial 2</div>
+          <div class="card-title">Context Engineering</div>
+          <div class="card-desc">Learn to onboard Claude like a new team member. Build layered documentation — from chat messages to brand guides to page specs — and watch how each layer transforms the output.</div>
+        </div>
+        <div class="card-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </a>
 
+      <a href="prompt-alongs/cowork-workflow.html" class="tutorial-card">
+        <div class="card-thumb" style="background: #d97706;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 6a2 2 0 012-2h4l3 3h9a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2z"/>
+            <path d="M12 11v6"/>
+            <path d="M9 14h6"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Tutorial 3</div>
+          <div class="card-title">Building Your First AI Workflow</div>
+          <div class="card-desc">Graduate from Claude Chat to Claude Cowork. Build a content repurposing system with a structured folder, steering documents, and a feedback loop that compounds over time.</div>
+        </div>
+        <div class="card-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- TIER 2: The Three-Layer Model  -->
+  <!-- ═══════════════════════════════ -->
+  <div class="tier tier-model">
+    <div class="tier-header">
+      <span class="tier-label">The Three-Layer Model</span>
+      <div class="tier-line"></div>
+    </div>
+    <p class="tier-desc">The mental model that changes everything. Learn it, then build each layer for real — data, execution, and verification.</p>
+
+    <div class="tutorials">
+
+      <a href="prompt-alongs/three-layers.html" class="tutorial-card">
+        <div class="card-thumb" style="background: #16a34a;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Tutorial 4</div>
+          <div class="card-title">The Three Layers of AI-Native Work</div>
+          <div class="card-desc">Learn the mental model reshaping all knowledge work. Decompose a real task from your job into data, execution, and intent — and see where your value concentrates as AI takes over execution.</div>
+        </div>
+        <div class="card-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </a>
+
+      <a href="prompt-alongs/your-data-layer.html" class="tutorial-card">
+        <div class="card-thumb" style="background: #081f3f;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12H2"/>
+            <path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/>
+            <line x1="6" y1="16" x2="6.01" y2="16"/>
+            <line x1="10" y1="16" x2="10.01" y2="16"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Tutorial 5</div>
+          <div class="card-title">Your Hard Drive Is a Database</div>
+          <div class="card-desc">See your local files and folders as an untapped data layer. Build directory maps, create context indexes, and watch Claude transform your messy hard drive into actionable intelligence.</div>
+        </div>
+        <div class="card-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </a>
+
+      <a href="prompt-alongs/execution-layer.html" class="tutorial-card">
+        <div class="card-thumb" style="background: #15465b;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"/>
+            <line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Tutorial 6</div>
+          <div class="card-title">The Execution Layer</div>
+          <div class="card-desc">Turn your directory into an instruction manual Claude follows every time. Build persistent instructions, reusable skills, and state management — with parallel paths for Claude Code and Cowork.</div>
+        </div>
+        <div class="card-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </a>
+
+      <a href="prompt-alongs/intent-verification.html" class="tutorial-card">
+        <div class="card-thumb" style="background: #d97706;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="6"/>
+            <circle cx="12" cy="12" r="2"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Tutorial 7</div>
+          <div class="card-title">Know What Good Looks Like</div>
+          <div class="card-desc">Define success before you run anything. Build quality standards, verification scenarios, and a three-lens evaluation framework that tells you exactly where your system breaks — and how to fix it.</div>
+        </div>
+        <div class="card-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- TIER 3: Advanced               -->
+  <!-- ═══════════════════════════════ -->
+  <div class="tier tier-advanced">
+    <div class="tier-header">
+      <span class="tier-label">Advanced</span>
+      <div class="tier-line"></div>
+    </div>
+    <p class="tier-desc">Wire your layers into automated systems. This is where you stop prompting and start engineering.</p>
+
+    <div class="tutorials">
+
+      <a href="prompt-alongs/from-workshop-to-factory.html" class="tutorial-card">
+        <div class="card-thumb" style="background: #16a34a;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 4v6h-6"/>
+            <path d="M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Tutorial 8</div>
+          <div class="card-title">From Workshop to Factory</div>
+          <div class="card-desc">Wire your three layers into an automated pipeline. Separate specification from execution, add automated validation, and build feedback loops that improve the system with every run.</div>
+        </div>
+        <div class="card-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </a>
+
+    </div>
   </div>
 
   <div class="footer">

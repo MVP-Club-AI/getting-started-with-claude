@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StrongDM Software Factory — System Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Zilla+Slab&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #faf5f0;
+    color: #081f3f;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Page shell ── */
+  .page { max-width: 1100px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  /* ── Header ── */
+  .brand { font-size: 11px; font-weight: 600; color: #d97706; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+  h1 { font-family: 'Zilla Slab', serif; font-size: 36px; font-weight: 400; color: #081f3f; line-height: 1.2; margin-bottom: 12px; }
+  .subtitle { font-size: 16px; color: #5a5a5a; max-width: 680px; line-height: 1.7; margin-bottom: 12px; }
+  .source-note { font-size: 13px; color: #a89880; margin-bottom: 40px; }
+  .source-note a { color: #d97706; text-decoration: none; }
+  .source-note a:hover { text-decoration: underline; }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 20px;
+    padding: 16px 20px; background: white; border: 1px solid #e8e0d8;
+    border-radius: 12px; margin-bottom: 40px; font-size: 13px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 8px; }
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-input { background: #16a34a; }
+  .dot-output { background: #d97706; }
+  .dot-leverage { background: #7c3aed; }
+  .dot-decision { background: #15465b; }
+  .dot-feedback { background: #dc2626; }
+
+  /* ── Flow container ── */
+  .flow { display: flex; flex-direction: column; align-items: center; gap: 0; }
+
+  /* ── Connector arrows ── */
+  .connector {
+    width: 2px; height: 32px; background: #c4b8a8; position: relative;
+  }
+  .connector::after {
+    content: '';
+    position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 6px solid transparent; border-right: 6px solid transparent;
+    border-top: 7px solid #c4b8a8;
+  }
+  .connector-long { height: 48px; }
+
+  /* Feedback loop connector */
+  .feedback-connector {
+    display: flex; align-items: center; gap: 0; width: 100%; max-width: 900px;
+    margin: 0 auto;
+  }
+  .feedback-line-up {
+    width: 2px; background: #dc2626; flex-shrink: 0;
+  }
+  .feedback-label {
+    font-size: 11px; font-weight: 700; color: #dc2626;
+    text-transform: uppercase; letter-spacing: 1px;
+    white-space: nowrap; padding: 4px 12px;
+    background: #fef2f2; border: 1px solid #fecaca; border-radius: 20px;
+  }
+
+  /* ── Flow nodes ── */
+  .flow-node {
+    width: 100%; max-width: 900px;
+    border-radius: 16px; overflow: hidden;
+    border: 2px solid #e8e0d8;
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .flow-node:hover {
+    border-color: #c4b8a8;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  }
+
+  .node-header {
+    padding: 20px 24px 16px;
+    display: flex; align-items: flex-start; gap: 16px;
+  }
+  .node-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: white;
+  }
+  .node-icon svg { width: 22px; height: 22px; }
+  .node-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.2px; margin-bottom: 2px;
+  }
+  .node-title {
+    font-family: 'Zilla Slab', serif; font-size: 22px; font-weight: 400;
+    color: #081f3f; line-height: 1.3;
+  }
+  .node-desc {
+    font-size: 14px; color: #5a5a5a; line-height: 1.6;
+    padding: 0 24px 8px 84px;
+  }
+
+  /* ── Annotation tags ── */
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 24px 16px 84px; }
+  .tag {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; padding: 3px 10px; border-radius: 20px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .tag-input { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+  .tag-output { background: #fef9f0; color: #d97706; border: 1px solid #fde68a; }
+  .tag-leverage { background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe; }
+  .tag-decision { background: #f0f5f7; color: #15465b; border: 1px solid #bfd8e0; }
+
+  /* ── Detail panels inside nodes ── */
+  .node-details {
+    border-top: 1px solid #f0ebe4;
+    padding: 0 24px;
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.35s ease, padding 0.35s ease;
+  }
+  .flow-node.open .node-details {
+    max-height: 800px;
+    padding: 20px 24px;
+  }
+  .node-toggle {
+    display: flex; align-items: center; justify-content: center;
+    padding: 10px; cursor: pointer; border-top: 1px solid #f0ebe4;
+    font-size: 12px; font-weight: 600; color: #a89880;
+    transition: color 0.2s, background 0.2s;
+    user-select: none;
+  }
+  .node-toggle:hover { color: #081f3f; background: #faf5f0; }
+  .node-toggle .arrow { transition: transform 0.25s; display: inline-block; margin-right: 6px; }
+  .flow-node.open .node-toggle .arrow { transform: rotate(180deg); }
+
+  /* Detail content styles */
+  .detail-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .detail-card {
+    background: #faf5f0; border-radius: 10px; padding: 14px;
+  }
+  .detail-card-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 6px;
+  }
+  .detail-card-text { font-size: 13px; color: #3a3a3a; line-height: 1.5; }
+
+  .detail-list { list-style: none; padding: 0; }
+  .detail-list li {
+    font-size: 13px; color: #3a3a3a; line-height: 1.5;
+    padding: 6px 0; border-bottom: 1px solid #f0ebe4;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .detail-list li:last-child { border-bottom: none; }
+  .detail-bullet {
+    width: 6px; height: 6px; border-radius: 50%;
+    flex-shrink: 0; margin-top: 7px;
+  }
+
+  .detail-quote {
+    font-size: 14px; color: #15465b; font-style: italic;
+    border-left: 3px solid #d97706; padding: 8px 16px;
+    background: #fef9f0; border-radius: 0 8px 8px 0;
+    margin: 12px 0;
+  }
+
+  /* ── Outcome split ── */
+  .outcome-split {
+    display: flex; gap: 16px; width: 100%; max-width: 900px;
+  }
+  .outcome-card {
+    flex: 1; border-radius: 16px; padding: 24px;
+    border: 2px solid #e8e0d8; background: white; text-align: center;
+  }
+  .outcome-card-converge {
+    border-color: #16a34a; background: #f0fdf4;
+  }
+  .outcome-card-iterate {
+    border-color: #dc2626; background: #fef2f2;
+  }
+  .outcome-icon { font-size: 28px; margin-bottom: 8px; }
+  .outcome-title {
+    font-family: 'Zilla Slab', serif; font-size: 18px; font-weight: 400;
+    margin-bottom: 4px;
+  }
+  .outcome-desc { font-size: 13px; color: #5a5a5a; line-height: 1.5; }
+
+  /* ── Feedback loop visual ── */
+  .feedback-loop {
+    width: 100%; max-width: 900px;
+    display: flex; align-items: stretch; position: relative;
+    margin: -8px 0;
+  }
+  .feedback-loop-line {
+    position: absolute;
+    right: -32px; top: 0; bottom: 0;
+    width: 48px;
+    border: 2px solid #dc2626;
+    border-left: none;
+    border-radius: 0 24px 24px 0;
+  }
+  .feedback-loop-label {
+    position: absolute;
+    right: -80px; top: 50%; transform: translateY(-50%) rotate(90deg);
+    font-size: 11px; font-weight: 700; color: #dc2626;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    white-space: nowrap;
+    background: #faf5f0; padding: 2px 8px;
+  }
+
+  /* ── Koan / pull quote ── */
+  .koan {
+    width: 100%; max-width: 900px;
+    background: #081f3f; border-radius: 16px; padding: 32px;
+    text-align: center; margin-top: 8px;
+  }
+  .koan-text {
+    font-family: 'Zilla Slab', serif; font-size: 20px;
+    font-weight: 400; color: #faf5f0; line-height: 1.5;
+    margin-bottom: 8px;
+  }
+  .koan-attr { font-size: 13px; color: #d97706; }
+
+  /* ── Infrastructure sidebar strip ── */
+  .infra-strip {
+    width: 100%; max-width: 900px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin-top: 4px;
+  }
+  .infra-card {
+    border-radius: 12px; padding: 16px;
+    border: 1px solid #e8e0d8; background: white; text-align: center;
+  }
+  .infra-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: white; margin-bottom: 8px;
+  }
+  .infra-icon svg { width: 18px; height: 18px; }
+  .infra-title { font-size: 13px; font-weight: 700; color: #081f3f; margin-bottom: 2px; }
+  .infra-desc { font-size: 12px; color: #5a5a5a; line-height: 1.4; }
+
+  /* ── Section dividers ── */
+  .section-label {
+    font-size: 11px; font-weight: 700; color: #a89880;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    width: 100%; max-width: 900px; margin: 32px auto 16px;
+    padding-bottom: 8px; border-bottom: 1px solid #e8e0d8;
+  }
+
+  /* ── Techniques grid ── */
+  .techniques-grid {
+    width: 100%; max-width: 900px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  }
+  .tech-card {
+    border-radius: 12px; padding: 16px; border: 1px solid #e8e0d8;
+    background: white; cursor: default;
+    transition: border-color 0.2s;
+  }
+  .tech-card:hover { border-color: #c4b8a8; }
+  .tech-title { font-size: 14px; font-weight: 600; color: #081f3f; margin-bottom: 4px; }
+  .tech-desc { font-size: 12px; color: #5a5a5a; line-height: 1.5; }
+  .tech-tag { margin-top: 8px; }
+
+  /* ── Concerns section ── */
+  .concerns {
+    width: 100%; max-width: 900px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .concern-row {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 12px 16px; background: white; border-radius: 10px;
+    border: 1px solid #e8e0d8;
+  }
+  .concern-source {
+    font-size: 11px; font-weight: 700; color: #15465b;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    min-width: 100px; flex-shrink: 0; padding-top: 1px;
+  }
+  .concern-text { font-size: 13px; color: #3a3a3a; line-height: 1.5; }
+
+  /* ── Stats bar ── */
+  .stats-bar {
+    width: 100%; max-width: 900px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  }
+  .stat-card {
+    background: white; border-radius: 12px; padding: 16px;
+    border: 1px solid #e8e0d8; text-align: center;
+  }
+  .stat-num {
+    font-family: 'Zilla Slab', serif; font-size: 28px;
+    font-weight: 400; color: #081f3f; line-height: 1.2;
+  }
+  .stat-label { font-size: 11px; color: #5a5a5a; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+  /* ── Footer ── */
+  .footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid #e8e0d8; font-size: 13px; color: #a89880; }
+  .footer a { color: #d97706; text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    .detail-grid { grid-template-columns: 1fr; }
+    .outcome-split { flex-direction: column; }
+    .infra-strip { grid-template-columns: 1fr; }
+    .techniques-grid { grid-template-columns: 1fr; }
+    .stats-bar { grid-template-columns: 1fr 1fr; }
+    .node-desc, .tags { padding-left: 24px; }
+    .feedback-loop-line { display: none; }
+    .feedback-loop-label { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="brand">Research Map</div>
+  <h1>StrongDM's Software Factory</h1>
+  <p class="subtitle">A visual map of the system that writes, tests, and ships production code with zero human authorship and zero human review. Founded July 2025 by Justin McCarthy (CTO), Jay Taylor, and Navan Chauhan — a 3-person team.</p>
+  <p class="source-note">Sources: <a href="https://factory.strongdm.ai/" target="_blank">factory.strongdm.ai</a> · <a href="https://github.com/strongdm/attractor" target="_blank">github.com/strongdm/attractor</a> · <a href="https://www.strongdm.com/blog/the-strongdm-software-factory-building-software-with-ai" target="_blank">StrongDM Blog</a></p>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot dot-input"></span> Human input</div>
+    <div class="legend-item"><span class="legend-dot dot-output"></span> System output</div>
+    <div class="legend-item"><span class="legend-dot dot-leverage"></span> Leverage point</div>
+    <div class="legend-item"><span class="legend-dot dot-decision"></span> Decision point</div>
+    <div class="legend-item"><span class="legend-dot dot-feedback"></span> Feedback loop</div>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="stats-bar" style="margin-bottom: 40px;">
+    <div class="stat-card">
+      <div class="stat-num">3</div>
+      <div class="stat-label">Engineers</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">~1M</div>
+      <div class="stat-label">Lines of code</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">3.5/day</div>
+      <div class="stat-label">PRs per engineer</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">$1K+</div>
+      <div class="stat-label">Tokens/day/engineer</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!--  MAIN FLOW                              -->
+  <!-- ════════════════════════════════════════ -->
+
+  <div class="section-label">The Pipeline</div>
+
+  <div class="flow">
+
+    <!-- ── NODE 1: Human Intent ── -->
+    <div class="flow-node" id="node-intent">
+      <div class="node-header">
+        <div class="node-icon" style="background: #16a34a;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <div>
+          <div class="node-label" style="color: #16a34a;">Human Intent</div>
+          <div class="node-title">Specifications, Scenarios, and Seeds</div>
+        </div>
+      </div>
+      <div class="node-desc">Humans define <strong>what</strong> the system should do — never <strong>how</strong>. Four input types seed everything downstream. This is the only place humans directly author content.</div>
+      <div class="tags">
+        <span class="tag tag-input">Input: Specs</span>
+        <span class="tag tag-input">Input: Scenarios</span>
+        <span class="tag tag-input">Input: Screenshots</span>
+        <span class="tag tag-input">Input: Exemplars</span>
+        <span class="tag tag-leverage">Leverage: Spec precision</span>
+        <span class="tag tag-leverage">Leverage: Scenario quality</span>
+      </div>
+      <div class="node-details">
+        <div class="detail-grid">
+          <div class="detail-card">
+            <div class="detail-card-label" style="color: #16a34a;">Specifications (NLSpecs)</div>
+            <div class="detail-card-text">Natural-language documents describing desired behavior, constraints, and architecture. Written by humans; implemented by agents. The spec is the product — code is just the compilation artifact.</div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-card-label" style="color: #16a34a;">Scenarios (Holdout Set)</div>
+            <div class="detail-card-text">End-to-end user stories stored <em>outside</em> the codebase — like a holdout set in ML. Prevents agents from gaming tests. Evaluated by LLM-as-judge, not boolean assertions.</div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-card-label" style="color: #16a34a;">Screenshots &amp; Mockups</div>
+            <div class="detail-card-text">Visual references that seed frontend development. Agents interpret visual intent directly from images — another input channel that bypasses the need for human code.</div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-card-label" style="color: #16a34a;">Exemplars (Gene Transfusion)</div>
+            <div class="detail-card-text">Working code from other codebases that demonstrates a pattern. Agents extract the pattern and synthesize it into the target codebase. Example: using Caddy's Let's Encrypt integration as reference.</div>
+          </div>
+        </div>
+        <div class="detail-quote">"If what you described was ambiguous, you're going to get software that fills in the gaps with software guesses, not customer-centric guesses."</div>
+      </div>
+      <div class="node-toggle" onclick="toggleNode('node-intent')"><span class="arrow">&#9662;</span> Details</div>
+    </div>
+
+    <div class="connector"></div>
+
+    <!-- ── NODE 2: Attractor ── -->
+    <div class="flow-node" id="node-attractor">
+      <div class="node-header">
+        <div class="node-icon" style="background: #081f3f;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+          </svg>
+        </div>
+        <div>
+          <div class="node-label" style="color: #081f3f;">Orchestration</div>
+          <div class="node-title">Attractor — Pipeline Engine</div>
+        </div>
+      </div>
+      <div class="node-desc">A DOT/Graphviz-based pipeline orchestrator. Nodes are tasks, edges are transitions. The open-source repo contains <strong>zero code</strong> — only three NLSpec files that any agent can implement. 11+ community implementations exist.</div>
+      <div class="tags">
+        <span class="tag tag-decision">Decision: Conditional branching</span>
+        <span class="tag tag-decision">Decision: Human gates</span>
+        <span class="tag tag-leverage">Leverage: Model stylesheets</span>
+      </div>
+      <div class="node-details">
+        <div class="detail-card" style="margin-bottom: 12px;">
+          <div class="detail-card-label" style="color: #081f3f;">Node Types (Graphviz shapes → handlers)</div>
+          <div class="detail-card-text">
+            <strong>box</strong> → codergen (LLM task) · <strong>hexagon</strong> → wait.human (approval gate) · <strong>diamond</strong> → conditional (branching) · <strong>component</strong> → parallel (concurrent branches) · <strong>parallelogram</strong> → tool (external command) · <strong>house</strong> → stack.manager_loop (recursive supervision)
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div class="detail-card">
+            <div class="detail-card-label" style="color: #7c3aed;">Model Stylesheets</div>
+            <div class="detail-card-text">CSS-like syntax for per-node LLM configuration. Example: <code>.critical { llm_model: claude-opus; reasoning_effort: high; }</code> — different models and settings for different tasks in the same pipeline.</div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-card-label" style="color: #15465b;">Crash Recovery</div>
+            <div class="detail-card-text">Checkpoint-based state snapshots at every node. Pipeline can crash and resume from exactly where it left off. Serializable state enables distributed execution.</div>
+          </div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-card-label" style="color: #081f3f;">Five-Phase Execution</div>
+          <div class="detail-card-text">PARSE → VALIDATE → INITIALIZE → EXECUTE → FINALIZE. The engine traverses the graph from start to exit, with exponential backoff retries (up to 50), goal gate enforcement, and conditional edge selection using boolean expressions.</div>
+        </div>
+      </div>
+      <div class="node-toggle" onclick="toggleNode('node-attractor')"><span class="arrow">&#9662;</span> Details</div>
+    </div>
+
+    <div class="connector"></div>
+
+    <!-- ── NODE 3: Agent Loop ── -->
+    <div class="flow-node" id="node-agent">
+      <div class="node-header">
+        <div class="node-icon" style="background: #15465b;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"/>
+            <line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+        </div>
+        <div>
+          <div class="node-label" style="color: #15465b;">Execution</div>
+          <div class="node-title">Coding Agent Loop</div>
+        </div>
+      </div>
+      <div class="node-desc">The inner loop: LLM calls paired with tool execution. Provider-native toolsets (no universal shim — each model gets its native format). Loop detection prevents agents from spinning. Mid-session steering allows course correction without restarting.</div>
+      <div class="tags">
+        <span class="tag tag-leverage">Leverage: Model selection</span>
+        <span class="tag tag-decision">Decision: Loop detection</span>
+        <span class="tag tag-decision">Decision: Steering injection</span>
+        <span class="tag tag-output">Output: Code changes</span>
+      </div>
+      <div class="node-details">
+        <div class="detail-grid">
+          <div class="detail-card">
+            <div class="detail-card-label" style="color: #15465b;">Provider-Native Toolsets</div>
+            <div class="detail-card-text">OpenAI agents get <code>apply_patch</code>. Anthropic agents get <code>old_string/new_string</code>. Each provider's native tool format, not a forced universal abstraction. Captures provider-specific capabilities like reasoning tokens and extended thinking.</div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-card-label" style="color: #15465b;">Session State Machine</div>
+            <div class="detail-card-text">IDLE → PROCESSING → (AWAITING_INPUT | IDLE | CLOSED). Tool execution environment abstraction supports local, Docker, Kubernetes, WASM, or SSH backends. Output truncated to 8KB for the LLM; full output preserved in logs.</div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-card-label" style="color: #dc2626;">Loop Detection</div>
+            <div class="detail-card-text">Tracks tool call signatures over a sliding window (default 10 calls). Detects repeating patterns and breaks cycles — preventing agents from getting stuck hammering the same failing approach.</div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-card-label" style="color: #7c3aed;">Mid-Session Steering</div>
+            <div class="detail-card-text"><code>steer()</code> injects corrections into an active session. <code>follow_up()</code> adds new inputs. Subagents get independent conversation histories but shared filesystem access.</div>
+          </div>
+        </div>
+      </div>
+      <div class="node-toggle" onclick="toggleNode('node-agent')"><span class="arrow">&#9662;</span> Details</div>
+    </div>
+
+    <div class="connector"></div>
+
+    <!-- ── NODE 4: DTU ── -->
+    <div class="flow-node" id="node-dtu">
+      <div class="node-header">
+        <div class="node-icon" style="background: #7c3aed;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </div>
+        <div>
+          <div class="node-label" style="color: #7c3aed;">Validation Environment</div>
+          <div class="node-title">Digital Twin Universe (DTU)</div>
+        </div>
+      </div>
+      <div class="node-desc">Behavioral clones of third-party SaaS services — standalone Go binaries that replicate APIs, edge cases, and observable behaviors. Agents test at unlimited volume without rate limits, API costs, or abuse detection.</div>
+      <div class="tags">
+        <span class="tag tag-leverage">Leverage: Clone fidelity</span>
+        <span class="tag tag-leverage">Leverage: Scenario coverage</span>
+      </div>
+      <div class="node-details">
+        <div class="detail-card" style="margin-bottom: 12px;">
+          <div class="detail-card-label" style="color: #7c3aed;">Current Behavioral Clones</div>
+          <div class="detail-card-text"><strong>Okta</strong> (identity/auth) · <strong>Jira</strong> (issue tracking) · <strong>Slack</strong> (messaging) · <strong>Google Docs, Drive, Sheets</strong> (productivity). Each clone targets 100% compatibility with popular SDK client libraries.</div>
+        </div>
+        <ul class="detail-list">
+          <li><span class="detail-bullet" style="background: #16a34a;"></span> Validate at volumes exceeding production rate limits</li>
+          <li><span class="detail-bullet" style="background: #16a34a;"></span> Test failure modes that would be dangerous against live services</li>
+          <li><span class="detail-bullet" style="background: #16a34a;"></span> Thousands of scenarios per hour — no API costs</li>
+          <li><span class="detail-bullet" style="background: #16a34a;"></span> Deterministic, replayable test conditions</li>
+          <li><span class="detail-bullet" style="background: #d97706;"></span> Requires substantial engineering investment to build each clone</li>
+        </ul>
+      </div>
+      <div class="node-toggle" onclick="toggleNode('node-dtu')"><span class="arrow">&#9662;</span> Details</div>
+    </div>
+
+    <div class="connector"></div>
+
+    <!-- ── NODE 5: Satisfaction Testing ── -->
+    <div class="flow-node" id="node-satisfaction">
+      <div class="node-header">
+        <div class="node-icon" style="background: #d97706;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <div>
+          <div class="node-label" style="color: #d97706;">Evaluation</div>
+          <div class="node-title">Satisfaction Testing</div>
+        </div>
+      </div>
+      <div class="node-desc">Not pass/fail. An LLM-as-judge evaluates: <em>"Of all observed trajectories through all scenarios, what fraction likely satisfies the user?"</em> Probabilistic and empirical — mirrors ML evaluation methodology, not traditional QA.</div>
+      <div class="tags">
+        <span class="tag tag-decision">Decision: Satisfaction threshold</span>
+        <span class="tag tag-decision">Decision: Model consensus</span>
+        <span class="tag tag-output">Output: Satisfaction score</span>
+      </div>
+      <div class="node-details">
+        <div class="detail-quote">"Satisfaction" replaces "correctness." A scenario can be satisfied in multiple ways. The LLM judge evaluates behavioral outcomes against user intent — not line-by-line code inspection.</div>
+        <div class="detail-grid">
+          <div class="detail-card">
+            <div class="detail-card-label" style="color: #d97706;">Why Not Boolean Tests?</div>
+            <div class="detail-card-text">They observed agents writing <code>return true</code> to pass self-written tests while doing nothing useful. Scenarios stored outside the codebase prevent this gaming. The holdout set can't be overfit.</div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-card-label" style="color: #d97706;">The ML Analogy</div>
+            <div class="detail-card-text">Generated code = model weights. Scenarios = holdout evaluation set. Satisfaction score = model accuracy. The code is an opaque artifact — you validate behavior, not implementation.</div>
+          </div>
+        </div>
+      </div>
+      <div class="node-toggle" onclick="toggleNode('node-satisfaction')"><span class="arrow">&#9662;</span> Details</div>
+    </div>
+
+    <div class="connector"></div>
+
+    <!-- ── Outcome split ── -->
+    <div class="outcome-split">
+      <div class="outcome-card outcome-card-converge">
+        <div class="outcome-title" style="color: #16a34a;">Converged</div>
+        <div class="outcome-desc">Satisfaction threshold met. Ship it. Code goes to production as an opaque artifact — never human-reviewed.</div>
+        <div class="tags" style="justify-content: center; padding: 8px 0 0;">
+          <span class="tag tag-output">Output: Production code</span>
+          <span class="tag tag-output">Output: PR</span>
+        </div>
+      </div>
+      <div class="outcome-card outcome-card-iterate">
+        <div class="outcome-title" style="color: #dc2626;">Not Yet</div>
+        <div class="outcome-desc">Feedback returns to the agent loop. Iterate against the same scenarios until convergence. The loop is the product.</div>
+        <div class="tags" style="justify-content: center; padding: 8px 0 0;">
+          <span class="tag tag-decision" style="background: #fef2f2; color: #dc2626; border-color: #fecaca;">Feedback loop</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /flow -->
+
+  <!-- ════════════════════════════════════════ -->
+  <!--  SUPPORTING INFRASTRUCTURE              -->
+  <!-- ════════════════════════════════════════ -->
+
+  <div class="section-label">Supporting Infrastructure</div>
+
+  <div class="infra-strip">
+    <div class="infra-card">
+      <div class="infra-icon" style="background: #081f3f;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="9" ry="3"/>
+          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+        </svg>
+      </div>
+      <div class="infra-title">CXDB</div>
+      <div class="infra-desc">AI context store. Turn DAG + content-addressed blob storage. O(1) conversation forking, 70%+ storage reduction. Every turn of every conversation, preserved and branchable.</div>
+    </div>
+    <div class="infra-card">
+      <div class="infra-icon" style="background: #dc2626;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0110 0v4"/>
+        </svg>
+      </div>
+      <div class="infra-title">Leash</div>
+      <div class="infra-desc">Container-based agent security harness. Cedar policy language, full telemetry, MCP tool call inspection. Wraps any agent (Claude, Codex, Gemini) in an auditable sandbox.</div>
+    </div>
+    <div class="infra-card">
+      <div class="infra-icon" style="background: #d97706;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          <circle cx="12" cy="12" r="4"/>
+        </svg>
+      </div>
+      <div class="infra-title">Weather Report</div>
+      <div class="infra-desc">Public model-selection matrix. Which model for which task — including consensus voting (multiple models for sprint planning). Updated as model capabilities shift.</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!--  TECHNIQUES                             -->
+  <!-- ════════════════════════════════════════ -->
+
+  <div class="section-label">Key Techniques</div>
+
+  <div class="techniques-grid">
+    <div class="tech-card">
+      <div class="tech-title">Shift Work</div>
+      <div class="tech-desc">Separate interactive specification from non-interactive execution. Humans spec first; agents execute without interruption.</div>
+      <div class="tech-tag"><span class="tag tag-leverage">Leverage</span></div>
+    </div>
+    <div class="tech-card">
+      <div class="tech-title">Gene Transfusion</div>
+      <div class="tech-desc">Move working code patterns between codebases by pointing agents at exemplars. Identify → Extract → Synthesize → Validate → Propagate.</div>
+      <div class="tech-tag"><span class="tag tag-input">Input technique</span></div>
+    </div>
+    <div class="tech-card">
+      <div class="tech-title">Semport</div>
+      <div class="tech-desc">Automated semantic porting between languages. StrongDM monitors OpenAI's Python SDK daily and auto-translates patterns into Go.</div>
+      <div class="tech-tag"><span class="tag tag-leverage">Leverage</span></div>
+    </div>
+    <div class="tech-card">
+      <div class="tech-title">Pyramid Summaries</div>
+      <div class="tech-desc">Multi-zoom-level summarization (like map tiles). Survey hundreds of items at 2-word detail, expand only what's interesting. MapReduce for context.</div>
+      <div class="tech-tag"><span class="tag tag-leverage">Leverage</span></div>
+    </div>
+    <div class="tech-card">
+      <div class="tech-title">The Filesystem</div>
+      <div class="tech-desc">Directory structures and disk-based state as cognitive substrate for AI. Agents navigate repos and manage their own context through files.</div>
+      <div class="tech-tag"><span class="tag tag-leverage">Leverage</span></div>
+    </div>
+    <div class="tech-card">
+      <div class="tech-title">NLSpecs</div>
+      <div class="tech-desc">Natural Language Specifications replace code as the source of truth. The Attractor repo is pure spec — zero code. Any agent can implement it.</div>
+      <div class="tech-tag"><span class="tag tag-input">Input technique</span></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!--  KOAN                                    -->
+  <!-- ════════════════════════════════════════ -->
+
+  <div class="koan" style="margin-top: 40px;">
+    <div class="koan-text">"Code must not be written by humans. Code must not be reviewed by humans."</div>
+    <div class="koan-attr">The two rules of the Software Factory charter</div>
+  </div>
+
+  <div class="koan" style="margin-top: 12px; background: #15465b;">
+    <div class="koan-text">"Generated code is like ML model weights — an opaque artifact validated exclusively through externally observable behavior."</div>
+    <div class="koan-attr">The core mental model</div>
+  </div>
+
+  <!-- ════════════════════════════════════════ -->
+  <!--  OPEN QUESTIONS / CRITICAL CONCERNS     -->
+  <!-- ════════════════════════════════════════ -->
+
+  <div class="section-label">Open Questions and Critical Concerns</div>
+
+  <div class="concerns">
+    <div class="concern-row">
+      <div class="concern-source">Stanford Law</div>
+      <div class="concern-text"><strong>The circularity problem:</strong> "When the builder and the inspector share the same blind spots, no amount of test variety fully eliminates risk." Who's liable when agent-written, agent-tested code fails?</div>
+    </div>
+    <div class="concern-row">
+      <div class="concern-source">Simon Willison</div>
+      <div class="concern-text"><strong>Economics:</strong> $1K/day per engineer = ~$20K/month token budgets. Also: if agents can build features in hours, competitors can clone your product just as fast. Defensibility shifts from code to data and specifications.</div>
+    </div>
+    <div class="concern-row">
+      <div class="concern-source">Ry Walker</div>
+      <div class="concern-text"><strong>Applicability:</strong> DTU approach is optimized for integration-heavy software (StrongDM's core business). Building behavioral clones requires substantial engineering investment. Unclear how well this generalizes to other domains.</div>
+    </div>
+    <div class="concern-row">
+      <div class="concern-source">Structural</div>
+      <div class="concern-text"><strong>Spec quality bottleneck:</strong> The system's ceiling is the human's ability to write precise specifications and comprehensive scenarios. Garbage specs in, garbage code out — at scale and speed.</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Research compiled Feb 2026 · Sources: factory.strongdm.ai, github.com/strongdm, simonwillison.net, Stanford Law CodeX
+  </div>
+</div>
+
+<script>
+function toggleNode(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+</script>
+
+</body>
+</html>
