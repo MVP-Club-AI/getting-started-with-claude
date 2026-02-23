@@ -8,15 +8,30 @@
 
 **Hands-on tutorials that take you from your first conversation with Claude to building automated systems that run without you.**
 
-### [Start learning &rarr;](https://mvp-club-ai.github.io/getting-started-with-claude/)
+<p align="center">
+  <a href="https://mvp-club-ai.github.io/getting-started-with-claude/">
+    <img src="https://img.shields.io/badge/%E2%96%B6%20START%20HERE-mvp--club--ai.github.io-d97706?style=for-the-badge&labelColor=081f3f" alt="Start Here">
+  </a>
+</p>
+
+> **All tutorials are on the deployed site above.** This repo is the source code — the learning experience lives at the GitHub Pages link. Open it in your browser to get started.
 
 ---
 
-## What this is
+## How prompt-alongs work
 
-A series of interactive prompt-along tutorials built by [MVP Club](https://mvpclub.ai). Each tutorial walks you through a real project — with prompts you copy and paste — teaching you to work with Claude Code and Claude Cowork at progressively deeper levels.
+These aren't articles to read. They're **procedural walkthroughs** you do side by side with Claude.
+
+**Setup:** Open two windows next to each other:
+
+1. **Left** — Claude Code (your terminal) or Claude Cowork (desktop app)
+2. **Right** — The prompt-along in your browser
+
+**Flow:** Each tutorial walks you step by step. When you hit a prompt block, copy it, paste it into Claude, and follow along with the results. You're building something real as you go — not watching a demo.
 
 No coding experience required for the first tier. By the end, you're engineering automated pipelines.
+
+---
 
 ## Tutorials
 
