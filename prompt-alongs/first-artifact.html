@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your First Artifact</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Zilla+Slab&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #faf5f0;
+    color: #081f3f;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    display: flex;
+    gap: 24px;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 20px 16px 20px 4px;
+    min-height: 100vh;
+  }
+
+  .main-col { flex: 1; min-width: 0; }
+
+  /* Section sequence rail */
+  .section-rail { width: 104px; flex-shrink: 0; padding-top: 8px; }
+  .section-rail-inner {
+    position: sticky;
+    top: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .rail-thumb {
+    width: 96px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    padding: 10px 8px 7px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-family: 'Inter', sans-serif;
+    background: #f0ebe4;
+    color: #b8a898;
+  }
+  .rail-thumb-visual { display: flex; align-items: center; justify-content: center; height: 44px; }
+  .rail-thumb-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; line-height: 1; text-align: center; }
+  .rail-thumb.upcoming { background: #f0ebe4; color: #b8a898; border-color: transparent; }
+  .rail-thumb.upcoming .rail-thumb-visual { opacity: 0.45; }
+  .rail-thumb.completed { background: #fef3e2; color: #b45309; border-color: #eba714; }
+  .rail-thumb.current {
+    background: #d97706; color: white;
+    border-color: #b45309;
+    box-shadow: 0 2px 10px rgba(217,119,6,0.4);
+    transform: scale(1.06);
+  }
+  .rail-connector { width: 2px; height: 6px; flex-shrink: 0; }
+  .rail-connector.completed { background: #eba714; }
+  .rail-connector.upcoming { background: #e8e0d8; }
+  .rail-thumb:hover::after {
+    content: attr(data-label);
+    position: absolute;
+    left: 102px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #081f3f;
+    color: #faf5f0;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 30;
+  }
+  .rail-thumb:hover::before {
+    content: '';
+    position: absolute;
+    left: 96px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: #081f3f;
+    pointer-events: none;
+    z-index: 30;
+  }
+
+  /* Vector icons (CSS mask) */
+  .icon { display:inline-block;width:1em;height:1em;background:currentColor;vertical-align:-0.125em;flex-shrink:0;-webkit-mask:no-repeat center/contain;mask:no-repeat center/contain; }
+  .i-chat{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'/%3E%3C/svg%3E");}
+  .i-zap{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9z'/%3E%3C/svg%3E");}
+  .i-search{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");}
+  .i-refresh{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'/%3E%3Cpath d='M1 20v-6h6'/%3E%3Cpath d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15'/%3E%3C/svg%3E");}
+  .i-sparkle{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5z'/%3E%3Cpath d='M19 2l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3Cpath d='M5 18l.5 2 2 .5-2 .5-.5 2-.5-2-2-.5 2-.5z'/%3E%3C/svg%3E");}
+  .i-check{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 11-5.93-9.14'/%3E%3Cpath d='M22 4L12 14.01l-3-3'/%3E%3C/svg%3E");}
+  .i-target{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");}
+  .i-wrench{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E");}
+  .i-grid{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18M3 15h18M9 3v18M15 3v18'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18M3 15h18M9 3v18M15 3v18'/%3E%3C/svg%3E");}
+  .i-chart{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M18 20V10M12 20V4M6 20v-6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M18 20V10M12 20V4M6 20v-6'/%3E%3C/svg%3E");}
+  .i-briefcase{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='2' y='7' width='20' height='14' rx='2'/%3E%3Cpath d='M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='2' y='7' width='20' height='14' rx='2'/%3E%3Cpath d='M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2'/%3E%3C/svg%3E");}
+  .i-eye{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");}
+  .i-edit{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z'/%3E%3C/svg%3E");}
+  .i-star{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z'/%3E%3C/svg%3E");}
+  .i-globe{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M2 12h20'/%3E%3Cpath d='M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M2 12h20'/%3E%3Cpath d='M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z'/%3E%3C/svg%3E");}
+
+  /* Step header */
+  .step-header { margin-bottom: 24px; }
+  .step-header h1 { font-family: 'Zilla Slab', serif; font-size: 28px; font-weight: 400; color: #081f3f; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .step-header p { font-size: 16px; color: #15465b; }
+
+  /* Content area */
+  .step-content { margin-bottom: 32px; }
+  .step-content > p { font-size: 17px; line-height: 1.8; color: #081f3f; margin-bottom: 20px; }
+  .step { display: none; }
+  .step.active { display: block; min-height: calc(100vh - 240px); }
+
+  /* Fixed navigation header */
+  .nav-header {
+    position: sticky;
+    top: 0;
+    background: #faf5f0;
+    padding: 8px 0 12px;
+    z-index: 10;
+  }
+  .nav-header::after {
+    content: '';
+    display: block;
+    height: 20px;
+    margin: 0 -16px;
+    background: linear-gradient(to top, transparent, #faf5f0);
+    pointer-events: none;
+    position: absolute;
+    bottom: -20px;
+    left: 0;
+    right: 0;
+  }
+
+  /* Navigation */
+  .nav { display: flex; gap: 12px; }
+  .btn { padding: 14px 20px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; font-family: 'Inter', sans-serif; }
+  .btn:hover { opacity: 0.9; }
+  .btn-back { flex: 1; border: 1px solid #e8e0d8; background: white; color: #15465b; }
+  .btn-next { flex: 2; background: #d97706; color: white; }
+
+  /* Reusable blocks */
+  .callout { padding: 16px 20px; border-radius: 0 12px 12px 0; margin-bottom: 20px; }
+  .callout-purple { background: #fef9f0; border-left: 4px solid #081f3f; }
+  .callout-green { background: #f0fdf4; border-left: 4px solid #16a34a; }
+  .callout-blue { background: #f0f5f7; border-left: 4px solid #15465b; }
+  .callout-amber { background: #fef9f0; border-left: 4px solid #d97706; }
+  .callout-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .callout-text { font-size: 13px; color: #15465b; line-height: 1.7; }
+
+  .dark-card { background: #081f3f; border-radius: 16px; padding: 28px; margin-bottom: 24px; text-align: center; }
+  .dark-card h2 { font-family: 'Zilla Slab', serif; font-size: 22px; font-weight: 400; color: #faf5f0; margin-bottom: 8px; }
+  .dark-card p { font-size: 14px; color: #eba714; line-height: 1.7; }
+
+  .section-label {
+    font-size: 11px; font-weight: 600; color: #15465b;
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 12px; text-align: center;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Vibe loop */
+  .vibe-loop { background: linear-gradient(135deg, #081f3f, #15465b); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+  .vibe-loop-steps { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; }
+  .vibe-step { text-align: center; min-width: 72px; }
+  .vibe-step-icon { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-size: 22px; color: #faf5f0; }
+  .vibe-step-label { font-size: 12px; font-weight: 700; color: #faf5f0; margin-bottom: 2px; }
+  .vibe-step-desc { font-size: 10px; color: #eba714; line-height: 1.4; }
+  .vibe-arrow { display: flex; align-items: center; color: #d97706; font-size: 16px; padding-top: 8px; }
+  .vibe-footer { text-align: center; margin-top: 12px; font-size: 11px; color: #eba714; font-style: italic; }
+
+  /* Prompt block */
+  .prompt-block { background: #081f3f; color: #faf5f0; border-radius: 12px; padding: 20px; font-size: 14px; line-height: 1.7; font-family: monospace; white-space: pre-wrap; margin-bottom: 12px; }
+  .copy-btn { width: 100%; padding: 10px 20px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; background: #d97706; color: white; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Inter', sans-serif; }
+  .copy-btn.copied { background: #059669; }
+
+  /* Expandable cards */
+  .expand-card { border: 1px solid #e8e0d8; border-radius: 12px; margin-bottom: 12px; overflow: hidden; background: white; }
+  .expand-header { width: 100%; padding: 14px 18px; background: none; border: none; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 15px; font-weight: 600; color: #081f3f; text-align: left; font-family: inherit; }
+  .expand-arrow { font-size: 12px; color: #15465b; transition: transform 0.2s; }
+  .expand-card.open .expand-arrow { transform: rotate(180deg); }
+  .expand-body { padding: 0 18px 16px; color: #15465b; font-size: 14px; line-height: 1.7; display: none; }
+  .expand-card.open .expand-body { display: block; }
+
+  /* Iteration prompts */
+  .iter-card { background: #faf5f0; border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; border: 1px solid #e8e0d8; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .iter-text { font-size: 14px; color: #081f3f; line-height: 1.6; flex: 1; }
+  .iter-copy { background: #fef3e2; color: #b45309; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0; font-family: inherit; }
+
+  /* Success card */
+  .success-card { background: #f0fdf4; border-radius: 12px; padding: 20px; border: 1px solid #bbf7d0; text-align: center; margin-top: 16px; }
+  .success-icon { font-size: 28px; margin-bottom: 8px; }
+  .success-title { font-size: 16px; font-weight: 700; color: #15803d; margin-bottom: 8px; }
+  .success-text { font-size: 14px; color: #15465b; line-height: 1.7; }
+
+  /* Recap list */
+  .recap-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0ebe4; align-items: center; }
+  .recap-item:last-child { border-bottom: none; }
+  .recap-icon { font-size: 18px; flex-shrink: 0; }
+  .recap-text { font-size: 14px; color: #15465b; line-height: 1.6; }
+
+  /* Next grid */
+  .next-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .next-card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #e8e0d8; text-align: center; }
+  .next-card-icon { font-size: 24px; margin-bottom: 6px; }
+  .next-card-title { font-size: 14px; font-weight: 700; color: #081f3f; margin-bottom: 4px; }
+  .next-card-desc { font-size: 12px; color: #15465b; line-height: 1.4; }
+
+  /* Project summary */
+  .summary-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #e8e0d8; margin-bottom: 20px; }
+  .summary-card p { font-size: 14px; color: #15465b; line-height: 2; }
+
+  .text-center { text-align: center; }
+  .text-muted { color: #15465b; }
+  .text-sm { font-size: 15px; line-height: 1.7; }
+  .mt-16 { margin-top: 16px; }
+  .mb-20 { margin-bottom: 20px; }
+  .mb-24 { margin-bottom: 24px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Section sequence rail -->
+  <div class="section-rail">
+    <div class="section-rail-inner" id="sectionRail"></div>
+  </div>
+
+  <div class="main-col">
+  <!-- Fixed navigation header -->
+  <div class="nav-header">
+    <div class="nav">
+      <button class="btn btn-back" id="btnBack" onclick="prevStep()" style="display:none">Back</button>
+      <button class="btn btn-next" id="btnNext" onclick="nextStep()">Let's go</button>
+    </div>
+  </div>
+
+  <!-- Step header -->
+  <div class="step-header">
+    <h1 id="stepTitle">Build Your First Artifact</h1>
+    <p id="stepSubtitle">Your first AI-built tool, in one conversation.</p>
+  </div>
+
+  <!-- Step content -->
+  <div class="step-content">
+
+    <!-- STEP 0: Welcome -->
+    <div class="step active" id="step-0">
+      <div class="dark-card">
+        <div style="font-size:36px;margin-bottom:8px"><span class="icon i-sparkle"></span></div>
+        <h2>One conversation. One tool. Zero setup.</h2>
+        <p>You're about to build a real, interactive decision-making tool using nothing but a conversation with Claude.</p>
+      </div>
+
+      <p>No code. No terminal. No downloads. You'll go to <strong>claude.ai</strong>, type a prompt, and get back a working application you can use immediately.</p>
+
+      <p>The tool you'll build helps you compare options and make better decisions — something you can actually use at work or in life. And you'll build it in one sitting.</p>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#15803d">No setup required</div>
+        <div class="callout-text">All you need is a free Claude account at <strong>claude.ai</strong>. That's it. No software to install, no accounts to configure, no terminal to open. If you can use a chat app, you can do this.</div>
+      </div>
+
+      <div class="summary-card">
+        <div style="font-size:13px;font-weight:700;color:#081f3f;margin-bottom:12px">What you'll build</div>
+        <!-- Mockup of the decision tool (illustration only) -->
+        <div style="background:#081f3f;border-radius:12px;padding:16px;margin-bottom:16px;position:relative;pointer-events:none">
+          <div style="position:absolute;top:8px;right:12px;font-size:9px;font-weight:600;color:#5a7a8a;text-transform:uppercase;letter-spacing:0.5px">Illustration</div>
+          <div style="font-size:13px;font-weight:700;color:#faf5f0;margin-bottom:4px;text-align:center">Decision Comparison Tool</div>
+          <div style="font-size:10px;color:#5a7a8a;text-align:center;margin-bottom:12px">You pick the decision &bull; You pick the criteria &bull; The tool scores them</div>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <div style="flex:1;background:rgba(255,255,255,0.08);border-radius:8px;padding:10px">
+              <div style="font-size:10px;color:#5a7a8a;margin-bottom:4px">e.g. "Take the new job"</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="font-size:9px;color:#eba714;width:50px">Salary</div><div style="height:6px;background:#d97706;border-radius:3px;flex:1;width:75%"></div><div style="font-size:9px;color:#eba714">8</div></div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="font-size:9px;color:#eba714;width:50px">Balance</div><div style="height:6px;background:#d97706;border-radius:3px;flex:1;width:50%;opacity:0.7"></div><div style="font-size:9px;color:#eba714">5</div></div>
+              <div style="display:flex;align-items:center;gap:6px"><div style="font-size:9px;color:#eba714;width:50px">Growth</div><div style="height:6px;background:#d97706;border-radius:3px;flex:1;width:90%;opacity:0.5"></div><div style="font-size:9px;color:#eba714">9</div></div>
+            </div>
+            <div style="flex:1;background:rgba(255,255,255,0.08);border-radius:8px;padding:10px">
+              <div style="font-size:10px;color:#5a7a8a;margin-bottom:4px">e.g. "Stay at current job"</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="font-size:9px;color:#6ee7b7;width:50px">Salary</div><div style="height:6px;background:#16a34a;border-radius:3px;flex:1;width:60%"></div><div style="font-size:9px;color:#6ee7b7">6</div></div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="font-size:9px;color:#6ee7b7;width:50px">Balance</div><div style="height:6px;background:#16a34a;border-radius:3px;flex:1;width:90%;opacity:0.7"></div><div style="font-size:9px;color:#6ee7b7">9</div></div>
+              <div style="display:flex;align-items:center;gap:6px"><div style="font-size:9px;color:#6ee7b7;width:50px">Growth</div><div style="height:6px;background:#16a34a;border-radius:3px;flex:1;width:40%;opacity:0.5"></div><div style="font-size:9px;color:#6ee7b7">4</div></div>
+            </div>
+          </div>
+          <div style="text-align:center;font-size:10px;color:#5a7a8a;margin-top:8px">Each criterion gets a weight (how much it matters) and a score (1-10 per option)</div>
+        </div>
+        <p>An interactive tool where you enter any two options, define the criteria that matter to you, score each one, and get a weighted recommendation. You'll type one prompt and get it back as a working artifact.</p>
+      </div>
+    </div>
+
+    <!-- STEP 1: Start the Conversation -->
+    <div class="step" id="step-1">
+      <p>Open <strong>claude.ai</strong> in your browser. Start a new conversation. Then copy the prompt below and paste it in.</p>
+
+      <div class="expand-card mb-20" onclick="toggleExpand(this)">
+        <button class="expand-header">How does the scoring work?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">
+          <p style="margin-bottom:10px">The tool uses two numbers for each criterion:</p>
+          <p style="margin-bottom:6px"><strong>Weight</strong> = how much this criterion matters to you. "Salary" might be high-weight; "office snacks" might be low-weight. The tool might use sliders, dropdowns (low/medium/high), or numbers — whatever Claude decides looks best.</p>
+          <p style="margin-bottom:6px"><strong>Score</strong> = how well each option performs on that criterion, from 1 (terrible) to 10 (amazing). You score each option separately.</p>
+          <p>The tool multiplies weight &times; score for each criterion, then adds them up. The option with the higher total wins. It's the same math a spreadsheet would do, but the tool makes it visual and easy.</p>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;margin-bottom:8px">
+        <div class="prompt-block" id="mainPrompt">Build me an interactive decision-making tool as an artifact. I want to compare two options side by side using weighted criteria.
+
+The tool should:
+1. Let me enter two options I'm deciding between (e.g., "Take the new job" vs "Stay at current job")
+2. Let me add criteria that matter to me (e.g., salary, work-life balance, growth potential)
+3. Let me weight each criterion by importance (drag a slider or pick high/medium/low)
+4. Let me score each option on each criterion (1-10 scale)
+5. Calculate a weighted total score for each option
+6. Show a clear visual comparison — bar charts or some kind of visual
+7. Give a recommendation based on the scores
+
+Start with some example criteria pre-filled so I can see how it works right away.
+
+Make it look polished and modern — clean design, good use of color, satisfying to interact with. I want it to feel like a real app, not a homework assignment.</div>
+        <button class="copy-btn" id="mainCopyBtn" onclick="copyMainPrompt()">Copy this prompt</button>
+      </div>
+
+      <div class="callout callout-amber mt-16">
+        <div class="callout-title" style="color:#b45309">What happens next</div>
+        <div class="callout-text">Claude will think for a moment, then produce an <strong>artifact</strong> — an interactive application that appears in a panel to the right of the conversation. You can use it right there, inside Claude. The "job" example in the prompt is just a placeholder — the tool will have text fields where you type in whatever decision you're actually facing.</div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">What is an artifact?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">An artifact is a self-contained piece of interactive content that Claude builds for you right inside the conversation. It could be a tool, a document, a diagram, a game — anything that works in a browser. It runs right in the Claude interface. No downloading, no installing, no deploying. You ask, Claude builds, you use it immediately.</div>
+      </div>
+
+      <div class="callout callout-purple">
+        <div class="callout-title" style="color:#081f3f">Pro tip</div>
+        <div class="callout-text">You can talk to Claude in whatever language feels natural. The prompt above is detailed because specificity helps — but once you get the first version, you can iterate with short, casual messages like "make it prettier" or "add a reset button."</div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Try It Out -->
+    <div class="step" id="step-2">
+      <p>You should now see your decision-making tool in the artifact panel. Let's take it for a spin.</p>
+
+      <div class="summary-card mb-24">
+        <div style="font-size:13px;font-weight:700;color:#081f3f;margin-bottom:12px">Try these steps</div>
+        <p>
+          <strong>1.</strong> Enter two options you're actually deciding between — or use the pre-filled example<br>
+          <strong>2.</strong> Look at the criteria — add one that matters to you, remove one that doesn't<br>
+          <strong>3.</strong> Adjust the weights — which criteria matter most?<br>
+          <strong>4.</strong> Score each option on each criterion (be honest!)<br>
+          <strong>5.</strong> Look at the visual comparison and the recommendation
+        </p>
+      </div>
+
+      <div class="callout callout-blue">
+        <div class="callout-title" style="color:#15465b">Does it feel real?</div>
+        <div class="callout-text">Pause and notice what just happened. You typed a paragraph of English, and you got back a working application. Buttons work. Sliders slide. Scores calculate. This is what people mean when they say AI changes everything — the gap between "I have an idea" and "I have a working tool" just collapsed.</div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">What if it doesn't look right?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">AI output varies every time. Your tool might look slightly different from someone else's — different colors, different layout, maybe some criteria are different. That's normal. If something is broken or missing, just tell Claude: "The scoring doesn't seem to work" or "I don't see any visual comparison." Claude will fix it.</div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Make It Better -->
+    <div class="step" id="step-3">
+      <div class="dark-card">
+        <h2>The secret isn't the first prompt.</h2>
+        <p>It's what you do next. Describe, build, review, refine. That's the whole loop.</p>
+      </div>
+
+      <p>Your tool works, but it could be better. The most powerful thing about working with AI isn't getting a perfect first result — it's how fast you can iterate. Try any of these:</p>
+
+      <div class="iter-card">
+        <div class="iter-text">"Add a brief summary at the top that explains what this tool does and how to use it in 2-3 sentences."</div>
+        <button class="iter-copy">Copy</button>
+      </div>
+      <div class="iter-card">
+        <div class="iter-text">"Improve the visual design — add subtle gradients, better spacing, and a more modern color palette. Make it feel premium."</div>
+        <button class="iter-copy">Copy</button>
+      </div>
+      <div class="iter-card">
+        <div class="iter-text">"Support comparing 3 or more options, not just two. Let me add and remove options dynamically."</div>
+        <button class="iter-copy">Copy</button>
+      </div>
+      <div class="iter-card">
+        <div class="iter-text">"Add an export button that copies my comparison results as formatted text I can paste into a document or email."</div>
+        <button class="iter-copy">Copy</button>
+      </div>
+      <div class="iter-card">
+        <div class="iter-text">"Add a reset button that clears all scores but keeps my criteria and options, plus a full reset that clears everything."</div>
+        <button class="iter-copy">Copy</button>
+      </div>
+
+      <div class="vibe-loop mt-16">
+        <div class="section-label" style="color:#eba714">The iteration loop</div>
+        <div class="vibe-loop-steps">
+          <div class="vibe-step">
+            <div class="vibe-step-icon"><span class="icon i-chat"></span></div>
+            <div class="vibe-step-label">Describe</div>
+            <div class="vibe-step-desc">Tell Claude what to change</div>
+          </div>
+          <div class="vibe-arrow">&rarr;</div>
+          <div class="vibe-step">
+            <div class="vibe-step-icon"><span class="icon i-zap"></span></div>
+            <div class="vibe-step-label">Build</div>
+            <div class="vibe-step-desc">Claude updates the artifact</div>
+          </div>
+          <div class="vibe-arrow">&rarr;</div>
+          <div class="vibe-step">
+            <div class="vibe-step-icon"><span class="icon i-search"></span></div>
+            <div class="vibe-step-label">Review</div>
+            <div class="vibe-step-desc">Try the new version</div>
+          </div>
+          <div class="vibe-arrow">&rarr;</div>
+          <div class="vibe-step">
+            <div class="vibe-step-icon"><span class="icon i-refresh"></span></div>
+            <div class="vibe-step-label">Refine</div>
+            <div class="vibe-step-desc">Ask for more changes</div>
+          </div>
+        </div>
+        <div class="vibe-footer">&circlearrowleft; Repeat until it's exactly what you want</div>
+      </div>
+
+      <div class="callout callout-green">
+        <div class="callout-title" style="color:#15803d">This is the real skill</div>
+        <div class="callout-text">Building with AI isn't about writing the perfect prompt the first time. It's about iterating quickly. Describe what you want, see what you get, then refine. Each round gets you closer. Try 2-3 of the prompts above and see how fast the tool improves.</div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Make It Yours -->
+    <div class="step" id="step-4">
+      <p>The decision-making tool is useful on its own — but the real power is adapting it to your specific world. Tell Claude what you actually do, and the tool reshapes itself around your work.</p>
+
+      <p class="text-sm text-muted mb-20">Try one of these — or describe your own use case. That's the whole point.</p>
+
+      <div class="iter-card">
+        <div class="iter-text">"Customize this for evaluating job candidates. Pre-fill criteria with: technical skills, communication, culture fit, experience level, and salary expectations."</div>
+        <button class="iter-copy">Copy</button>
+      </div>
+      <div class="iter-card">
+        <div class="iter-text">"Turn this into a vendor comparison tool. Pre-fill with: cost, reliability, support quality, integration ease, and scalability."</div>
+        <button class="iter-copy">Copy</button>
+      </div>
+      <div class="iter-card">
+        <div class="iter-text">"Adapt this for prioritizing projects. Pre-fill criteria with: business impact, effort required, strategic alignment, risk level, and time to value."</div>
+        <button class="iter-copy">Copy</button>
+      </div>
+      <div class="iter-card">
+        <div class="iter-text">"Make the entire interface bilingual — add a toggle that switches between English and Spanish."</div>
+        <button class="iter-copy">Copy</button>
+      </div>
+
+      <div class="callout callout-amber mt-16">
+        <div class="callout-title" style="color:#b45309">Make it weird</div>
+        <div class="callout-text">The best way to learn is to push the boundaries. Ask for something surprising — "Add a dark mode," "Make it look like a retro video game," "Add sound effects when I submit a score." See what happens. You can't break anything.</div>
+      </div>
+
+      <div class="expand-card" onclick="toggleExpand(this)">
+        <button class="expand-header">Can I share my artifact with someone?<span class="expand-arrow">&#9660;</span></button>
+        <div class="expand-body">Yes! Click the <strong>Share</strong> button at the top of the artifact panel. You'll get a link anyone can use to interact with your tool — they don't even need a Claude account. It's a real, working app that lives at a URL.</div>
+      </div>
+    </div>
+
+    <!-- STEP 5: What Just Happened -->
+    <div class="step" id="step-5">
+      <div class="dark-card">
+        <div style="font-size:36px;margin-bottom:8px"><span class="icon i-sparkle"></span></div>
+        <h2>You just built software.</h2>
+        <p>With a conversation. No code. No IDE. No stack overflow.</p>
+      </div>
+
+      <p>This wasn't a demo. You built a real, interactive tool that solves a real problem — comparing options with weighted criteria. And you did it by describing what you wanted in plain English.</p>
+
+      <div class="dark-card">
+        <h2>The pattern behind everything</h2>
+        <p>Every tutorial in this series follows the same loop you just used. The tools change, the complexity grows, but the core pattern never does.</p>
+      </div>
+
+      <div style="font-size:16px;font-weight:600;color:#081f3f;margin-bottom:16px">What you actually learned:</div>
+      <div class="mb-20">
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-chat"></span></span><span class="recap-text"><strong>Artifacts</strong> — Claude can build interactive tools, not just answer questions.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-target"></span></span><span class="recap-text"><strong>Specificity matters</strong> — a detailed first prompt gets you 80% of the way there.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-refresh"></span></span><span class="recap-text"><strong>Iteration is the skill</strong> — the best results come from refining, not from perfecting the first prompt.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-edit"></span></span><span class="recap-text"><strong>Customization is free</strong> — reshaping a tool for your specific use case takes one sentence.</span></div>
+        <div class="recap-item"><span class="recap-icon"><span class="icon i-eye"></span></span><span class="recap-text"><strong>You don't need to code</strong> — describing what you want clearly IS the new technical skill.</span></div>
+      </div>
+
+      <div class="success-card">
+        <div class="success-icon"><span class="icon i-star"></span></div>
+        <div class="success-title" style="font-size:18px">You're ready for more.</div>
+        <div class="success-text">You've experienced the core loop: describe, build, review, refine. Everything else in this series builds on exactly this pattern — with more powerful tools and bigger projects.</div>
+      </div>
+
+      <div style="font-size:16px;font-weight:600;color:#081f3f;margin-bottom:12px;margin-top:24px">What to try next:</div>
+      <div class="next-grid">
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-globe"></span></div>
+          <div class="next-card-title">Vibe-code a website</div>
+          <div class="next-card-desc">Build and deploy a real site with Claude Code</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-wrench"></span></div>
+          <div class="next-card-title">Build another artifact</div>
+          <div class="next-card-desc">A quiz, a calculator, a planner — you name it</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-chart"></span></div>
+          <div class="next-card-title">Visualize data</div>
+          <div class="next-card-desc">Ask Claude to chart a dataset as an artifact</div>
+        </div>
+        <div class="next-card">
+          <div class="next-card-icon"><span class="icon i-briefcase"></span></div>
+          <div class="next-card-title">Solve a work problem</div>
+          <div class="next-card-desc">Build a tool your team actually needs</div>
+        </div>
+      </div>
+
+      <p class="text-sm text-muted text-center">The gap between "person with ideas" and "person who builds things" just closed.</p>
+    </div>
+
+  </div>
+
+  </div><!-- /main-col -->
+</div>
+
+<script>
+const STEPS = [
+  { title: "Build Your First Artifact", subtitle: "Your first AI-built tool, in one conversation." },
+  { title: "Start the Conversation", subtitle: "One prompt. One artifact. Zero code." },
+  { title: "Try It Out", subtitle: "Use the tool you just built." },
+  { title: "Make It Better", subtitle: "The iteration loop \u2014 describe, build, refine." },
+  { title: "Make It Yours", subtitle: "Customize it for your world." },
+  { title: "What Just Happened", subtitle: "The pattern behind everything you\u2019ll build with AI." },
+];
+
+let currentStep = 0;
+
+const RAIL_THUMBS = [
+  { label: "Start",
+    visual: '<div style="display:flex;gap:4px"><div style="width:26px;height:30px;border-radius:4px;border:2px solid currentColor;opacity:0.5"></div><div style="width:26px;height:30px;border-radius:4px;border:2px solid currentColor"></div></div>' },
+  { label: "Prompt",
+    visual: '<div style="width:56px;height:32px;background:currentColor;opacity:0.15;border-radius:5px;position:relative;overflow:hidden"><div style="position:absolute;top:8px;left:8px;width:20px;height:4px;background:currentColor;opacity:1;border-radius:2px"></div><div style="position:absolute;top:18px;left:8px;width:32px;height:4px;background:currentColor;opacity:0.5;border-radius:2px"></div></div>' },
+  { label: "Try",
+    visual: '<div style="width:56px;height:32px;border:2px solid currentColor;border-radius:5px;overflow:hidden"><div style="height:10px;border-bottom:1.5px solid currentColor;display:flex;align-items:center;padding-left:4px;gap:3px"><div style="width:5px;height:5px;border-radius:50%;background:currentColor"></div><div style="width:5px;height:5px;border-radius:50%;background:currentColor;opacity:0.5"></div></div></div>' },
+  { label: "Iterate",
+    visual: '<div style="width:34px;height:34px;border:3px solid currentColor;border-radius:50%;border-top-color:transparent;position:relative"><div style="position:absolute;top:-3px;right:8px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:7px solid currentColor"></div></div>' },
+  { label: "Yours",
+    visual: '<div style="width:52px;display:flex;flex-direction:column;gap:4px"><div style="display:flex;gap:6px;align-items:center"><div style="width:16px;height:8px;border-radius:2px;background:currentColor"></div><div style="flex:1;height:3px;background:currentColor;opacity:0.3;border-radius:2px"></div></div><div style="display:flex;gap:6px;align-items:center"><div style="width:16px;height:8px;border-radius:2px;background:currentColor;opacity:0.8"></div><div style="flex:1;height:3px;background:currentColor;opacity:0.3;border-radius:2px"></div></div><div style="display:flex;gap:6px;align-items:center"><div style="width:16px;height:8px;border-radius:2px;background:currentColor;opacity:0.6"></div><div style="flex:1;height:3px;background:currentColor;opacity:0.3;border-radius:2px"></div></div></div>' },
+  { label: "Done",
+    visual: '<div style="font-size:30px;line-height:1">&#9733;</div>' },
+];
+
+// Init section rail
+const railEl = document.getElementById("sectionRail");
+STEPS.forEach((step, i) => {
+  if (i > 0) {
+    const conn = document.createElement("div");
+    conn.className = "rail-connector upcoming";
+    conn.id = "rail-conn-" + i;
+    railEl.appendChild(conn);
+  }
+  const thumb = document.createElement("button");
+  thumb.className = "rail-thumb" + (i === 0 ? " current" : " upcoming");
+  thumb.id = "rail-thumb-" + i;
+  thumb.setAttribute("data-label", step.title);
+  thumb.innerHTML = '<div class="rail-thumb-visual">' + RAIL_THUMBS[i].visual + '</div><div class="rail-thumb-label">' + RAIL_THUMBS[i].label + '</div>';
+  thumb.onclick = () => goToStep(i);
+  railEl.appendChild(thumb);
+});
+
+function goToStep(n) {
+  document.getElementById("step-" + currentStep).classList.remove("active");
+  currentStep = n;
+  document.getElementById("step-" + currentStep).classList.add("active");
+
+  // Update header
+  document.getElementById("stepTitle").textContent = STEPS[n].title;
+  document.getElementById("stepSubtitle").textContent = STEPS[n].subtitle;
+
+  // Update nav
+  document.getElementById("btnBack").style.display = n > 0 ? "" : "none";
+  const btnNext = document.getElementById("btnNext");
+  if (n >= STEPS.length - 1) {
+    btnNext.style.display = "none";
+  } else {
+    btnNext.style.display = "";
+    btnNext.textContent = n === 0 ? "Let's go" : "Next step";
+  }
+
+  // Update section rail
+  STEPS.forEach((_, i) => {
+    const thumb = document.getElementById("rail-thumb-" + i);
+    if (thumb) thumb.className = "rail-thumb " + (i < n ? "completed" : i === n ? "current" : "upcoming");
+    if (i > 0) {
+      const conn = document.getElementById("rail-conn-" + i);
+      if (conn) conn.className = "rail-connector " + (i <= n ? "completed" : "upcoming");
+    }
+  });
+
+  // Scroll to top
+  window.scrollTo(0, 0);
+}
+
+function nextStep() { if (currentStep < STEPS.length - 1) goToStep(currentStep + 1); }
+function prevStep() { if (currentStep > 0) goToStep(currentStep - 1); }
+
+// Expandable cards
+function toggleExpand(card) {
+  card.classList.toggle("open");
+}
+
+// Copy main prompt
+function copyMainPrompt() {
+  const text = document.getElementById("mainPrompt").textContent;
+  const btn = document.getElementById("mainCopyBtn");
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add("copied");
+    btn.textContent = "Copied to clipboard!";
+    setTimeout(() => {
+      btn.classList.remove("copied");
+      btn.textContent = "Copy this prompt";
+    }, 2000);
+  });
+}
+
+// Iteration copy buttons
+document.querySelectorAll(".iter-copy").forEach(btn => {
+  btn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    const text = this.parentElement.querySelector(".iter-text").textContent.replace(/^"|"$/g, "");
+    navigator.clipboard.writeText(text).then(() => {
+      this.textContent = "Copied!";
+      setTimeout(() => { this.textContent = "Copy"; }, 1500);
+    });
+  });
+});
+
+// Keyboard nav
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") nextStep();
+  if (e.key === "ArrowLeft" || e.key === "ArrowUp") prevStep();
+});
+</script>
+</body>
+</html>
