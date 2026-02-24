@@ -10,14 +10,12 @@
 
 <table align="center">
   <tr>
-    <td align="center" width="320">
+    <td align="center" width="360">
       <a href="https://mvp-club-ai.github.io/getting-started-with-claude/">
-        <img src="https://img.shields.io/badge/%E2%96%B6%20%20START%20HERE-Open%20the%20tutorial%20site-d97706?style=for-the-badge&labelColor=081f3f&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik04IDVsMTEgN0w4IDE5eiIvPjwvc3ZnPg==&logoColor=white&logoWidth=20" alt="Start Here" height="56">
+        <img src="assets/start-here-btn.svg" alt="Start Here — Open the tutorial site" width="340">
       </a>
       <br><br>
-      <strong>mvp-club-ai.github.io/getting-started-with-claude</strong>
-      <br>
-      <sub>All tutorials live on this deployed site. Open it in your browser to get started.</sub>
+      <sub>All tutorials live on this deployed site. This repo is the source code.<br>Open the link above in your browser to get started.</sub>
     </td>
     <td width="380">
       <a href="https://mvp-club-ai.github.io/getting-started-with-claude/">

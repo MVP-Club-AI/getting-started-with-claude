@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="64" viewBox="0 0 340 64">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="116%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <rect x="4" y="2" width="332" height="54" rx="12" ry="12" fill="#081f3f" filter="url(#shadow)"/>
+  <polygon points="28,18 28,40 44,29" fill="#d97706"/>
+  <text x="58" y="25" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="15" font-weight="700" fill="#ffffff" letter-spacing="1.5">START HERE</text>
+  <text x="58" y="43" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="12" fill="#d97706">Open the tutorial site &rarr;</text>
+</svg>
